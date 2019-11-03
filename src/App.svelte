@@ -6,7 +6,6 @@
 	#header {
 		height: 80px;
 		background: var(--g-middle-gray);
-		margin-bottom: 20px;
 	}
 </style>
 

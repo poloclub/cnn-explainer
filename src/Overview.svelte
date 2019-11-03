@@ -1,4 +1,17 @@
 <script>
+  import { onMount } from 'svelte';
+
+  let overviewComponent;
+
+  onMount(() => {
+    let svg = d3.select(overviewComponent)
+      .select('#overview-svg');
+    let width = svg.attr('width');
+    let height = svg.attr('height');
+
+    console.log(svg, width, height);
+
+  })
 </script>
 
 <style>
@@ -12,21 +25,17 @@
     align-items: flex-end;
   }
 
-  .overview-svg {
-    width: 100%;
-    height: 90%;
-  }
-
   .control-wrapper {
-    height: 10%;
+    padding: 5px 0;
     display: flex;
     justify-content: flex-end;
     align-items: center;
   }
 </style>
 
-<div class="overview">
-  <svg class="overview-svg"></svg>
+<div class="overview"
+  bind:this={overviewComponent}>
+  <svg id="overview-svg" width="950" height="600"></svg>
   <div class="control-wrapper">
     <button class="button">
       <span class="icon has-text-danger">
