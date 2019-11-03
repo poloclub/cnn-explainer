@@ -1,0 +1,27 @@
+:root {
+	--outer-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+	--outer-shadow-sm: 0 .125rem .25rem rgba(0,0,0,.075);
+	--outer-shadow-lg: 0 1rem 3rem rgba(0,0,0,.175);
+	--g-red: rgb(255, 59, 48);
+	--g-blue: rgb(0, 122, 255);
+	--g-green: rgb(52, 199, 89);
+	--g-teal: rgb(90, 200, 250);
+	--g-light-gray: rgb(250, 250, 250);
+	--g-middle-gray: rgb(190, 190, 190);
+	--g-dark-gray: rgb(155, 155, 155);
+}
+
+html, body {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+body {
+	color: #333;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
