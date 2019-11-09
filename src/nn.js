@@ -17,15 +17,13 @@ class Node {
    * @param {int} index Index of this node in its layer.
    * @param {string} type Node type {input, conv, pool, relu, fc}. 
    * @param {number} bias The bias assocated to this node.
-   * @param {[number]} shape 2D shape of the current node.
-   * @param {[number]} output Output of this node.
+   * @param {[[number]]} output Output of this node.
    */
-  constructor(layerName, index, type, bias, shape, output) {
+  constructor(layerName, index, type, bias, output) {
     this.layerName = layerName;
     this.index = index;
     this.type = type;
     this.bias = bias;
-    this.shape = shape;
     this.output = output;
 
     /* Weights are stored in the links */
@@ -51,9 +49,8 @@ const constructNNFromJSON = (nnJSON) => {
   let inputShape = nnJSON[0].input_shape;
 
   for (let i = 0; i < inputShape[2]; i++) {
-    let shape = inputShape.slice(0, 2);
-    let output = new Array(inputShape[0] * inputShape[1]).fill(0);
-    let node = new Node('input', i, nodeType.INPUT, 0, shape, output);
+    let output = init2DArray(inputShape[0], inputShape[1], 0);
+    let node = new Node('input', i, nodeType.INPUT, 0, output);
     inputLayer.push(node);
   }
 
@@ -79,11 +76,11 @@ const constructNNFromJSON = (nnJSON) => {
 
     let shape = layer.output_shape.slice(0, 2);
     let bias = 0;
-    let length = 0;
+    let output;
     if (curLayerType === nodeType.FLATTEN || curLayerType === nodeType.FC) {
-      length = shape[0]
+      output = new Array(shape[0]).fill(0);
     } else {
-      shape[0] * shape[1];
+      output = init2DArray(shape[0], shape[1], 0);
     }
 
     /* Add neurons into this layer */
@@ -91,8 +88,7 @@ const constructNNFromJSON = (nnJSON) => {
       if (curLayerType === nodeType.CONV || curLayerType === nodeType.FC) {
         bias = layer.weights[i].bias;
       }
-      let node = new Node(layer.name, i, curLayerType, bias,
-        layer.output_shape.slice(0, 2), new Array(length).fill(0))
+      let node = new Node(layer.name, i, curLayerType, bias, output)
 
       /* TODO: Connect this node to all previous nodes (create links) */
 
@@ -112,7 +108,7 @@ export const constructNN = () => {
     fetch('/assets/data/nn_10.json')
       .then(response => {
         response.json().then(nnJSON => {
-          let nn = constructNNFromJSON(nnJSON); 
+          let nn = constructNNFromJSON(nnJSON);
           resolve(nn);
         });
       })
@@ -120,4 +116,15 @@ export const constructNN = () => {
         reject(error);
       });
   });
+}
+
+/* Helper functions */
+const init2DArray = (height, width, fill) => {
+  let array = [];
+  /* Itereate through rows */
+  for (let r = 0; r < height; r++) {
+    let row = new Array(width).fill(fill);
+    array.push(row);
+  }
+  return array;
 }
