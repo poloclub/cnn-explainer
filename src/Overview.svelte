@@ -1,16 +1,18 @@
 <script>
   import { onMount } from 'svelte';
+  import { constructNN } from './nn.js';
 
   let overviewComponent;
 
-  onMount(() => {
+  onMount(async () => {
     let svg = d3.select(overviewComponent)
       .select('#overview-svg');
     let width = svg.attr('width');
     let height = svg.attr('height');
-
-    console.log(svg, width, height);
-
+    console.log(svg);
+    
+    let nn = await constructNN();
+    console.log(nn);
   })
 </script>
 
