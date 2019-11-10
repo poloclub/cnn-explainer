@@ -40,19 +40,6 @@ class Link {
 }
 
 const constructNNFromJSON = (nnJSON) => {
-  let tt = [[1,2,3,4], [5,6,7,8], [9,10,11,12], [13,14,15,16]];
-  let stepSize = 3;
-  let kernel = [[1,1], [1,1]];
-  let result = init2DArray(stepSize, stepSize, 0);
-  for (let r = 0; r < stepSize; r++) {
-    for (let c = 0; c < stepSize; c++) {
-      let curWindow = matrixSlice(tt, r, r + kernel.length, c, c + kernel.length);
-      let dot = matrixDot(curWindow, kernel);
-      result[r][c] = dot;
-    }
-  }
-  console.log(result);
-
   console.log(nnJSON);
   let nn = [];
 
@@ -107,7 +94,7 @@ const constructNNFromJSON = (nnJSON) => {
       if (curLayerType === nodeType.CONV || curLayerType === nodeType.FC) {
         for (let j = 0; j < nn[curLayerIndex - 1].length; j++) {
           let preNode = nn[curLayerIndex - 1][j];
-          let curLink = new Link(preNode, node, layer.weights[i].weights);
+          let curLink = new Link(preNode, node, layer.weights[i].weights[j]);
           preNode.outputLinks.push(curLink);
           node.inputLinks.push(curLink);
         }
@@ -178,6 +165,11 @@ const matrixDot = (mat1, mat2) => {
   return result;
 }
 
+/**
+ * Matrix elementwise addition.
+ * @param {[[number]]} mat1 Matrix 1
+ * @param {[[number]]} mat2 Matrix 2
+ */
 const matrixAdd = (mat1, mat2) => {
   console.assert(mat1.length === mat2.length, 'Dimension not matching');
   console.assert(mat1[0].length === mat2[0].length, 'Dimension not matching');
@@ -193,6 +185,14 @@ const matrixAdd = (mat1, mat2) => {
   return result;
 }
 
+/**
+ * 2D slice on a matrix.
+ * @param {[[number]]} mat Matrix
+ * @param {int} xs First dimension (row) starting index
+ * @param {int} xe First dimension (row) ending index
+ * @param {int} ys Second dimension (column) starting index
+ * @param {int} ye Second dimension (column) ending index
+ */
 const matrixSlice = (mat, xs, xe, ys, ye) => {
   return mat.slice(xs, xe).map(s => s.slice(ys, ye));
 }
@@ -222,13 +222,17 @@ const singleConv = (input, kernel, stride=1, padding=0) => {
     for (let c = 0; c < stepSize; c+=stride) {
       let curWindow = matrixSlice(input, r, r + kernel.length, c, c + kernel.length);
       let dot = matrixDot(curWindow, kernel);
-      result[r][c] = dot;
     }
   }
-
   return result;
 }
 
+/**
+ * Convolution operation. This function update the outputs property of all nodes
+ * in the given layer. Previous layer is accessed by the reference in nodes'
+ * links.
+ * @param {[Node]} curLayer Conv layer.
+ */
 const convolute = (curLayer) => {
   console.assert(curLayer[0].type === 'conv');
 
@@ -256,7 +260,6 @@ const convolute = (curLayer) => {
 
 export const tempMain = async () => {
   let nn = await constructNN();
-  console.log(nn[1]);
   convolute(nn[1]);
   console.log(nn);
 }
