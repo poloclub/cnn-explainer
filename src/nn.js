@@ -93,14 +93,34 @@ const constructNNFromJSON = (nnJSON, inputImageArray) => {
 
       // Connect this node to all previous nodes (create links)
       if (curLayerType === nodeType.CONV || curLayerType === nodeType.FC) {
+        // CONV and FC layers have weights in links. Links are one-to-multiple
         for (let j = 0; j < nn[curLayerIndex - 1].length; j++) {
           let preNode = nn[curLayerIndex - 1][j];
           let curLink = new Link(preNode, node, layer.weights[i].weights[j]);
           preNode.outputLinks.push(curLink);
           node.inputLinks.push(curLink);
         }
-      }
+      } else if (curLayerType === nodeType.RELU || curLayerType === nodeType.POOL) {
+        // RELU and POOL layers have no weights. Links are one-to-one
+        let preNode = nn[curLayerIndex - 1][i];
+        let link = new Link(preNode, node, null);
+        preNode.outputLinks.push(link);
+        node.inputLinks.push(link);
+      } else if (curLayerType === nodeType.FLATTEN) {
+        // Flatten layer has no weights. Links are multiple-to-one.
+        // Use dummy weights to store the corresponding entry in the previsou node
+        // (row, column)
+        let preNodeWidth = nn[curLayerIndex - 1][0].output.length,
+          preNodeSingleNum = Math.pow(preNodeWidth, 2),
+          preNodeIndex = Math.floor(i / preNodeSingleNum),
+          preNodeRow = Math.floor(i % (preNodeSingleNum) / preNodeWidth),
+          preNodeCol = i % preNodeSingleNum % preNodeWidth,
+          link = new Link(nn[curLayerIndex - 1][preNodeIndex],
+            node, [preNodeRow, preNodeCol]);
 
+        nn[curLayerIndex - 1][preNodeIndex].outputLinks.push(link);
+        node.inputLinks.push(link);
+      }
       curLayerNodes.push(node);
     }
 
@@ -202,37 +222,6 @@ const matrixSlice = (mat, xs, xe, ys, ye) => {
 }
 
 /**
- * Compute convolutions of one kernel on one matrix (one slice of a tensor).
- * @param {[[number]]} input Input, square matrix
- * @param {[[number]]} kernel Kernel weights, square matrix
- * @param {int} stride Stride size
- * @param {int} padding Padding size
- */
-const singleConv = (input, kernel, stride=1, padding=0) => {
-  // TODO: implement padding
-
-  // Only support square input and kernel
-  console.assert(input.length === input[0].length,
-     'Conv input is not square');
-  console.assert(kernel.length === kernel[0].length,
-    'Conv kernel is not square');
-
-  let stepSize = (input.length - kernel.length) / stride + 1;
-
-  let result = init2DArray(stepSize, stepSize, 0);
-
-  // Window sliding
-  for (let r = 0; r < stepSize; r+=stride) {
-    for (let c = 0; c < stepSize; c+=stride) {
-      let curWindow = matrixSlice(input, r, r + kernel.length, c, c + kernel.length);
-      let dot = matrixDot(curWindow, kernel);
-      result[r][c] = dot;
-    }
-  }
-  return result;
-}
-
-/**
  * Convert canvas image data into a 3D array with dimension [height, width, 3].
  * Each pixel is in 0-255 scale.
  * @param {[int8]} imageData Canvas image data
@@ -291,6 +280,37 @@ const getInputImageArray = (imgFile) => {
 }
 
 /**
+ * Compute convolutions of one kernel on one matrix (one slice of a tensor).
+ * @param {[[number]]} input Input, square matrix
+ * @param {[[number]]} kernel Kernel weights, square matrix
+ * @param {int} stride Stride size
+ * @param {int} padding Padding size
+ */
+const singleConv = (input, kernel, stride=1, padding=0) => {
+  // TODO: implement padding
+
+  // Only support square input and kernel
+  console.assert(input.length === input[0].length,
+     'Conv input is not square');
+  console.assert(kernel.length === kernel[0].length,
+    'Conv kernel is not square');
+
+  let stepSize = (input.length - kernel.length) / stride + 1;
+
+  let result = init2DArray(stepSize, stepSize, 0);
+
+  // Window sliding
+  for (let r = 0; r < stepSize; r+=stride) {
+    for (let c = 0; c < stepSize; c+=stride) {
+      let curWindow = matrixSlice(input, r, r + kernel.length, c, c + kernel.length);
+      let dot = matrixDot(curWindow, kernel);
+      result[r][c] = dot;
+    }
+  }
+  return result;
+}
+
+/**
  * Convolution operation. This function update the outputs property of all nodes
  * in the given layer. Previous layer is accessed by the reference in nodes'
  * links.
@@ -321,8 +341,35 @@ const convolute = (curLayer) => {
   })
 }
 
+const singleRelu = (mat) => {
+  // Only support square matrix
+  console.assert(mat.length === mat[0].length, 'Activating non-square matrix!');
+
+  let width = mat.length;
+  let result = init2DArray(width, width, 0);
+
+  for (let i = 0; i < width; i++) {
+    for (let j = 0; j < width; j++) {
+      result[i][j] = Math.max(0, mat[i][j]);
+    }
+  }
+  return result;
+}
+
+const relu = (curLayer) => {
+  console.assert(curLayer[0].type === 'relu');
+
+  // Itereate through all nodes in curLayer to update their outputs
+  for (let i = 0; i < curLayer.length; i++) {
+    let curNode = curLayer[i];
+    let preNode = curNode.inputLinks[0].source;
+    curNode.output = singleRelu(preNode.output);
+  }
+}
+
 export const tempMain = async () => {
   let nn = await constructNN('/assets/img/koala.jpeg');
   convolute(nn[1]);
+  relu(nn[2])
   console.log(nn);
 }
