@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { constructNN } from './nn.js';
+  import { constructNN, tempMain } from './nn.js';
 
   let overviewComponent;
 
@@ -11,8 +11,11 @@
     let height = svg.attr('height');
     console.log(svg);
     
+    /*
     let nn = await constructNN();
     console.log(nn);
+    */
+    tempMain();
   })
 </script>
 
