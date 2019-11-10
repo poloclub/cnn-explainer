@@ -228,6 +228,58 @@ const singleConv = (input, kernel, stride=1, padding=0) => {
 }
 
 /**
+ * Convert canvas image data into a 3D array with dimension [height, width, 3].
+ * Each pixel is in 0-255 scale.
+ * @param {[int8]} imageData Canvas image data
+ */
+const imageDataTo3DArray = (imageData) => {
+  /* Get image dimension (assume square image) */
+  let width = Math.sqrt(imageData.length / 4);
+
+  /* Create array placeholder for each channel */
+  let imageArray = [init2DArray(width, width, 0), init2DArray(width, width, 0),
+    init2DArray(width, width, 0)];
+  
+  /* Iterate through the data to fill out channel arrays above */
+  for (let i = 0; i < imageData.length; i++) {
+    let pixelIndex = Math.floor(i / 4),
+      channelIndex = i % 4,
+      row = Math.floor(pixelIndex / width),
+      column = pixelIndex % width;
+    
+    if (channelIndex < 3) {
+      imageArray[channelIndex][row][column] = imageData[i];
+    }
+  }
+
+  return imageArray;
+}
+
+/**
+ * Get the 3D pixel value array of the given image file.
+ * @param {string} imgFile File path to the image file
+ * @returns A promise with the corresponding 3D array
+ */
+const getInputImageArray = (imgFile) => {
+  let canvas = document.getElementById('input-canvas');
+  let context = canvas.getContext('2d');
+
+  return new Promise((resolve, reject) => {
+    let inputImage = new Image();
+    inputImage.src = imgFile;
+    inputImage.onload = () => {
+      context.drawImage(inputImage, 0, 0,);
+      /* Get image data and convert it to a 3D array */
+      let imageData = context.getImageData(0, 0, inputImage.width,
+        inputImage.height).data;
+      console.log(imageDataTo3DArray(imageData));
+      resolve(imageDataTo3DArray(imageData));
+    }
+    inputImage.onerror = reject;
+  })
+}
+
+/**
  * Convolution operation. This function update the outputs property of all nodes
  * in the given layer. Previous layer is accessed by the reference in nodes'
  * links.
@@ -262,4 +314,5 @@ export const tempMain = async () => {
   let nn = await constructNN();
   convolute(nn[1]);
   console.log(nn);
+  getInputImageArray('/assets/img/koala.jpeg');
 }
