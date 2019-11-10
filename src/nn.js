@@ -1,4 +1,4 @@
-/* Enum of node types */
+// Enum of node types
 const nodeType = {
   INPUT: 'input',
   CONV: 'conv',
@@ -25,7 +25,7 @@ class Node {
     this.bias = bias;
     this.output = output;
 
-    /* Weights are stored in the links */
+    // Weights are stored in the links
     this.inputLinks = [];
     this.outputLinks = [];
   }
@@ -43,7 +43,7 @@ const constructNNFromJSON = (nnJSON) => {
   console.log(nnJSON);
   let nn = [];
 
-  /* Add the first layer (input layer) */
+  // Add the first layer (input layer)
   let inputLayer = [];
   let inputShape = nnJSON[0].input_shape;
 
@@ -83,14 +83,14 @@ const constructNNFromJSON = (nnJSON) => {
       output = init2DArray(shape[0], shape[1], 0);
     }
 
-    /* Add neurons into this layer */
+    // Add neurons into this layer
     for (let i = 0; i < layer.num_neurons; i++) {
       if (curLayerType === nodeType.CONV || curLayerType === nodeType.FC) {
         bias = layer.weights[i].bias;
       }
       let node = new Node(layer.name, i, curLayerType, bias, output)
 
-      /* Connect this node to all previous nodes (create links) */
+      // Connect this node to all previous nodes (create links)
       if (curLayerType === nodeType.CONV || curLayerType === nodeType.FC) {
         for (let j = 0; j < nn[curLayerIndex - 1].length; j++) {
           let preNode = nn[curLayerIndex - 1][j];
@@ -103,7 +103,7 @@ const constructNNFromJSON = (nnJSON) => {
       curLayerNodes.push(node);
     }
 
-    /* Add current layer to the NN */
+    // Add current layer to the NN
     nn.push(curLayerNodes);
     curLayerIndex++;
   });
@@ -112,7 +112,7 @@ const constructNNFromJSON = (nnJSON) => {
 }
 
 export const constructNN = () => {
-  /* Load the saved model file */
+  // Load the saved model file
   return new Promise((resolve, reject) => {
     fetch('/assets/data/nn_10.json')
       .then(response => {
@@ -127,7 +127,7 @@ export const constructNN = () => {
   });
 }
 
-/* Helper functions */
+// Helper functions
 
 /**
  * Create a 2D array (matrix) with given size and default value.
@@ -138,7 +138,7 @@ export const constructNN = () => {
  */
 const init2DArray = (height, width, fill) => {
   let array = [];
-  /* Itereate through rows */
+  // Itereate through rows
   for (let r = 0; r < height; r++) {
     let row = new Array(width).fill(fill);
     array.push(row);
@@ -205,9 +205,9 @@ const matrixSlice = (mat, xs, xe, ys, ye) => {
  * @param {int} padding Padding size
  */
 const singleConv = (input, kernel, stride=1, padding=0) => {
-  /* TODO: implement padding */
+  // TODO: implement padding
 
-  /* Only support square input and kernel */
+  // Only support square input and kernel
   console.assert(input.length === input[0].length,
      'Conv input is not square');
   console.assert(kernel.length === kernel[0].length,
@@ -217,11 +217,12 @@ const singleConv = (input, kernel, stride=1, padding=0) => {
 
   let result = init2DArray(stepSize, stepSize, 0);
 
-  /* Window sliding */
+  // Window sliding
   for (let r = 0; r < stepSize; r+=stride) {
     for (let c = 0; c < stepSize; c+=stride) {
       let curWindow = matrixSlice(input, r, r + kernel.length, c, c + kernel.length);
       let dot = matrixDot(curWindow, kernel);
+      result[r][c] = dot;
     }
   }
   return result;
@@ -233,14 +234,14 @@ const singleConv = (input, kernel, stride=1, padding=0) => {
  * @param {[int8]} imageData Canvas image data
  */
 const imageDataTo3DArray = (imageData) => {
-  /* Get image dimension (assume square image) */
+  // Get image dimension (assume square image)
   let width = Math.sqrt(imageData.length / 4);
 
-  /* Create array placeholder for each channel */
+  // Create array placeholder for each channel
   let imageArray = [init2DArray(width, width, 0), init2DArray(width, width, 0),
     init2DArray(width, width, 0)];
   
-  /* Iterate through the data to fill out channel arrays above */
+  // Iterate through the data to fill out channel arrays above
   for (let i = 0; i < imageData.length; i++) {
     let pixelIndex = Math.floor(i / 4),
       channelIndex = i % 4,
@@ -269,7 +270,7 @@ const getInputImageArray = (imgFile) => {
     inputImage.src = imgFile;
     inputImage.onload = () => {
       context.drawImage(inputImage, 0, 0,);
-      /* Get image data and convert it to a 3D array */
+      // Get image data and convert it to a 3D array
       let imageData = context.getImageData(0, 0, inputImage.width,
         inputImage.height).data;
       console.log(imageDataTo3DArray(imageData));
@@ -288,12 +289,12 @@ const getInputImageArray = (imgFile) => {
 const convolute = (curLayer) => {
   console.assert(curLayer[0].type === 'conv');
 
-  /* Itereate through all nodes in curLayer to update their outputs */
+  // Itereate through all nodes in curLayer to update their outputs
   curLayer.forEach(node => {
     /*
-    Accumulate the single conv result matrices from previous channels. Previous
-    channels (node) are accessed by the reference in Link objects.
-    */
+     * Accumulate the single conv result matrices from previous channels.
+     * Previous channels (node) are accessed by the reference in Link objects.
+     */
     let newOutput = init2DArray(node.output.length, node.output.length, 0);
 
     for (let i = 0; i < node.inputLinks.length; i++) {
@@ -302,7 +303,7 @@ const convolute = (curLayer) => {
       newOutput = matrixAdd(newOutput, curConvResult);
     }
 
-    /* Add bias to all element in the output */
+    // Add bias to all element in the output
     let biasMatrix = init2DArray(newOutput.length, newOutput.length, node.bias);
     newOutput = matrixAdd(newOutput, biasMatrix);
 
