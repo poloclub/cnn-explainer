@@ -39,17 +39,18 @@ class Link {
   }
 }
 
-const constructNNFromJSON = (nnJSON) => {
+const constructNNFromJSON = (nnJSON, inputImageArray) => {
   console.log(nnJSON);
+  console.log(inputImageArray);
   let nn = [];
 
   // Add the first layer (input layer)
   let inputLayer = [];
   let inputShape = nnJSON[0].input_shape;
 
+  // First layer's three nodes' outputs are the channels of inputImageArray
   for (let i = 0; i < inputShape[2]; i++) {
-    let output = init2DArray(inputShape[0], inputShape[1], 0);
-    let node = new Node('input', i, nodeType.INPUT, 0, output);
+    let node = new Node('input', i, nodeType.INPUT, 0, inputImageArray[i]);
     inputLayer.push(node);
   }
 
@@ -111,14 +112,17 @@ const constructNNFromJSON = (nnJSON) => {
   return nn;
 }
 
-export const constructNN = () => {
+export const constructNN = (inputImageFile) => {
   // Load the saved model file
   return new Promise((resolve, reject) => {
     fetch('/assets/data/nn_10.json')
       .then(response => {
         response.json().then(nnJSON => {
-          let nn = constructNNFromJSON(nnJSON);
-          resolve(nn);
+          getInputImageArray(inputImageFile)
+            .then(inputImageArray => {
+              let nn = constructNNFromJSON(nnJSON, inputImageArray);
+              resolve(nn);
+            })
         });
       })
       .catch(error => {
@@ -262,7 +266,9 @@ const imageDataTo3DArray = (imageData) => {
  * @returns A promise with the corresponding 3D array
  */
 const getInputImageArray = (imgFile) => {
-  let canvas = document.getElementById('input-canvas');
+  let canvas = document.createElement('canvas');
+  canvas.style.cssText = 'display:none;';
+  document.getElementsByTagName('body')[0].appendChild(canvas);
   let context = canvas.getContext('2d');
 
   return new Promise((resolve, reject) => {
@@ -273,6 +279,10 @@ const getInputImageArray = (imgFile) => {
       // Get image data and convert it to a 3D array
       let imageData = context.getImageData(0, 0, inputImage.width,
         inputImage.height).data;
+
+      // Remove this newly created canvas element
+      canvas.parentNode.removeChild(canvas);
+
       console.log(imageDataTo3DArray(imageData));
       resolve(imageDataTo3DArray(imageData));
     }
@@ -312,8 +322,7 @@ const convolute = (curLayer) => {
 }
 
 export const tempMain = async () => {
-  let nn = await constructNN();
+  let nn = await constructNN('/assets/img/koala.jpeg');
   convolute(nn[1]);
   console.log(nn);
-  getInputImageArray('/assets/img/koala.jpeg');
 }

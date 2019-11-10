@@ -36,15 +36,10 @@
     justify-content: flex-end;
     align-items: center;
   }
-
-  #input-canvas {
-    display: none;
-  }
 </style>
 
 <div class="overview"
   bind:this={overviewComponent}>
-  <canvas id="input-canvas"></canvas>
   <svg id="overview-svg" width="950" height="600"></svg>
   <div class="control-wrapper">
     <button class="button">
