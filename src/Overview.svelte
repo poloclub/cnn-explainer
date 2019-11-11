@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { constructNN, tempMain } from './nn.js';
+  import { constructNN, tempMain } from './cnn.js';
 
   let overviewComponent;
 

@@ -53,7 +53,7 @@ const constructNNFromJSON = (nnJSON, inputImageArray) => {
     let node = new Node('input', i, nodeType.INPUT, 0, inputImageArray[i]);
     inputLayer.push(node);
   }
-
+                                                                                                                   
   nn.push(inputLayer);
   let curLayerIndex = 1;
 
@@ -222,6 +222,22 @@ const matrixSlice = (mat, xs, xe, ys, ye) => {
 }
 
 /**
+ * Compute the maximum of a matrix.
+ * @param {[[number]]} mat Matrix
+ */
+const matrixMax = (mat) => {
+  let curMax = -Infinity;
+  for (let i = 0; i < mat.length; i++) {
+    for (let j = 0; j < mat[0].length; j++) {
+      if (mat[i][j] > curMax) {
+        curMax = mat[i][j];
+      }
+    }
+  }
+  return curMax;
+}
+
+/**
  * Convert canvas image data into a 3D array with dimension [height, width, 3].
  * Each pixel is in 0-255 scale.
  * @param {[int8]} imageData Canvas image data
@@ -300,9 +316,10 @@ const singleConv = (input, kernel, stride=1, padding=0) => {
   let result = init2DArray(stepSize, stepSize, 0);
 
   // Window sliding
-  for (let r = 0; r < stepSize; r+=stride) {
-    for (let c = 0; c < stepSize; c+=stride) {
-      let curWindow = matrixSlice(input, r, r + kernel.length, c, c + kernel.length);
+  for (let r = 0; r < stepSize; r++) {
+    for (let c = 0; c < stepSize; c++) {
+      let curWindow = matrixSlice(input, r * stride, r * stride + kernel.length,
+        c * stride, c * stride + kernel.length);
       let dot = matrixDot(curWindow, kernel);
       result[r][c] = dot;
     }
@@ -341,6 +358,10 @@ const convolute = (curLayer) => {
   })
 }
 
+/**
+ * Activate matrix mat using ReLU (max(0, x)).
+ * @param {[[number]]} mat Matrix
+ */
 const singleRelu = (mat) => {
   // Only support square matrix
   console.assert(mat.length === mat[0].length, 'Activating non-square matrix!');
@@ -356,6 +377,11 @@ const singleRelu = (mat) => {
   return result;
 }
 
+/**
+ * Update outputs of all nodes in the current ReLU layer. Values of previous
+ * layer nodes are accessed by the links stored in the current layer.
+ * @param {[Node]} curLayer ReLU layer
+ */
 const relu = (curLayer) => {
   console.assert(curLayer[0].type === 'relu');
 
@@ -367,9 +393,47 @@ const relu = (curLayer) => {
   }
 }
 
+/**
+ * Max pool one matrix.
+ * @param {[[number]]} mat Matrix
+ * @param {int} kernelWidth Pooling kernel length
+ * @param {int} stride Pooling sliding stride
+ */
+const singleMaxPooling = (mat, kernelWidth = 2, stride = 2) => {
+  let stepSize = (mat.length - kernelWidth) / stride + 1;
+  let result = init2DArray(stepSize, stepSize, 0);
+
+  for (let r = 0; r < stepSize; r++) {
+    for (let c = 0; c < stepSize; c++) {
+      let curWindow = matrixSlice(mat, r * stride, r * stride + kernelWidth,
+        c * stride, c * stride + kernelWidth);
+      result[r][c] = matrixMax(curWindow);
+    }
+ }
+ return result;
+}
+
+/**
+ * Max pooling one layer.
+ * @param {[Node]} curLayer MaxPool layer
+ */
+const maxPooling = (curLayer) => {
+  console.assert(curLayer[0].type === 'pool');
+
+  // Itereate through all nodes in curLayer to update their outputs
+  for (let i = 0; i < curLayer.length; i++) {
+    let curNode = curLayer[i];
+    let preNode = curNode.inputLinks[0].source;
+    curNode.output = singleMaxPooling(preNode.output);
+  }
+}
+
 export const tempMain = async () => {
   let nn = await constructNN('/assets/img/koala.jpeg');
   convolute(nn[1]);
   relu(nn[2])
+  convolute(nn[3]);
+  relu(nn[4]);
+  maxPooling(nn[5]);
   console.log(nn);
 }
