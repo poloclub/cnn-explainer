@@ -396,10 +396,23 @@ const relu = (curLayer) => {
 /**
  * Max pool one matrix.
  * @param {[[number]]} mat Matrix
- * @param {int} kernelWidth Pooling kernel length
- * @param {int} stride Pooling sliding stride
+ * @param {int} kernelWidth Pooling kernel length (only supports 2)
+ * @param {int} stride Pooling sliding stride (only supports 2)
+ * @param {string} padding Pading method when encountering odd number mat,
+ * currently this function only supports 'VALID'
  */
-const singleMaxPooling = (mat, kernelWidth = 2, stride = 2) => {
+const singleMaxPooling = (mat, kernelWidth=2, stride=2, padding='VALID') => {
+  console.assert(kernelWidth === 2, 'Only supports kernen = [2,2]');
+  console.assert(stride === 2, 'Only supports stride = 2');
+  console.assert(padding === 'VALID', 'Only support valid padding');
+
+  // Handle odd length mat
+  // 'VALID': ignore edge rows and columns
+  // 'SAME': add zero padding to make the mat have even length
+  if (mat.length % 2 === 1 && padding === 'VALID') {
+    mat = matrixSlice(mat, 0, mat.length - 1, 0, mat.length - 1);
+  }
+
   let stepSize = (mat.length - kernelWidth) / stride + 1;
   let result = init2DArray(stepSize, stepSize, 0);
 
@@ -435,5 +448,16 @@ export const tempMain = async () => {
   convolute(nn[3]);
   relu(nn[4]);
   maxPooling(nn[5]);
+  convolute(nn[6]);
+  relu(nn[7])
+  convolute(nn[8]);
+  relu(nn[9]);
+  maxPooling(nn[10]);
+  convolute(nn[11]);
+  relu(nn[12])
+  convolute(nn[13]);
+  relu(nn[14]);
+  maxPooling(nn[15]);
+  
   console.log(nn);
 }
