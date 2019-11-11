@@ -79,7 +79,7 @@ const constructNNFromJSON = (nnJSON, inputImageArray) => {
     let bias = 0;
     let output;
     if (curLayerType === nodeType.FLATTEN || curLayerType === nodeType.FC) {
-      output = new Array(shape[0]).fill(0);
+      output = 0;
     } else {
       output = init2DArray(shape[0], shape[1], 0);
     }
@@ -108,13 +108,14 @@ const constructNNFromJSON = (nnJSON, inputImageArray) => {
         node.inputLinks.push(link);
       } else if (curLayerType === nodeType.FLATTEN) {
         // Flatten layer has no weights. Links are multiple-to-one.
-        // Use dummy weights to store the corresponding entry in the previsou node
-        // (row, column)
+        // Use dummy weights to store the corresponding entry in the previsou
+        // node as (row, column)
+        // The flatten() in tf2.keras has order: channel -> row -> column
         let preNodeWidth = nn[curLayerIndex - 1][0].output.length,
-          preNodeSingleNum = Math.pow(preNodeWidth, 2),
-          preNodeIndex = Math.floor(i / preNodeSingleNum),
-          preNodeRow = Math.floor(i % (preNodeSingleNum) / preNodeWidth),
-          preNodeCol = i % preNodeSingleNum % preNodeWidth,
+          preNodeNum = nn[curLayerIndex - 1].length,
+          preNodeIndex = i % preNodeNum,
+          preNodeRow = Math.floor(Math.floor(i / preNodeNum) / preNodeWidth),
+          preNodeCol = Math.floor(i / preNodeNum) % preNodeWidth,
           link = new Link(nn[curLayerIndex - 1][preNodeIndex],
             node, [preNodeRow, preNodeCol]);
 
@@ -441,6 +442,24 @@ const maxPooling = (curLayer) => {
   }
 }
 
+/**
+ * Flatten a previous 2D layer (conv2d or maxpool2d). The flatten order matches
+ * tf2.keras' implementation: channel -> row -> column.
+ * @param {[Node]} curLayer Flatten layer
+ */
+const flatten = (curLayer) => {
+  console.assert(curLayer[0].type === 'flatten');
+
+  // Itereate through all nodes in curLayer to update their outputs
+  for (let i = 0; i < curLayer.length; i++) {
+    let curNode = curLayer[i];
+    let preNode = curNode.inputLinks[0].source;
+    let coordinate = curNode.inputLinks[0].weight;
+    // Take advantage of the dummy weights
+    curNode.output = preNode.output[coordinate[0]][coordinate[1]];
+  }
+}
+
 export const tempMain = async () => {
   let nn = await constructNN('/assets/img/koala.jpeg');
   convolute(nn[1]);
@@ -458,6 +477,7 @@ export const tempMain = async () => {
   convolute(nn[13]);
   relu(nn[14]);
   maxPooling(nn[15]);
+  flatten(nn[16]);
   
-  console.log(nn);
+  console.log(nn[16].map(d => d.output));
 }
