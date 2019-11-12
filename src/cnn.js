@@ -335,7 +335,7 @@ const singleConv = (input, kernel, stride=1, padding=0) => {
  * @param {[Node]} curLayer Conv layer.
  */
 const convolute = (curLayer) => {
-  console.assert(curLayer[0].type === 'conv');
+  console.assert(curLayer[0].type === 'conv', 'Wrong layer type');
 
   // Itereate through all nodes in curLayer to update their outputs
   curLayer.forEach(node => {
@@ -384,7 +384,7 @@ const singleRelu = (mat) => {
  * @param {[Node]} curLayer ReLU layer
  */
 const relu = (curLayer) => {
-  console.assert(curLayer[0].type === 'relu');
+  console.assert(curLayer[0].type === 'relu', 'Wrong layer type');
 
   // Itereate through all nodes in curLayer to update their outputs
   for (let i = 0; i < curLayer.length; i++) {
@@ -432,7 +432,7 @@ const singleMaxPooling = (mat, kernelWidth=2, stride=2, padding='VALID') => {
  * @param {[Node]} curLayer MaxPool layer
  */
 const maxPooling = (curLayer) => {
-  console.assert(curLayer[0].type === 'pool');
+  console.assert(curLayer[0].type === 'pool', 'Wrong layer type');
 
   // Itereate through all nodes in curLayer to update their outputs
   for (let i = 0; i < curLayer.length; i++) {
@@ -448,7 +448,7 @@ const maxPooling = (curLayer) => {
  * @param {[Node]} curLayer Flatten layer
  */
 const flatten = (curLayer) => {
-  console.assert(curLayer[0].type === 'flatten');
+  console.assert(curLayer[0].type === 'flatten', 'Wrong layer type');
 
   // Itereate through all nodes in curLayer to update their outputs
   for (let i = 0; i < curLayer.length; i++) {
@@ -458,6 +458,11 @@ const flatten = (curLayer) => {
     // Take advantage of the dummy weights
     curNode.output = preNode.output[coordinate[0]][coordinate[1]];
   }
+}
+
+const fullyConnect = (curLayer) => {
+  console.assert(curLayer[0].type === 'fc', 'Wrong layer type');
+  // TODO
 }
 
 export const tempMain = async () => {
