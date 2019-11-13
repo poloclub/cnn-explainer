@@ -483,6 +483,5 @@ export const tempMain = async () => {
   relu(nn[14]);
   maxPooling(nn[15]);
   flatten(nn[16]);
-  
   console.log(nn[16].map(d => d.output));
 }

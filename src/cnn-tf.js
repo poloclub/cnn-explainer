@@ -1,12 +1,129 @@
 import * as tf from '@tensorflow/tfjs';
 
+// Enum of node types
+const nodeType = {
+  INPUT: 'input',
+  CONV: 'conv',
+  POOL: 'pool',
+  RELU: 'relu',
+  FC: 'fc',
+  FLATTEN: 'flatten'
+}
+
+class Node {
+  /**
+   * Class structure for each neuron node.
+   * 
+   * @param {string} layerName Name of the node's layer.
+   * @param {int} index Index of this node in its layer.
+   * @param {string} type Node type {input, conv, pool, relu, fc}. 
+   * @param {number} bias The bias assocated to this node.
+   * @param {[[number]]} output Output of this node.
+   */
+  constructor(layerName, index, type, bias, output) {
+    this.layerName = layerName;
+    this.index = index;
+    this.type = type;
+    this.bias = bias;
+    this.output = output;
+
+    // Weights are stored in the links
+    this.inputLinks = [];
+    this.outputLinks = [];
+  }
+}
+
+class Link {
+  constructor(source, dest, weight) {
+    this.source = source;
+    this.dest = dest;
+    this.weight = weight;
+  }
+}
+
+const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
+  let nn = [];
+
+  // Add the first layer (input layer)
+  let inputLayer = [];
+  let inputShape = model.layers[0].batchInputShape.slice(1);
+  let inputImageArray = inputImageTensor.transpose([2, 0, 1]).arraySync();
+
+  // First layer's three nodes' outputs are the channels of inputImageArray
+  for (let i = 0; i < inputShape[2]; i++) {
+    let node = new Node('input', i, nodeType.INPUT, 0, inputImageArray[i]);
+    inputLayer.push(node);
+  }
+                                                                                                                   
+  nn.push(inputLayer);
+  let curLayerIndex = 1;
+
+  for (let l = 0; l < model.layers.length; l++) {
+    let layer = model.layers[l];
+    let outputs = allOutputs[l].squeeze();
+    let shape = outputs.shape;
+    outputs = outputs.arraySync();
+    console.log(layer.name, shape);
+    let curLayerNodes = [];
+    let curLayerType;
+
+    // Identify layer type based on the layer name
+    if (layer.name.includes('conv')) {
+      curLayerType = nodeType.CONV;
+    } else if (layer.name.includes('pool')) {
+      curLayerType = nodeType.POOL;
+    } else if (layer.name.includes('relu')) {
+      curLayerType = nodeType.RELU;
+    } else if (layer.name.includes('output')) {
+      curLayerType = nodeType.FC;
+    } else if (layer.name.includes('flatten')) {
+      curLayerType = nodeType.FLATTEN;
+    } else {
+      console.log('Find unknown type');
+    }
+
+    // Construct this layer based on its layer type
+    switch (curLayerType) {
+      case nodeType.CONV: {
+        let biases = layer.bias.val.arraySync();
+        // The new order is [output_depth, input_depth, height, width]
+        let weights = layer.kernel.val.transpose([3, 2, 0, 1]).arraySync();
+
+        // Add nodes into this layer
+        for (let i = 0; i < outputs.length; i++) {
+          let node = new Node(layer.name, i, curLayerType, biases[i],
+            outputs[i]);
+
+          // Connect this node to all previous nodes (create links)
+          // CONV layers have weights in links. Links are one-to-multiple.
+          for (let j = 0; j < nn[curLayerIndex - 1].length; j++) {
+            let preNode = nn[curLayerIndex - 1][j];
+            let curLink = new Link(preNode, node, weights[i][j]);
+            preNode.outputLinks.push(curLink);
+            node.inputLinks.push(curLink);
+          }
+          curLayerNodes.push(node);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+
+    // Add current layer to the NN
+    nn.push(curLayerNodes);
+    curLayerIndex++;
+  }
+
+  return nn;
+}
+
 const constructCNN = async (inputImageFile, model) => {
   // Load the image file
   let inputImageTensor = await getInputImageArray('/assets/img/koala.jpeg');
 
   // Need to feed the model with a batch
   let inputImageTensorBatch = tf.stack([inputImageTensor]);
-  inputImageTensorBatch.print();
 
   let result = model.predict(inputImageTensorBatch);
   result.print(true);
@@ -36,15 +153,21 @@ const constructCNN = async (inputImageFile, model) => {
     });
 
     // Record the output tensor
-    // Because there is only one element in the batch, we use [0] here
-    outputs.push(curModel.predict(inputImageTensorBatch));
+    // Because there is only one element in the batch, we use squeeze()
+    // We also want to use CHW order here
+    let output = curModel.predict(inputImageTensorBatch).squeeze();
+    if (output.shape.length === 3) {
+      output = output.transpose([2, 0, 1]);
+    }
+    outputs.push(output);
 
     // Update preLayer for next nesting iteration
     preLayer = curLayer;
   }
 
-  outputs.map(d => d.print());
-
+  console.log(model.layers[0].kernel.val.slice([0, 0, 0, 0], [3, 3, 1, 1]).squeeze());
+  let nn = constructCNNFromOutputs(outputs, model, inputImageTensor);
+  console.log(nn);
 }
 
 // Helper functions
@@ -117,5 +240,6 @@ export const tempMain = async () => {
   bb.print();
   
   let model = await loadTrainedModel('/assets/data/model.json');
+  // model.layers[0].bias.val.array().then(d => console.log(d));
   constructCNN('/assets/img/koala.jpeg', model);
 }
