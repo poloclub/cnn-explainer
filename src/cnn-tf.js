@@ -217,40 +217,25 @@ export const constructCNN = async (inputImageFile, model) => {
   let inputImageTensorBatch = tf.stack([inputImageTensor]);
 
   // To get intermediate layer outputs, we will iterate through all layers in
-  // the model, and sequencially build a new sub-model to do .predict() call
-
-  // IMPROVE: one potential optimization is to build independent "two layer"
-  // models, instead of stacking on previous model in each iteration. Therefore,
-  // each iteration doesn't need to repeate computing "earlier" layers.
-  // I failed to do this using tf.js.
-
-  // A universal input layer
-  let inputLayer = tf.input({shape: inputImageTensor.shape});
-
-  let preLayer = inputLayer;
+  // the model, and sequencially apply transformations.
+  let preTensor = inputImageTensorBatch;
   let outputs = [];
 
   // Iterate through all layers, and build one model with that layer as output
   for (let l = 0; l < model.layers.length; l++) {
-    // Nest all previous layers
-    let curLayer = model.layers[l].apply(preLayer);
-
-    let curModel = tf.model({
-      inputs: inputLayer,
-      outputs: curLayer
-    });
+    let curTensor = model.layers[l].apply(preTensor);
 
     // Record the output tensor
     // Because there is only one element in the batch, we use squeeze()
     // We also want to use CHW order here
-    let output = curModel.predict(inputImageTensorBatch).squeeze();
+    let output = curTensor.squeeze();
     if (output.shape.length === 3) {
       output = output.transpose([2, 0, 1]);
     }
     outputs.push(output);
 
-    // Update preLayer for next nesting iteration
-    preLayer = curLayer;
+    // Update preTensor for next nesting iteration
+    preTensor = curTensor;
   }
 
   let cnn = constructCNNFromOutputs(outputs, model, inputImageTensor);
