@@ -58,7 +58,7 @@ class Link {
  * @param {Tensor} inputImageTensor Loaded input image tensor.
  */
 const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
-  let nn = [];
+  let cnn = [];
 
   // Add the first layer (input layer)
   let inputLayer = [];
@@ -71,7 +71,7 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
     inputLayer.push(node);
   }
                                                                                                                    
-  nn.push(inputLayer);
+  cnn.push(inputLayer);
   let curLayerIndex = 1;
 
   for (let l = 0; l < model.layers.length; l++) {
@@ -112,8 +112,8 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
 
           // Connect this node to all previous nodes (create links)
           // CONV layers have weights in links. Links are one-to-multiple.
-          for (let j = 0; j < nn[curLayerIndex - 1].length; j++) {
-            let preNode = nn[curLayerIndex - 1][j];
+          for (let j = 0; j < cnn[curLayerIndex - 1].length; j++) {
+            let preNode = cnn[curLayerIndex - 1][j];
             let curLink = new Link(preNode, node, weights[i][j]);
             preNode.outputLinks.push(curLink);
             node.inputLinks.push(curLink);
@@ -134,8 +134,8 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
 
           // Connect this node to all previous nodes (create links)
           // FC layers have weights in links. Links are one-to-multiple.
-          for (let j = 0; j < nn[curLayerIndex - 1].length; j++) {
-            let preNode = nn[curLayerIndex - 1][j];
+          for (let j = 0; j < cnn[curLayerIndex - 1].length; j++) {
+            let preNode = cnn[curLayerIndex - 1][j];
             let curLink = new Link(preNode, node, weights[i][j]);
             preNode.outputLinks.push(curLink);
             node.inputLinks.push(curLink);
@@ -155,7 +155,7 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
           let node = new Node(layer.name, i, curLayerType, bias, outputs[i]);
 
           // RELU and POOL layers have no weights. Links are one-to-one
-          let preNode = nn[curLayerIndex - 1][i];
+          let preNode = cnn[curLayerIndex - 1][i];
           let link = new Link(preNode, node, weight);
           preNode.outputLinks.push(link);
           node.inputLinks.push(link);
@@ -175,15 +175,15 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
           // Use dummy weights to store the corresponding entry in the previsou
           // node as (row, column)
           // The flatten() in tf2.keras has order: channel -> row -> column
-          let preNodeWidth = nn[curLayerIndex - 1][0].output.length,
-            preNodeNum = nn[curLayerIndex - 1].length,
+          let preNodeWidth = cnn[curLayerIndex - 1][0].output.length,
+            preNodeNum = cnn[curLayerIndex - 1].length,
             preNodeIndex = i % preNodeNum,
             preNodeRow = Math.floor(Math.floor(i / preNodeNum) / preNodeWidth),
             preNodeCol = Math.floor(i / preNodeNum) % preNodeWidth,
-            link = new Link(nn[curLayerIndex - 1][preNodeIndex],
+            link = new Link(cnn[curLayerIndex - 1][preNodeIndex],
               node, [preNodeRow, preNodeCol]);
 
-          nn[curLayerIndex - 1][preNodeIndex].outputLinks.push(link);
+          cnn[curLayerIndex - 1][preNodeIndex].outputLinks.push(link);
           node.inputLinks.push(link);
 
           curLayerNodes.push(node);
@@ -196,11 +196,11 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
     }
 
     // Add current layer to the NN
-    nn.push(curLayerNodes);
+    cnn.push(curLayerNodes);
     curLayerIndex++;
   }
 
-  return nn;
+  return cnn;
 }
 
 /**
@@ -209,7 +209,7 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
  * @param {string} inputImageFile filename of input image.
  * @param {Model} model Loaded tf.js model.
  */
-const constructCNN = async (inputImageFile, model) => {
+export const constructCNN = async (inputImageFile, model) => {
   // Load the image file
   let inputImageTensor = await getInputImageArray('/assets/img/koala.jpeg');
 
@@ -253,8 +253,8 @@ const constructCNN = async (inputImageFile, model) => {
     preLayer = curLayer;
   }
 
-  let nn = constructCNNFromOutputs(outputs, model, inputImageTensor);
-  return nn;
+  let cnn = constructCNNFromOutputs(outputs, model, inputImageTensor);
+  return cnn;
 }
 
 // Helper functions
@@ -266,12 +266,12 @@ const constructCNN = async (inputImageFile, model) => {
  * 
  * @param {[int8]} imageData Canvas image data
  */
-const imageDataTo3DTensor = async (imageData) => {
+const imageDataTo3DTensor = (imageData) => {
   // Get image dimension (assume square image)
   let width = Math.sqrt(imageData.length / 4);
 
   // Create array placeholder for the 3d array
-  let imageArray = await tf.fill([width, width, 3], 0).array();
+  let imageArray = tf.fill([width, width, 3], 0).arraySync();
   
   // Iterate through the data to fill out channel arrays above
   for (let i = 0; i < imageData.length; i++) {
@@ -313,7 +313,7 @@ const getInputImageArray = (imgFile) => {
       // Remove this newly created canvas element
       canvas.parentNode.removeChild(canvas);
 
-      imageDataTo3DTensor(imageData).then(imageTensor => resolve(imageTensor));
+      resolve(imageDataTo3DTensor(imageData));
     }
     inputImage.onerror = reject;
   })
@@ -325,14 +325,6 @@ const getInputImageArray = (imgFile) => {
  * @param {string} modelFile Filename of converted (through tensorflowjs.py)
  *  model json file.
  */
-const loadTrainedModel = (modelFile) => {
+export const loadTrainedModel = (modelFile) => {
   return tf.loadLayersModel(modelFile);
-}
-
-export const tempMain = async () => {
-  let model = await loadTrainedModel('/assets/data/model.json');
-  console.log(model.layers);
-
-  let nn = await constructCNN('/assets/img/koala.jpeg', model);
-  console.log(nn);
 }

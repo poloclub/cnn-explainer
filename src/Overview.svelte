@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { tempMain } from './cnn-tf.js';
+  import { loadTrainedModel, constructCNN } from './cnn-tf.js';
 
   let overviewComponent;
 
@@ -11,7 +11,11 @@
     let height = svg.attr('height');
     console.log(svg);
     
-    tempMain();
+    console.time('Construct cnn');
+    let model = await loadTrainedModel('/assets/data/model.json');
+    let cnn = await constructCNN('/assets/img/koala.jpeg', model);
+    console.timeEnd('Construct cnn');
+    console.log(cnn);
   })
 </script>
 
