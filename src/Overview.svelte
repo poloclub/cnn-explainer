@@ -6,7 +6,7 @@
 
   onMount(async () => {
     let svg = d3.select(overviewComponent)
-      .select('#overview-svg');
+      .select('#cnn-svg');
     let width = svg.attr('width');
     let height = svg.attr('height');
     console.log(svg);
@@ -16,6 +16,36 @@
     let cnn = await constructCNN('/assets/img/koala.jpeg', model);
     console.timeEnd('Construct cnn');
     console.log(cnn);
+
+    let nodeLength = 40;
+    let numLayers = 12;
+    let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1); 
+
+    let cnnDiv = d3.select(overviewComponent)
+      .select('div.cnn')
+      .style('height', `${height}px`);
+
+    for (let l = 0; l < 12; l++) {
+      let curLayer = cnn[l];
+      let layerDiv = cnnDiv.append('div')
+        .attr('class', 'cnn-layer-container')
+        .style('height', `${height}px`)
+        .style('left', `${l * nodeLength + (l + 1) * hSpaceAroundGap}px`);
+
+      let vSpaceAroundGap = (height - nodeLength * curLayer.length) /
+        (curLayer.length + 1);
+
+      layerDiv.selectAll('div.node-container')
+        .data(curLayer)
+        .enter()
+        .append('div')
+        .attr('class', 'node-container')
+        .style('height', `${nodeLength}px`)
+        .style('width', `${nodeLength}px`)
+        .style('left', 0)
+        .style('top', (d, i) => `${i * nodeLength + (i + 1) * vSpaceAroundGap}px`)
+        .style('background', 'black');
+    }
   })
 </script>
 
@@ -30,23 +60,23 @@
     align-items: flex-end;
   }
 
-  .control-wrapper {
-    padding: 5px 0;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
+  .cnn {
+    position: relative;
+  }
+
+  :global(.node-container) {
+    position: absolute;
+  }
+
+  :global(.cnn-layer-container) {
+    position: absolute;
+    top: 0;
   }
 </style>
 
 <div class="overview"
   bind:this={overviewComponent}>
-  <svg id="overview-svg" width="950" height="600"></svg>
-  <div class="control-wrapper">
-    <button class="button">
-      <span class="icon has-text-danger">
-        <i class="fa fa-heart"></i>
-      </span>
-      <span>Button</span>
-    </button>
+  <div class="cnn">
+    <svg id="cnn-svg" width="1100" height="500"></svg>
   </div>
 </div>

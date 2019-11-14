@@ -15,9 +15,9 @@
 
 <style>
 #explainer {
-  height: 650px;
-  width: 950px;
+  width: 1140px;
   margin: 50px auto;
+  padding: 20px;
   background: var(--g-light-gray);
   /* outline: 1px solid var(--g-dark-gray); */
 }
