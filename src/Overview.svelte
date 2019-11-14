@@ -13,8 +13,13 @@
     
     console.time('Construct cnn');
     let model = await loadTrainedModel('/assets/data/model.json');
+    console.log('loaded')
     let cnn = await constructCNN('/assets/img/koala.jpeg', model);
     console.timeEnd('Construct cnn');
+
+    // Ignore the flatten layer for now
+    let flatten = cnn[cnn.length - 2];
+    cnn.splice(cnn.length - 2, 1);
     console.log(cnn);
 
     let nodeLength = 40;
@@ -25,7 +30,7 @@
       .select('div.cnn')
       .style('height', `${height}px`);
 
-    for (let l = 0; l < 12; l++) {
+    for (let l = 0; l < cnn.length; l++) {
       let curLayer = cnn[l];
       let layerDiv = cnnDiv.append('div')
         .attr('class', 'cnn-layer-container')
