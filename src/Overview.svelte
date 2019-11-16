@@ -13,7 +13,6 @@
     
     console.time('Construct cnn');
     let model = await loadTrainedModel('/assets/data/model.json');
-    console.log('loaded')
     let cnn = await constructCNN('/assets/img/koala.jpeg', model);
     console.timeEnd('Construct cnn');
 
@@ -29,13 +28,21 @@
     let cnnDiv = d3.select(overviewComponent)
       .select('div.cnn')
       .style('height', `${height}px`);
+    
+    // Record node coordinates
+    let nodeCoordinate = [];
 
     for (let l = 0; l < cnn.length; l++) {
       let curLayer = cnn[l];
+      nodeCoordinate.push([])
+
+      // All nodes share the same x coordiante (left in div style)
+      let left = l * nodeLength + (l + 1) * hSpaceAroundGap;
+
       let layerDiv = cnnDiv.append('div')
         .attr('class', 'cnn-layer-container')
         .style('height', `${height}px`)
-        .style('left', `${l * nodeLength + (l + 1) * hSpaceAroundGap}px`);
+        .style('left', `${left}px`);
 
       let vSpaceAroundGap = (height - nodeLength * curLayer.length) /
         (curLayer.length + 1);
@@ -45,12 +52,26 @@
         .enter()
         .append('div')
         .attr('class', 'node-container')
+        .attr('id', (d, i) => `layer-${l}-node-${i}`)
         .style('height', `${nodeLength}px`)
         .style('width', `${nodeLength}px`)
         .style('left', 0)
-        .style('top', (d, i) => `${i * nodeLength + (i + 1) * vSpaceAroundGap}px`)
+        .style('top', (d, i) => {
+          let top = i * nodeLength + (i + 1) * vSpaceAroundGap;
+          nodeCoordinate[l].push({x: left, y: top})
+          return `${top}px`;
+        })
         .style('background', 'black');
     }
+
+    // Test the coordinate
+    /*
+    svg.append('circle')
+      .attr('cx', nodeCoordinate[3][4].x + 20)
+      .attr('cy', nodeCoordinate[3][4].y + 20)
+      .attr('r', 5)
+      .style('fill', 'red')
+    */
   })
 </script>
 
@@ -76,6 +97,12 @@
   :global(.cnn-layer-container) {
     position: absolute;
     top: 0;
+  }
+
+  #cnn-svg {
+    /* Set the z-index so svg is on the top of the underlying CNN */
+    position: relative;
+    z-index: 10;
   }
 </style>
 
