@@ -211,7 +211,7 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
  */
 export const constructCNN = async (inputImageFile, model) => {
   // Load the image file
-  let inputImageTensor = await getInputImageArray('/assets/img/koala.jpeg');
+  let inputImageTensor = await getInputImageArray(inputImageFile);
 
   // Need to feed the model with a batch
   let inputImageTensorBatch = tf.stack([inputImageTensor]);
