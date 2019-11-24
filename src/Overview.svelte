@@ -113,8 +113,50 @@
     cnn.splice(cnn.length - 2, 1);
     console.log(cnn);
 
-    let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1); 
+    let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
+    
+    let output = cnn[0][0].output;
+    let dummyCategories = Array(output.length).fill(1).map((d, i) => d + i);
 
+    console.time('rect')
+    let outputData = [];
+
+    for (let r = 0; r < output.length; r++) {
+      for (let c = 0; c < output.length; c++) {
+        let curData = {
+          r: r,
+          c: c,
+          color: d3.interpolateReds(output[r][c] / 255)
+        }
+        outputData.push(curData)
+      }
+    }
+
+    let xScale = d3.scaleBand()
+      .range([0, nodeLength])
+      .domain(dummyCategories);
+    
+    let yScale = d3.scaleBand()
+      .range([0, nodeLength])
+      .domain(dummyCategories);
+
+    let heatmapGroup = svg.append('g')
+      .attr('class', 'heatmap-group')
+
+    console.log(outputData);
+
+    heatmapGroup.selectAll('rect')
+      .data(outputData)
+      .enter()
+      .append('rect')
+      .attr('x', d => xScale(d.c))
+      .attr('y', d => yScale(d.r))
+      .attr('width', xScale.bandwidth())
+      .attr('height', yScale.bandwidth())
+      .style('fill', d => d.color)
+
+    console.timeEnd('rect')
+    /*
     let cnnDiv = d3.select(overviewComponent)
       .select('div.cnn')
       .style('height', `${height}px`);
@@ -192,6 +234,7 @@
       .attr('width', nodeLength)
       .attr('height', nodeLength)
       .each(drawOutput);
+    */
 
     // Test the coordinate
     /*
