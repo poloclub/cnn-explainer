@@ -12,7 +12,7 @@
     conv: d3.interpolateBrBG,
     relu: d3.interpolateBuGn,
     pool: d3.interpolateBrBG,
-    output: d3.interpolateBuGn
+    fc: d3.interpolateBuGn
   };
 
   const getExtent = (array) => {
@@ -51,7 +51,7 @@
 
   const drawOutput = (d, i, g) => {
     let canvas = g[i];
-    let range = d3.select(canvas.parentNode).attr('data-range');
+    let range = d3.select(canvas).attr('data-range');
     let context = canvas.getContext('2d');
     let colorScale = layerColorScales[d.type];
 
@@ -59,11 +59,17 @@
       colorScale = colorScale[d.index];
     }
 
-    // Set up a second convas in order to resize image
-    let imageLength = 1;
-    if (d.output.length !== undefined) {
-      imageLength = d.output.length;
+    // Specially handle the output layer (one canvas is just one color fill)
+    if (d.layerName === 'output') {
+      console.log(colorScale);
+      context.fillStyle = colorScale(d.output);
+      console.log(colorScale(d.output));
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      return;
     }
+
+    // Set up a second convas in order to resize image
+    let imageLength = d.output.length === undefined ? 1 : d.output.length;
     let bufferCanvas = document.createElement("canvas");
     let bufferContext = bufferCanvas.getContext("2d");
     bufferCanvas.width = imageLength;
@@ -97,12 +103,13 @@
   }
 
   onMount(async () => {
+    // Create SVG
     let svg = d3.select(overviewComponent)
       .select('#cnn-svg');
     let width = svg.attr('width');
     let height = svg.attr('height');
-    console.log(svg);
     
+    // Construct CNN
     console.time('Construct cnn');
     let model = await loadTrainedModel('/assets/data/model.json');
     let cnn = await constructCNN('/assets/img/orange.jpeg', model);
@@ -113,57 +120,65 @@
     cnn.splice(cnn.length - 2, 1);
     console.log(cnn);
 
+    // Draw the CNN
     let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
-    
-    let output = cnn[0][0].output;
-    let dummyCategories = Array(output.length).fill(1).map((d, i) => d + i);
 
-    console.time('rect')
-    let outputData = [];
+    let nodeCoordinate = [];
+    // Iterate through the cnn to draw nodes in each layer
+    for (let l = 0; l < cnn.length; l++) {
+      let curLayer = cnn[l];
+      nodeCoordinate.push([]);
 
-    for (let r = 0; r < output.length; r++) {
-      for (let c = 0; c < output.length; c++) {
-        let curData = {
-          r: r,
-          c: c,
-          color: d3.interpolateReds(output[r][c] / 255)
-        }
-        outputData.push(curData)
-      }
+      // All nodes share the same x coordiante (left in div style)
+      let left = l * nodeLength + (l + 1) * hSpaceAroundGap;
+
+      let layerGroup = svg.append('g')
+        .attr('class', 'cnn-layer-group')
+        .attr('transform', `translate(${left}, 0)`);
+
+      let vSpaceAroundGap = (height - nodeLength * curLayer.length) /
+        (curLayer.length + 1);
+
+      // Compute the range of all outputs in input/output layer in order to create
+      // color scales
+      let outputExtents = curLayer.map(l => getExtent(l.output));
+      let aggregatedExtents = outputExtents.reduce((acc, cur) => {
+        return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
+      })
+      let outputRange = aggregatedExtents[1] - aggregatedExtents[0];
+
+      let nodeGroups = layerGroup.selectAll('g.node-group')
+        .data(curLayer)
+        .enter()
+        .append('g')
+        .attr('class', 'node-group')
+        .attr('id', (d, i) => `layer-${l}-node-${i}`)
+        .attr('transform', (d, i) => {
+          let top = i * nodeLength + (i + 1) * vSpaceAroundGap;
+          nodeCoordinate[l].push({x: left, y: top});
+          return `translate(0, ${top})`;
+        });
+      
+      // Embed canvas in these groups
+      let canvases = nodeGroups.append('foreignObject')
+        .attr('width', nodeLength)
+        .attr('height', nodeLength)
+        .append('xhtml:body')
+        .style('margin', 0)
+        .style('padding', 0)
+        .style('background-color', 'none')
+        .style('width', '100%')
+        .style('height', '100%')
+        .append('canvas')
+        .attr('width', nodeLength)
+        .attr('height', nodeLength)
+        .attr('data-range', outputRange);
+
+      // Draw the canvas
+      canvases.each(drawOutput);
     }
 
-    let xScale = d3.scaleBand()
-      .range([0, nodeLength])
-      .domain(dummyCategories);
-    
-    let yScale = d3.scaleBand()
-      .range([0, nodeLength])
-      .domain(dummyCategories);
-
-    let heatmapGroup = svg.append('g')
-      .attr('class', 'heatmap-group')
-
-    console.log(outputData);
-
-    heatmapGroup.selectAll('rect')
-      .data(outputData)
-      .enter()
-      .append('rect')
-      .attr('x', d => xScale(d.c))
-      .attr('y', d => yScale(d.r))
-      .attr('width', xScale.bandwidth())
-      .attr('height', yScale.bandwidth())
-      .style('fill', d => d.color)
-
-    console.timeEnd('rect')
     /*
-    let cnnDiv = d3.select(overviewComponent)
-      .select('div.cnn')
-      .style('height', `${height}px`);
-    
-    // Record node coordinates
-    let nodeCoordinate = [];
-
     // Iterate through all nodes to find a uniform range for conv, relu, and 
     // pooling layers
     let convExtents = [];
@@ -184,57 +199,6 @@
     aggregatedExtent = aggregatedExtent.map(Math.abs);
     let outputRange = 2 * Math.max(...aggregatedExtent);
     console.log(Math.max(...aggregatedExtent), outputRange);
-
-    for (let l = 0; l < cnn.length; l++) {
-      let curLayer = cnn[l];
-      nodeCoordinate.push([]);
-
-      // All nodes share the same x coordiante (left in div style)
-      let left = l * nodeLength + (l + 1) * hSpaceAroundGap;
-
-      let layerDiv = cnnDiv.append('div')
-        .attr('class', 'cnn-layer-container')
-        .style('height', `${height}px`)
-        .style('left', `${left}px`);
-
-      let vSpaceAroundGap = (height - nodeLength * curLayer.length) /
-        (curLayer.length + 1);
-
-      // Compute the range of all outputs in input/output layer in order to create
-      // color scales
-      // if (l.type === 'input' || l.type === 'output') {
-        let outputExtents = curLayer.map(l => getExtent(l.output));
-        let aggregatedExtents = outputExtents.reduce((acc, cur) => {
-          return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
-        })
-        outputRange = aggregatedExtents[1] - aggregatedExtents[0];
-      //}
-
-      layerDiv.selectAll('div.node-container')
-        .data(curLayer)
-        .enter()
-        .append('div')
-        .attr('class', 'node-container')
-        .attr('id', (d, i) => `layer-${l}-node-${i}`)
-        .attr('data-range', outputRange)
-        .style('height', `${nodeLength}px`)
-        .style('width', `${nodeLength}px`)
-        .style('left', 0)
-        .style('top', (d, i) => {
-          let top = i * nodeLength + (i + 1) * vSpaceAroundGap;
-          nodeCoordinate[l].push({x: left, y: top})
-          return `${top}px`;
-        });
-        //.style('background', 'black');
-    }
-
-    // Draw activation (node output) into node containers
-    cnnDiv.selectAll('.node-container')
-      .append('canvas')
-      .attr('width', nodeLength)
-      .attr('height', nodeLength)
-      .each(drawOutput);
-    */
 
     // Test the coordinate
     /*
