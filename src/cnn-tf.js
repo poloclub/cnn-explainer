@@ -210,11 +210,14 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
  * @param {Model} model Loaded tf.js model.
  */
 export const constructCNN = async (inputImageFile, model) => {
+  console.log(model.layers[11]);
+
   // Load the image file
-  let inputImageTensor = await getInputImageArray(inputImageFile);
+  let inputImageTensor = await getInputImageArray(inputImageFile, true);
 
   // Need to feed the model with a batch
   let inputImageTensorBatch = tf.stack([inputImageTensor]);
+  inputImageTensorBatch.print();
 
   // To get intermediate layer outputs, we will iterate through all layers in
   // the model, and sequencially apply transformations.
@@ -224,6 +227,9 @@ export const constructCNN = async (inputImageFile, model) => {
   // Iterate through all layers, and build one model with that layer as output
   for (let l = 0; l < model.layers.length; l++) {
     let curTensor = model.layers[l].apply(preTensor);
+    if (l === model.layers.length - 1) {
+      curTensor.print();
+    }
 
     // Record the output tensor
     // Because there is only one element in the batch, we use squeeze()
@@ -251,7 +257,7 @@ export const constructCNN = async (inputImageFile, model) => {
  * 
  * @param {[int8]} imageData Canvas image data
  */
-const imageDataTo3DTensor = (imageData) => {
+const imageDataTo3DTensor = (imageData, normalize=true) => {
   // Get image dimension (assume square image)
   let width = Math.sqrt(imageData.length / 4);
 
@@ -266,7 +272,12 @@ const imageDataTo3DTensor = (imageData) => {
       column = pixelIndex % width;
     
     if (channelIndex < 3) {
-      imageArray[row][column][channelIndex] = imageData[i];
+      let curEntry  = imageData[i];
+      // Normalize the original pixel value from [0, 255] to [0, 1]
+      if (normalize) {
+        curEntry /= 255;
+      }
+      imageArray[row][column][channelIndex] = curEntry;
     }
   }
 
@@ -280,7 +291,7 @@ const imageDataTo3DTensor = (imageData) => {
  * @param {string} imgFile File path to the image file
  * @returns A promise with the corresponding 3D array
  */
-const getInputImageArray = (imgFile) => {
+const getInputImageArray = (imgFile, normalize=true) => {
   let canvas = document.createElement('canvas');
   canvas.style.cssText = 'display:none;';
   document.getElementsByTagName('body')[0].appendChild(canvas);
@@ -298,7 +309,7 @@ const getInputImageArray = (imgFile) => {
       // Remove this newly created canvas element
       canvas.parentNode.removeChild(canvas);
 
-      resolve(imageDataTo3DTensor(imageData));
+      resolve(imageDataTo3DTensor(imageData, normalize));
     }
     inputImage.onerror = reject;
   })

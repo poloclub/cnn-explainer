@@ -61,9 +61,7 @@
 
     // Specially handle the output layer (one canvas is just one color fill)
     if (d.layerName === 'output') {
-      console.log(colorScale);
       context.fillStyle = colorScale(d.output);
-      console.log(colorScale(d.output));
       context.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
