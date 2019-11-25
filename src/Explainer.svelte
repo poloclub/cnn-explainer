@@ -15,10 +15,9 @@
 
 <style>
 #explainer {
-  width: 1140px;
-  margin: 50px auto;
-  padding: 20px;
-  background: var(--g-light-gray);
+  width: 100%;
+  padding: 0;
+  margin: auto;
   /* outline: 1px solid var(--g-dark-gray); */
 }
 </style>

@@ -15,12 +15,14 @@
   let nodeLength = 40;
   let numLayers = 12;
 
+  let svgPaddings = {top: 30, bottom: 30};
+
   let layerColorScales = {
-    input: [d3.interpolateReds, d3.interpolateGreens, d3.interpolateBlues],
-    conv: d3.interpolateBrBG,
-    relu: d3.interpolateBrBG,
-    pool: d3.interpolateBrBG,
-    fc: d3.interpolateBuGn
+    input: [d3.interpolateGreys, d3.interpolateGreys, d3.interpolateGreys],
+    conv: d3.interpolateRdBu,
+    relu: d3.interpolateRdBu,
+    pool: d3.interpolateRdBu,
+    fc: d3.interpolateGreys
   };
 
   let layerIndex = {
@@ -40,9 +42,7 @@
 
   // Helper functions
   const updateCanvas = () => {
-    console.log(selectedScaleLevel);
     if (svg !== undefined) {
-      console.log(123);
       svg.selectAll('canvas.node-canvas').each(drawOutput);
     }
   }
@@ -149,12 +149,14 @@
     svg = d3.select(overviewComponent)
       .select('#cnn-svg');
     let width = svg.attr('width');
-    let height = svg.attr('height');
+    let height = svg.attr('height') - svgPaddings.top - svgPaddings.bottom;
+    let cnnGroup = svg.append('g')
+      .attr('class', 'cnn-group')
+      .attr('transform', `translate(0, ${svgPaddings.top})`);
     
-    // Construct CNN
     console.time('Construct cnn');
     let model = await loadTrainedModel('/assets/data/model.json');
-    let cnn = await constructCNN('/assets/img/orange.jpeg', model);
+    let cnn = await constructCNN('/assets/img/koala.jpeg', model);
     console.timeEnd('Construct cnn');
 
     // Ignore the flatten layer for now
@@ -209,7 +211,7 @@
 
     // Update the ranges dictionary
     cnnLayerRanges.local = cnnLayerRangesLocal;
-    cnnLayerRanges.component = cnnLayerRangesComponent;
+    cnnLayerRanges.module = cnnLayerRangesComponent;
     cnnLayerRanges.global = cnnLayerRangesGlobal;
 
     // Draw the CNN
@@ -224,7 +226,7 @@
       // All nodes share the same x coordiante (left in div style)
       let left = l * nodeLength + (l + 1) * hSpaceAroundGap;
 
-      let layerGroup = svg.append('g')
+      let layerGroup = cnnGroup.append('g')
         .attr('class', 'cnn-layer-group')
         .attr('transform', `translate(${left}, 0)`);
 
@@ -262,6 +264,23 @@
     // Draw the canvas
     svg.selectAll('canvas.node-canvas').each(drawOutput);
 
+    // Add layer label
+    let layerNames = cnn.map(d => d[0].layerName);
+    console.log(nodeCoordinate);
+    svg.selectAll('g.layer-label')
+      .data(layerNames)
+      .enter()
+      .append('g')
+      .attr('class', 'layer-label')
+      .attr('transform', (d, i) => {
+        let x = nodeCoordinate[i][0].x + nodeLength / 2;
+        let y = svgPaddings.top / 2;
+        return `translate(${x}, ${y})`;
+      })
+      .append('text')
+      .text(d => d);
+
+
     // Test the coordinate
     /*
     svg.append('circle')
@@ -284,23 +303,20 @@
     align-items: flex-start;
   }
 
+  .control-container {
+    padding: 15px 20px;
+  }
+
   .cnn {
-    position: relative;
+    width: 100%;
+    height: 560px;
+    padding: 0;
+    background: var(--g-light-gray);
+    display: flex;
   }
 
-  :global(.node-container) {
-    position: absolute;
-  }
-
-  :global(.cnn-layer-container) {
-    position: absolute;
-    top: 0;
-  }
-
-  #cnn-svg {
-    /* Set the z-index so svg is on the top of the underlying CNN */
-    position: relative;
-    z-index: 10;
+  svg {
+    margin: auto;
   }
 
   .is-very-small {
@@ -310,23 +326,38 @@
   :global(canvas) {
     image-rendering: crisp-edges;
   }
+
+  :global(.layer-label) {
+    dominant-baseline: middle;
+  }
+
+  :global(.layer-label text) {
+    font-size: 12px;
+    dominant-baseline: middle;
+    text-anchor: middle;
+  }
 </style>
 
 <div class="overview"
   bind:this={overviewComponent}>
-  <div class="control is-very-small has-icons-left">
-    <span class="icon is-left">
-      <i class="fas fa-palette"></i>
-    </span>
-    <div class="select">
-      <select bind:value={selectedScaleLevel}>
-        <option value="local">Local</option>
-        <option value="component">Component</option>
-        <option value="global">Global</option>
-      </select>
+
+  <div class="control-container">
+    <div class="control is-very-small has-icons-left">
+      <span class="icon is-left">
+        <i class="fas fa-palette"></i>
+      </span>
+
+      <div class="select">
+        <select bind:value={selectedScaleLevel}>
+          <option value="local">Local</option>
+          <option value="module">Module</option>
+          <option value="global">Global</option>
+        </select>
+      </div>
     </div>
   </div>
+
   <div class="cnn">
-    <svg id="cnn-svg" width="1100" height="500"></svg>
+    <svg id="cnn-svg" width="1100" height="560"></svg>
   </div>
 </div>
