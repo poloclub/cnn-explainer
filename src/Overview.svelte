@@ -3,17 +3,49 @@
   import { onMount } from 'svelte';
   import { loadTrainedModel, constructCNN } from './cnn-tf.js';
 
+  // View bindings
   let overviewComponent;
+  let cnnLayerRanges = {};
+  let selectedScaleLevel = 'local';
+  let svg = undefined;
 
+  $: selectedScaleLevel, updateCanvas();
+
+  // Configs
   let nodeLength = 40;
   let numLayers = 12;
+
   let layerColorScales = {
     input: [d3.interpolateReds, d3.interpolateGreens, d3.interpolateBlues],
     conv: d3.interpolateBrBG,
-    relu: d3.interpolateBuGn,
+    relu: d3.interpolateBrBG,
     pool: d3.interpolateBrBG,
     fc: d3.interpolateBuGn
   };
+
+  let layerIndex = {
+    'input': 0,
+    'conv_1_1': 1,
+    'relu_1_1': 2,
+    'conv_1_2': 3,
+    'relu_1_2': 4,
+    'max_pool_1': 5,
+    'conv_2_1': 6,
+    'relu_2_1': 7,
+    'conv_2_2': 8,
+    'relu_2_2': 9,
+    'max_pool_2': 10,
+    'output': 11
+  }
+
+  // Helper functions
+  const updateCanvas = () => {
+    console.log(selectedScaleLevel);
+    if (svg !== undefined) {
+      console.log(123);
+      svg.selectAll('canvas.node-canvas').each(drawOutput);
+    }
+  }
 
   const getExtent = (array) => {
     let min = Infinity;
@@ -49,9 +81,16 @@
     return [min, max];
   }
 
+  const drawOutputSafariDebug = (d, i, g) => {
+    let canvas = g[i];
+    let context = canvas.getContext('2d');
+    context.fillStyle = 'blue';
+    context.fillRect(0, 0, 40, 40);
+  }
+
   const drawOutput = (d, i, g) => {
     let canvas = g[i];
-    let range = d3.select(canvas).attr('data-range');
+    let range = cnnLayerRanges[selectedScaleLevel][layerIndex[d.layerName]];
     let context = canvas.getContext('2d');
     let colorScale = layerColorScales[d.type];
 
@@ -84,7 +123,12 @@
         let pixeIndex = Math.floor(i / 4);
         let row = Math.floor(pixeIndex / imageLength);
         let column = pixeIndex % imageLength;
-        let color = d3.rgb(colorScale(Math.abs(d.output[row][column]) / range));
+        let color = undefined;
+        if (d.type === 'input' || d.type === 'fc' ) {
+          color = d3.rgb(colorScale(d.output[row][column]))
+        } else {
+          color = d3.rgb(colorScale((d.output[row][column] + range / 2) / range));
+        }
 
         imageSingleArray[i] = color.r;
         imageSingleArray[i + 1] = color.g;
@@ -102,7 +146,7 @@
 
   onMount(async () => {
     // Create SVG
-    let svg = d3.select(overviewComponent)
+    svg = d3.select(overviewComponent)
       .select('#cnn-svg');
     let width = svg.attr('width');
     let height = svg.attr('height');
@@ -117,6 +161,56 @@
     let flatten = cnn[cnn.length - 2];
     cnn.splice(cnn.length - 2, 1);
     console.log(cnn);
+
+    // Iterate through all nodes to find a output ranges for each layer
+    let cnnLayerRangesLocal = [1];
+    let curRange = undefined;
+    for (let l = 0; l < cnn.length - 1; l++) {
+      let curLayer = cnn[l];
+
+      // conv layer refreshes curRange counting
+      if (curLayer[0].type === 'conv' || curLayer[0].type === 'fc') {
+        let outputExtents = curLayer.map(l => getExtent(l.output));
+        let aggregatedExtent = outputExtents.reduce((acc, cur) => {
+          return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
+        })
+        aggregatedExtent = aggregatedExtent.map(Math.abs);
+        curRange = 2 * (0.1 + 
+          Math.round(Math.max(...aggregatedExtent) * 1000) / 1000);
+      }
+
+      if (curRange !== undefined){
+        cnnLayerRangesLocal.push(curRange);
+      }
+    }
+
+    // Finally, add the output layer range
+    cnnLayerRangesLocal.push(1);
+
+    // Support different levels of scales (1) lcoal, (2) component, (3) global
+    let cnnLayerRangesComponent = [1];
+    let numOfComponent = (numLayers - 2) / 5;
+    for (let i = 0; i < numOfComponent; i++) {
+      let curArray = cnnLayerRangesLocal.slice(1 + 5 * i, 1 + 5 * i + 5);
+      let maxRange = Math.max(...curArray);
+      for (let j = 0; j < 5; j++) {
+        cnnLayerRangesComponent.push(maxRange);
+      }
+    }
+    cnnLayerRangesComponent.push(1);
+
+    let cnnLayerRangesGlobal = [1];
+    let maxRange = Math.max(...cnnLayerRangesLocal.slice(1,
+      cnnLayerRangesLocal.length - 1));
+    for (let i = 0; i < numLayers - 2; i++) {
+      cnnLayerRangesGlobal.push(maxRange);
+    }
+    cnnLayerRangesGlobal.push(1);
+
+    // Update the ranges dictionary
+    cnnLayerRanges.local = cnnLayerRangesLocal;
+    cnnLayerRanges.component = cnnLayerRangesComponent;
+    cnnLayerRanges.global = cnnLayerRangesGlobal;
 
     // Draw the CNN
     let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
@@ -137,14 +231,6 @@
       let vSpaceAroundGap = (height - nodeLength * curLayer.length) /
         (curLayer.length + 1);
 
-      // Compute the range of all outputs in input/output layer in order to create
-      // color scales
-      let outputExtents = curLayer.map(l => getExtent(l.output));
-      let aggregatedExtents = outputExtents.reduce((acc, cur) => {
-        return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
-      })
-      let outputRange = aggregatedExtents[1] - aggregatedExtents[0];
-
       let nodeGroups = layerGroup.selectAll('g.node-group')
         .data(curLayer)
         .enter()
@@ -158,7 +244,7 @@
         });
       
       // Embed canvas in these groups
-      let canvases = nodeGroups.append('foreignObject')
+      nodeGroups.append('foreignObject')
         .attr('width', nodeLength)
         .attr('height', nodeLength)
         .append('xhtml:body')
@@ -168,35 +254,13 @@
         .style('width', '100%')
         .style('height', '100%')
         .append('canvas')
+        .attr('class', 'node-canvas')
         .attr('width', nodeLength)
-        .attr('height', nodeLength)
-        .attr('data-range', outputRange);
-
-      // Draw the canvas
-      canvases.each(drawOutput);
+        .attr('height', nodeLength);
     }
 
-    /*
-    // Iterate through all nodes to find a uniform range for conv, relu, and 
-    // pooling layers
-    let convExtents = [];
-    for (let l = 0; l < cnn.length; l++) {
-      let curLayer = cnn[l];
-      if (curLayer[0].type === 'input' || curLayer[0].type === 'output') {
-        continue;
-      }
-      let outputExtents = curLayer.map(l => getExtent(l.output));
-      let aggregatedExtent = outputExtents.reduce((acc, cur) => {
-        return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
-      })
-      convExtents.push(aggregatedExtent);
-    }
-    let aggregatedExtent = convExtents.reduce((acc, cur) => {
-        return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
-    });
-    aggregatedExtent = aggregatedExtent.map(Math.abs);
-    let outputRange = 2 * Math.max(...aggregatedExtent);
-    console.log(Math.max(...aggregatedExtent), outputRange);
+    // Draw the canvas
+    svg.selectAll('canvas.node-canvas').each(drawOutput);
 
     // Test the coordinate
     /*
@@ -217,7 +281,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: flex-start;
   }
 
   .cnn {
@@ -238,10 +302,30 @@
     position: relative;
     z-index: 10;
   }
+
+  .is-very-small {
+    font-size: 12px;
+  }
+
+  :global(canvas) {
+    image-rendering: crisp-edges;
+  }
 </style>
 
 <div class="overview"
   bind:this={overviewComponent}>
+  <div class="control is-very-small has-icons-left">
+    <span class="icon is-left">
+      <i class="fas fa-palette"></i>
+    </span>
+    <div class="select">
+      <select bind:value={selectedScaleLevel}>
+        <option value="local">Local</option>
+        <option value="component">Component</option>
+        <option value="global">Global</option>
+      </select>
+    </div>
+  </div>
   <div class="cnn">
     <svg id="cnn-svg" width="1100" height="500"></svg>
   </div>

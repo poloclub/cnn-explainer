@@ -210,14 +210,11 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
  * @param {Model} model Loaded tf.js model.
  */
 export const constructCNN = async (inputImageFile, model) => {
-  console.log(model.layers[11]);
-
   // Load the image file
   let inputImageTensor = await getInputImageArray(inputImageFile, true);
 
   // Need to feed the model with a batch
   let inputImageTensorBatch = tf.stack([inputImageTensor]);
-  inputImageTensorBatch.print();
 
   // To get intermediate layer outputs, we will iterate through all layers in
   // the model, and sequencially apply transformations.
@@ -227,9 +224,6 @@ export const constructCNN = async (inputImageFile, model) => {
   // Iterate through all layers, and build one model with that layer as output
   for (let l = 0; l < model.layers.length; l++) {
     let curTensor = model.layers[l].apply(preTensor);
-    if (l === model.layers.length - 1) {
-      curTensor.print();
-    }
 
     // Record the output tensor
     // Because there is only one element in the batch, we use squeeze()
