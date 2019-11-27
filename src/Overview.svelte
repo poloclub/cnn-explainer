@@ -2,6 +2,7 @@
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
   import { loadTrainedModel, constructCNN } from './cnn-tf.js';
+  import { cnnStore } from './stores.js';
 
   // View bindings
   let overviewComponent;
@@ -199,6 +200,7 @@
     let model = await loadTrainedModel('/assets/data/model.json');
     let cnn = await constructCNN('/assets/img/koala.jpeg', model);
     console.timeEnd('Construct cnn');
+    cnnStore.set(cnn);
 
     // Ignore the flatten layer for now
     let flatten = cnn[cnn.length - 2];
@@ -491,7 +493,7 @@
     font-size: 10px;
   }
 
-  :global(.localLegend, .moduleLegend, .globalLegend) {
+  :global(.localLegend, .globalLegend) {
     opacity: 0;
   }
 </style>

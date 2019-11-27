@@ -2,6 +2,7 @@
   import Overview from './Overview.svelte';
   import Layerview from './Layerview.svelte';
   import Detailview from './Detailview.svelte';
+  import { cnnStore } from './stores.js';
 
   // Enum to control the displaying view
   const View = {
@@ -11,6 +12,13 @@
   };
 
   let mainView = View.OVERVIEW;
+
+  /* Example to read loaded cnn in other components:
+  $: if ( $cnnStore.length != 0) {
+    console.log($cnnStore);
+  }
+  */
+
 </script>
 
 <style>
