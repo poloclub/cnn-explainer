@@ -7,7 +7,9 @@
   // View bindings
   let overviewComponent;
   let cnnLayerRanges = {};
+  let scaleLevelSet = new Set(['local', 'module', 'global']);
   let selectedScaleLevel = 'local';
+  let previousSelectedScaleLevel = selectedScaleLevel;
   let svg = undefined;
 
   $: selectedScaleLevel, selectedScaleLevelChanged();
@@ -43,29 +45,31 @@
 
   // Helper functions
   const selectedScaleLevelChanged = () => {
-    updateCanvas();
-  }
-
-  const updateCanvas = () => {
     if (svg !== undefined) {
-      svg.selectAll('canvas.node-canvas').each(drawOutput);
-      switch(selectedScaleLevel) {
-        case('local'): {
-          console.log('local');
-          break;
-        };
-        case('module'): {
-          console.log('module');
-          break;
-        };
-        case('global'): {
-          console.log('global');
-          break;
-        }
-        default: {
-          console.error('Encounter unknown selected scale level!')
-        }
+      if (!scaleLevelSet.add(selectedScaleLevel)) {
+        console.error('Encounter unknown scale level!');
       }
+
+      // TODO: only redraw partial nodes to speed up
+      svg.selectAll('canvas.node-canvas').each(drawOutput);
+
+      // Update legends
+      if (selectedScaleLevel != previousSelectedScaleLevel){
+        // Hide previous legend
+        svg.selectAll(`.${previousSelectedScaleLevel}Legend`)
+          .transition()
+          .duration(500)
+          .ease(d3.easeCubicOut)
+          .style('opacity', 0);
+
+        // Show selected legends
+        svg.selectAll(`.${selectedScaleLevel}Legend`)
+          .transition()
+          .duration(800)
+          .ease(d3.easeCubicOut)
+          .style('opacity', 1);
+      }
+      previousSelectedScaleLevel = selectedScaleLevel;
     }
   }
 
@@ -110,7 +114,7 @@
     context.fillRect(0, 0, 40, 40);
   }
 
-  const drawOutput = (d, i, g) => {
+  const drawOutput = async (d, i, g) => {
     let canvas = g[i];
     let range = cnnLayerRanges[selectedScaleLevel][layerIndex[d.layerName]];
     let context = canvas.getContext('2d');
@@ -358,6 +362,7 @@
 
       let localLegend1 = legends.append('g')
         .attr('class', 'localLegend')
+        .style('opacity', selectedScaleLevel === 'local' ? 1 : 0)
         .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
       localLegend1.append('rect')
@@ -371,6 +376,7 @@
 
       let localLegend2 = legends.append('g')
         .attr('class', 'localLegend')
+        .style('opacity', selectedScaleLevel === 'local' ? 1 : 0)
         .attr('transform', `translate(${nodeCoordinate[start + 2][0].x}, ${0})`);
 
       localLegend2.append('rect')
@@ -399,6 +405,7 @@
 
       let moduleLegend = legends.append('g')
         .attr('class', 'moduleLegend')
+        .style('opacity', selectedScaleLevel === 'module' ? 1 : 0)
         .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
       moduleLegend.append('rect')
@@ -426,6 +433,7 @@
 
     let globalLegend = legends.append('g')
       .attr('class', 'globalLegend')
+      .style('opacity', selectedScaleLevel === 'global' ? 1 : 0)
       .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
     globalLegend.append('rect')
@@ -489,13 +497,10 @@
     text-anchor: middle;
   }
 
-  :global(.colorLegend text) {
+  :global(.colorLegend) {
     font-size: 10px;
   }
 
-  :global(.localLegend, .globalLegend) {
-    opacity: 0;
-  }
 </style>
 
 <div class="overview"
@@ -518,6 +523,6 @@
   </div>
 
   <div class="cnn">
-    <svg id="cnn-svg" width="1100" height="560"></svg>
+    <svg id="cnn-svg" width="1080" height="560"></svg>
   </div>
 </div>
