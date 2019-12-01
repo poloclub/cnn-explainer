@@ -11,6 +11,7 @@
   let selectedScaleLevel = 'local';
   let previousSelectedScaleLevel = selectedScaleLevel;
   let svg = undefined;
+  let detailedMode = false;
 
   $: selectedScaleLevel, selectedScaleLevelChanged();
 
@@ -50,23 +51,47 @@
         console.error('Encounter unknown scale level!');
       }
 
-      // TODO: only redraw partial nodes to speed up
-      svg.selectAll('canvas.node-canvas').each(drawOutput);
-
-      // Update legends
+      // Update nodes and legends
       if (selectedScaleLevel != previousSelectedScaleLevel){
+        // We can simply redraw all nodes using the new color scale, or we can
+        // make it faster by only redraw certian nodes
+        let updatingLayerIndexDict = {
+          local: {
+            module: [1, 2, 8, 9, 10],
+            global: [1, 2, 3, 4, 5, 8, 9, 10]
+          },
+          module: {
+            local: [1, 2, 8, 9, 10],
+            global: [1, 2, 3, 4, 5, 8, 9, 10]
+          },
+          global: {
+            local: [1, 2, 3, 4, 5, 8, 9, 10],
+            module: [1, 2, 3, 4, 5]
+          }
+        };
+
+        let updatingLayerIndex = updatingLayerIndexDict[
+          previousSelectedScaleLevel][selectedScaleLevel];
+
+        updatingLayerIndex.forEach(d => {
+          svg.select(`#cnn-layer-group-${d}`)
+            .selectAll('.node-canvas')
+            .each(drawOutput);
+        });
+
         // Hide previous legend
         svg.selectAll(`.${previousSelectedScaleLevel}Legend`)
           .transition()
-          .duration(500)
-          .ease(d3.easeCubicOut)
+          .duration(600)
+          .ease(d3.easeCubicInOut)
           .style('opacity', 0);
 
         // Show selected legends
         svg.selectAll(`.${selectedScaleLevel}Legend`)
           .transition()
-          .duration(800)
-          .ease(d3.easeCubicOut)
+          .delay(200)
+          .duration(600)
+          .ease(d3.easeCubicInOut)
           .style('opacity', 1);
       }
       previousSelectedScaleLevel = selectedScaleLevel;
@@ -114,7 +139,7 @@
     context.fillRect(0, 0, 40, 40);
   }
 
-  const drawOutput = async (d, i, g) => {
+  const drawOutput = (d, i, g) => {
     let canvas = g[i];
     let range = cnnLayerRanges[selectedScaleLevel][layerIndex[d.layerName]];
     let context = canvas.getContext('2d');
@@ -151,7 +176,7 @@
         let column = pixeIndex % imageLength;
         let color = undefined;
         if (d.type === 'input' || d.type === 'fc' ) {
-          color = d3.rgb(colorScale(d.output[row][column]))
+          color = d3.rgb(colorScale(1 - d.output[row][column]))
         } else {
           color = d3.rgb(colorScale((d.output[row][column] + range / 2) / range));
         }
@@ -170,10 +195,18 @@
       0, 0, nodeLength, nodeLength);
   }
 
-  const getLegendGradient = (g, colorScale) => {
+  const drawOutputScore = (d, i, g) => {
+    let group = d3.select(g[i]);
+    group.append('rect')
+      .attr('width', d.output * nodeLength)
+      .attr('height', nodeLength)
+      .style('fill', 'gray');
+  }
+
+  const getLegendGradient = (g, colorScale, gradientName) => {
     let gradient = g.append('defs')
       .append('svg:linearGradient')
-      .attr('id', 'legendGradient')
+      .attr('id', `${gradientName}`)
       .attr('x1', '0%')
       .attr('y1', '100%')
       .attr('x2', '100%')
@@ -181,10 +214,10 @@
       .attr('spreadMethod', 'pad');
     let interpolation = 10
     for (let i = 0; i < interpolation; i++) {
-      let curProgess = i / (interpolation - 1);
-      let curColor = colorScale(curProgess);
+      let curProgress = i / (interpolation - 1);
+      let curColor = colorScale(curProgress);
       gradient.append('stop')
-        .attr('offset', `${curProgess * 100}%`)
+        .attr('offset', `${curProgress * 100}%`)
         .attr('stop-color', curColor)
         .attr('stop-opacity', 1);
     }
@@ -270,6 +303,7 @@
     // Iterate through the cnn to draw nodes in each layer
     for (let l = 0; l < cnn.length; l++) {
       let curLayer = cnn[l];
+      let isOutput = curLayer[0].layerName === 'output';
       nodeCoordinate.push([]);
 
       // All nodes share the same x coordiante (left in div style)
@@ -277,6 +311,7 @@
 
       let layerGroup = cnnGroup.append('g')
         .attr('class', 'cnn-layer-group')
+        .attr('id', `cnn-layer-group-${l}`)
         .attr('transform', `translate(${left}, 0)`);
 
       vSpaceAroundGap = (height - nodeLength * curLayer.length) /
@@ -287,6 +322,7 @@
         .enter()
         .append('g')
         .attr('class', 'node-group')
+        .classed('node-output', isOutput)
         .attr('id', (d, i) => `layer-${l}-node-${i}`)
         .attr('transform', (d, i) => {
           let top = i * nodeLength + (i + 1) * vSpaceAroundGap;
@@ -294,24 +330,27 @@
           return `translate(0, ${top})`;
         });
       
-      // Embed canvas in these groups
-      nodeGroups.append('foreignObject')
-        .attr('width', nodeLength)
-        .attr('height', nodeLength)
-        .append('xhtml:body')
-        .style('margin', 0)
-        .style('padding', 0)
-        .style('background-color', 'none')
-        .style('width', '100%')
-        .style('height', '100%')
-        .append('canvas')
-        .attr('class', 'node-canvas')
-        .attr('width', nodeLength)
-        .attr('height', nodeLength);
+      if (curLayer[0].layerName !== 'output') {
+        // Embed canvas in these groups
+        nodeGroups.append('foreignObject')
+          .attr('width', nodeLength)
+          .attr('height', nodeLength)
+          .append('xhtml:body')
+          .style('margin', 0)
+          .style('padding', 0)
+          .style('background-color', 'none')
+          .style('width', '100%')
+          .style('height', '100%')
+          .append('canvas')
+          .attr('class', 'node-canvas')
+          .attr('width', nodeLength)
+          .attr('height', nodeLength);
+      }
     }
 
     // Draw the canvas
     svg.selectAll('canvas.node-canvas').each(drawOutput);
+    svg.selectAll('g.node-output').each(drawOutputScore);
 
     // Add layer label
     let layerNames = cnn.map(d => d[0].layerName);
@@ -330,7 +369,9 @@
       .text(d => d);
 
     // Add layer color scale legends
-    getLegendGradient(svg, layerColorScales.conv);
+    getLegendGradient(svg, layerColorScales.conv, 'convGradient');
+    getLegendGradient(svg, layerColorScales.input[0], 'inputGradient');
+
     let legendHeight = 10;
     let legends = svg.append('g')
         .attr('class', 'colorLegend')
@@ -368,7 +409,7 @@
       localLegend1.append('rect')
         .attr('width', 2 * nodeLength + hSpaceAroundGap)
         .attr('height', legendHeight)
-        .style('fill', 'url(#legendGradient)');
+        .style('fill', 'url(#convGradient)');
       
       localLegend1.append('g')
         .attr('transform', `translate(0, ${legendHeight})`)
@@ -382,7 +423,7 @@
       localLegend2.append('rect')
         .attr('width', 3 * nodeLength + 2 * hSpaceAroundGap)
         .attr('height', legendHeight)
-        .style('fill', 'url(#legendGradient)');
+        .style('fill', 'url(#convGradient)');
       
       localLegend2.append('g')
         .attr('transform', `translate(0, ${legendHeight})`)
@@ -411,7 +452,7 @@
       moduleLegend.append('rect')
         .attr('width', 5 * nodeLength + 4 * hSpaceAroundGap)
         .attr('height', legendHeight)
-        .style('fill', 'url(#legendGradient)');
+        .style('fill', 'url(#convGradient)');
       
       moduleLegend.append('g')
         .attr('transform', `translate(0, ${legendHeight})`)
@@ -439,11 +480,50 @@
     globalLegend.append('rect')
       .attr('width', 10 * nodeLength + 9 * hSpaceAroundGap)
       .attr('height', legendHeight)
-      .style('fill', 'url(#legendGradient)');
+      .style('fill', 'url(#convGradient)');
     
     globalLegend.append('g')
       .attr('transform', `translate(0, ${legendHeight})`)
       .call(globalLegendAxis)
+
+    // Add output legend
+    let outputLegendScale = d3.scaleLinear()
+      .range([0, nodeLength])
+      .domain([0, 1]);
+    
+    let outputLegendAxis = d3.axisBottom()
+      .scale(outputLegendScale)
+      .tickFormat(d3.format('.1f'))
+      .tickValues([0, 0.5, 1])
+    
+    let outputLegend = legends.append('g')
+      .attr('class', 'outputLegend')
+      .attr('transform', `translate(${nodeCoordinate[11][0].x}, ${0})`);
+    
+    outputLegend.append('rect')
+      .attr('width', nodeLength)
+      .attr('height', legendHeight)
+      .style('fill', 'gray');
+    
+    outputLegend.append('g')
+      .attr('transform', `translate(0, ${legendHeight})`)
+      .call(outputLegendAxis);
+    
+    // Add input image legend
+    let inputLegend = legends.append('g')
+      .attr('class', 'inputLegend')
+      .attr('transform', `translate(${nodeCoordinate[0][0].x}, ${0})`);
+    
+    inputLegend.append('rect')
+      .attr('width', nodeLength)
+      .attr('height', legendHeight)
+      .attr('transform', `rotate(180, ${nodeLength/2}, ${legendHeight/2})`)
+      .style('fill', 'url(#inputGradient)');
+    
+    inputLegend.append('g')
+      .attr('transform', `translate(0, ${legendHeight})`)
+      .call(outputLegendAxis);
+
 
     // Test the coordinate
     /*
