@@ -18,6 +18,10 @@
   // Configs
   let nodeLength = 40;
   let numLayers = 12;
+  let edgeOpacity = 0.7;
+  let edgeInitColor = 'rgb(230, 230, 230)';
+  let edgeHoverColor = 'rgb(130, 130, 130)';
+  let edgeHoverOuting = false;
 
   let svgPaddings = {top: 40, bottom: 40};
 
@@ -29,7 +33,7 @@
     fc: d3.interpolateGreys
   };
 
-  let layerIndex = {
+  let layerIndexDict = {
     'input': 0,
     'conv_1_1': 1,
     'relu_1_1': 2,
@@ -141,7 +145,7 @@
 
   const drawOutput = (d, i, g) => {
     let canvas = g[i];
-    let range = cnnLayerRanges[selectedScaleLevel][layerIndex[d.layerName]];
+    let range = cnnLayerRanges[selectedScaleLevel][layerIndexDict[d.layerName]];
     let context = canvas.getContext('2d');
     let colorScale = layerColorScales[d.type];
 
@@ -221,6 +225,81 @@
         .attr('stop-color', curColor)
         .attr('stop-opacity', 1);
     }
+  }
+
+  const getOutputKnot = point => {
+    return {
+      x: point.x + nodeLength,
+      y: point.y + nodeLength / 2
+    };
+  }
+
+  const getInputKnot = point => {
+    return {
+      x: point.x,
+      y: point.y + nodeLength / 2
+    }
+  }
+
+  const getLinkData = (cnn, nodeCoordinate) => {
+    let linkData = [];
+    // Create links backward (starting for the first conv layer)
+    for (let l = 1; l < cnn.length; l++) {
+      for (let n = 0; n < cnn[l].length; n++) {
+        let curTarget = getInputKnot(nodeCoordinate[l][n]);
+        for (let p = 0; p < cnn[l][n].inputLinks.length; p++) {
+          // Specially handle output layer (since we are ignoring the flatten)
+          let inputNodeIndex = cnn[l][n].inputLinks[p].source.index;
+          if (cnn[l][n].layerName === 'output') {
+            let flattenDimension = cnn[l-1][0].output.length *
+              cnn[l-1][0].output.length;
+            if (inputNodeIndex % flattenDimension !== 0){
+                continue;
+            }
+            inputNodeIndex = Math.floor(inputNodeIndex / flattenDimension);
+          }
+          let curSource = getOutputKnot(nodeCoordinate[l-1][inputNodeIndex]);
+          let curWeight = cnn[l][n].inputLinks[p].weight;
+          linkData.push({
+            source: curSource,
+            target: curTarget,
+            weight: curWeight,
+            targetLayerIndex: l,
+            targetNodeIndex: n,
+            sourceNodeIndex: inputNodeIndex
+          });
+        }
+      }
+    }
+    return linkData;
+  }
+
+  const nodeMouseoverHandler = (d, i) => {
+    let layerIndex = layerIndexDict[d.layerName];
+    let nodeIndex = d.index;
+    let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
+    
+    edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
+      .raise()
+      .transition()
+      .duration(500)
+      .style('stroke', edgeHoverColor)
+      .style('stroke-width', '1')
+      .style('opacity', 1);
+  }
+
+  const nodeMouseoutHandler = (d, i) => {
+    let layerIndex = layerIndexDict[d.layerName];
+    let nodeIndex = d.index;
+    let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
+    
+    edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
+      .transition()
+      .ease(d3.easeCubicOut)
+      .duration(200)
+      .style('stroke', edgeInitColor)
+      .style('stroke-width', '0.5')
+      .style('opacity', edgeOpacity);
   }
 
   onMount(async () => {
@@ -322,6 +401,8 @@
         .enter()
         .append('g')
         .attr('class', 'node-group')
+        .on('mouseover', nodeMouseoverHandler)
+        .on('mouseout', nodeMouseoutHandler)
         .classed('node-output', isOutput)
         .attr('id', (d, i) => `layer-${l}-node-${i}`)
         .attr('transform', (d, i) => {
@@ -528,53 +609,6 @@
     let linkGen = d3.linkHorizontal()
       .x(d => d.x)
       .y(d => d.y);
-
-    const getOutputKnot = point => {
-      return {
-        x: point.x + nodeLength,
-        y: point.y + nodeLength / 2
-      };
-    }
-
-    const getInputKnot = point => {
-      return {
-        x: point.x,
-        y: point.y + nodeLength / 2
-      }
-    }
-
-    const getLinkData = (cnn, nodeCoordinate) => {
-      let linkData = [];
-      // Create links backward (starting for the first conv layer)
-      for (let l = 1; l < cnn.length; l++) {
-        for (let n = 0; n < cnn[l].length; n++) {
-          let curTarget = getInputKnot(nodeCoordinate[l][n]);
-          for (let p = 0; p < cnn[l][n].inputLinks.length; p++) {
-            // Specially handle output layer (since we are ignoring the flatten)
-            let inputNodeIndex = cnn[l][n].inputLinks[p].source.index;
-            if (cnn[l][n].layerName === 'output') {
-              let flattenDimension = cnn[l-1][0].output.length *
-                cnn[l-1][0].output.length;
-              if (inputNodeIndex % flattenDimension !== 0){
-                  continue;
-              }
-              inputNodeIndex = Math.floor(inputNodeIndex / flattenDimension);
-            }
-            let curSource = getOutputKnot(nodeCoordinate[l-1][inputNodeIndex]);
-            let curWeight = cnn[l][n].inputLinks[p].weight;
-            linkData.push({
-              source: curSource,
-              target: curTarget,
-              weight: curWeight,
-              targetLayerIndex: l,
-              targetNodeIndex: n,
-              sourceNodeIndex: inputNodeIndex
-            });
-          }
-        }
-      }
-      return linkData;
-    }
     
     let source = nodeCoordinate[0][0];
     let target = nodeCoordinate[1][0];
@@ -589,21 +623,15 @@
       .data(linkData)
       .enter()
       .append('path')
-      .attr('class', d => `edge edge-${d.targetLayerIndex}-${d.targetNodeIndex}`)
+      .attr('class', d =>
+        `edge edge-${d.targetLayerIndex} edge-${d.targetLayerIndex}-${d.targetNodeIndex}`)
       .attr('id', d => 
         `edge-${d.targetLayerIndex}-${d.targetNodeIndex}-${d.sourceNodeIndex}`)
       .attr('d', d => linkGen({source: d.source, target: d.target}))
       .style('fill', 'none')
-      .style('stroke', 'var(--light-gray-2)')
-      .style('opacity', '0.7');
-    // Test the coordinate
-    /*
-    svg.append('circle')
-      .attr('cx', nodeCoordinate[3][4].x + 20)
-      .attr('cy', nodeCoordinate[3][4].y + 20)
-      .attr('r', 5)
-      .style('fill', 'red')
-    */
+      .style('stroke-width', '0.5')
+      .style('opacity', edgeOpacity)
+      .style('stroke', edgeInitColor);
   })
 </script>
 
