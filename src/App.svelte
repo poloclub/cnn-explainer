@@ -5,7 +5,7 @@
 <style>
 	#header {
 		height: 80px;
-		background: var(--g-middle-gray);
+		background: var(--middle-gray);
 	}
 </style>
 

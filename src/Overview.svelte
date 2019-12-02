@@ -524,7 +524,78 @@
       .attr('transform', `translate(0, ${legendHeight})`)
       .call(outputLegendAxis);
 
+    // Add edges between nodes
+    let linkGen = d3.linkHorizontal()
+      .x(d => d.x)
+      .y(d => d.y);
 
+    const getOutputKnot = point => {
+      return {
+        x: point.x + nodeLength,
+        y: point.y + nodeLength / 2
+      };
+    }
+
+    const getInputKnot = point => {
+      return {
+        x: point.x,
+        y: point.y + nodeLength / 2
+      }
+    }
+
+    const getLinkData = (cnn, nodeCoordinate) => {
+      let linkData = [];
+      // Create links backward (starting for the first conv layer)
+      for (let l = 1; l < cnn.length; l++) {
+        for (let n = 0; n < cnn[l].length; n++) {
+          let curTarget = getInputKnot(nodeCoordinate[l][n]);
+          for (let p = 0; p < cnn[l][n].inputLinks.length; p++) {
+            // Specially handle output layer (since we are ignoring the flatten)
+            let inputNodeIndex = cnn[l][n].inputLinks[p].source.index;
+            if (cnn[l][n].layerName === 'output') {
+              let flattenDimension = cnn[l-1][0].output.length *
+                cnn[l-1][0].output.length;
+              if (inputNodeIndex % flattenDimension !== 0){
+                  continue;
+              }
+              inputNodeIndex = Math.floor(inputNodeIndex / flattenDimension);
+            }
+            let curSource = getOutputKnot(nodeCoordinate[l-1][inputNodeIndex]);
+            let curWeight = cnn[l][n].inputLinks[p].weight;
+            linkData.push({
+              source: curSource,
+              target: curTarget,
+              weight: curWeight,
+              targetLayerIndex: l,
+              targetNodeIndex: n,
+              sourceNodeIndex: inputNodeIndex
+            });
+          }
+        }
+      }
+      return linkData;
+    }
+    
+    let source = nodeCoordinate[0][0];
+    let target = nodeCoordinate[1][0];
+    let linkData = getLinkData(cnn, nodeCoordinate);
+
+    console.log(linkData);
+
+    let edgeGroup = cnnGroup.append('g')
+      .attr('class', 'edge-group');
+    
+    edgeGroup.selectAll('path.edge')
+      .data(linkData)
+      .enter()
+      .append('path')
+      .attr('class', d => `edge edge-${d.targetLayerIndex}-${d.targetNodeIndex}`)
+      .attr('id', d => 
+        `edge-${d.targetLayerIndex}-${d.targetNodeIndex}-${d.sourceNodeIndex}`)
+      .attr('d', d => linkGen({source: d.source, target: d.target}))
+      .style('fill', 'none')
+      .style('stroke', 'var(--light-gray-2)')
+      .style('opacity', '0.7');
     // Test the coordinate
     /*
     svg.append('circle')
@@ -555,7 +626,7 @@
     width: 100%;
     height: 560px;
     padding: 0;
-    background: var(--g-light-gray);
+    background: var(--light-gray);
     display: flex;
   }
 
