@@ -1,5 +1,4 @@
 <script>
-  import * as d3 from 'd3';
   import { onMount } from 'svelte';
   import { loadTrainedModel, constructCNN } from './cnn-tf.js';
   import { cnnStore } from './stores.js';
@@ -174,6 +173,7 @@
     if (imageLength === 1) {
       imageSingleArray[0] = d.output;
     } else {
+      console.log(imageSingleArray);
       for (let i = 0; i < imageSingleArray.length; i+=4) {
         let pixeIndex = Math.floor(i / 4);
         let row = Math.floor(pixeIndex / imageLength);

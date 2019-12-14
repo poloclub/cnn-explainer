@@ -7,12 +7,11 @@
     "rollup-plugin-livereload": "^1.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-svelte": "^5.0.3",
-    "rollup-plugin-terser": "^5.1.2",
+    "rollup-plugin-terser": "^5.1.3",
     "svelte": "^3.0.0"
   },
   "dependencies": {
     "@tensorflow/tfjs": "^1.3.1",
-    "d3": "^5.12.0",
     "sirv-cli": "^0.4.4"
   },
   "scripts": {
