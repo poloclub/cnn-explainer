@@ -173,7 +173,6 @@
     if (imageLength === 1) {
       imageSingleArray[0] = d.output;
     } else {
-      console.log(imageSingleArray);
       for (let i = 0; i < imageSingleArray.length; i+=4) {
         let pixeIndex = Math.floor(i / 4);
         let row = Math.floor(pixeIndex / imageLength);
@@ -201,9 +200,8 @@
 
   const drawOutputScore = (d, i, g) => {
     let group = d3.select(g[i]);
-    group.append('rect')
+    group.selectAll('rect.output-rect')
       .attr('width', d.output * nodeLength)
-      .attr('height', nodeLength)
       .style('fill', 'gray');
   }
 
@@ -309,8 +307,7 @@
     let width = svg.attr('width');
     let height = svg.attr('height') - svgPaddings.top - svgPaddings.bottom;
     let cnnGroup = svg.append('g')
-      .attr('class', 'cnn-group')
-      .attr('transform', `translate(0, ${svgPaddings.top})`);
+      .attr('class', 'cnn-group');
     
     console.time('Construct cnn');
     let model = await loadTrainedModel('/assets/data/model.json');
@@ -390,8 +387,7 @@
 
       let layerGroup = cnnGroup.append('g')
         .attr('class', 'cnn-layer-group')
-        .attr('id', `cnn-layer-group-${l}`)
-        .attr('transform', `translate(${left}, 0)`);
+        .attr('id', `cnn-layer-group-${l}`);
 
       vSpaceAroundGap = (height - nodeLength * curLayer.length) /
         (curLayer.length + 1);
@@ -404,11 +400,15 @@
         .on('mouseover', nodeMouseoverHandler)
         .on('mouseout', nodeMouseoutHandler)
         .classed('node-output', isOutput)
-        .attr('id', (d, i) => `layer-${l}-node-${i}`)
-        .attr('transform', (d, i) => {
+        .attr('id', (d, i) => {
+          // Compute the coordinate
+          // Not using transform on the group object because of a decade old
+          // bug on webkit (safari)
+          // https://bugs.webkit.org/show_bug.cgi?id=23113
           let top = i * nodeLength + (i + 1) * vSpaceAroundGap;
+          top += svgPaddings.top;
           nodeCoordinate[l].push({x: left, y: top});
-          return `translate(0, ${top})`;
+          return `layer-${l}-node-${i}`
         });
       
       if (curLayer[0].layerName !== 'output') {
@@ -416,6 +416,8 @@
         nodeGroups.append('foreignObject')
           .attr('width', nodeLength)
           .attr('height', nodeLength)
+          .attr('x', left)
+          .attr('y', (d, i) => nodeCoordinate[l][i].y)
           .append('xhtml:body')
           .style('margin', 0)
           .style('padding', 0)
@@ -426,6 +428,13 @@
           .attr('class', 'node-canvas')
           .attr('width', nodeLength)
           .attr('height', nodeLength);
+      } else {
+        nodeGroups.append('rect')
+          .attr('class', 'output-rect')
+          .attr('x', left)
+          .attr('y', (d, i) => nodeCoordinate[l][i].y)
+          .attr('height', nodeLength)
+          .attr('width', 0);
       }
     }
 
