@@ -81,21 +81,14 @@
             .selectAll('.node-canvas')
             .each(drawOutput);
         });
-
+ 
         // Hide previous legend
-        svg.selectAll(`.${previousSelectedScaleLevel}Legend`)
-          .transition()
-          .duration(600)
-          .ease(d3.easeCubicInOut)
-          .style('opacity', 0);
+        svg.selectAll(`.${previousSelectedScaleLevel}-legend`)
+          .classed('hidden', true);
 
         // Show selected legends
-        svg.selectAll(`.${selectedScaleLevel}Legend`)
-          .transition()
-          .delay(200)
-          .duration(600)
-          .ease(d3.easeCubicInOut)
-          .style('opacity', 1);
+        svg.selectAll(`.${selectedScaleLevel}-legend`)
+          .classed('hidden', !detailedMode);
       }
       previousSelectedScaleLevel = selectedScaleLevel;
     }
@@ -445,11 +438,12 @@
     // Add layer label
     let layerNames = cnn.map(d => d[0].layerName);
     console.log(nodeCoordinate);
-    svg.selectAll('g.layer-label')
+    svg.selectAll('g.layer-detailed-label')
       .data(layerNames)
       .enter()
       .append('g')
-      .attr('class', 'layer-label')
+      .attr('class', 'layer-detailed-label')
+      .classed('hidden', !detailedMode)
       .attr('transform', (d, i) => {
         let x = nodeCoordinate[i][0].x + nodeLength / 2;
         let y = (svgPaddings.top + vSpaceAroundGap) / 2;
@@ -457,6 +451,25 @@
       })
       .append('text')
       .text(d => d);
+    
+    svg.selectAll('g.layer-label')
+      .data(layerNames)
+      .enter()
+      .append('g')
+      .attr('class', 'layer-label')
+      .classed('hidden', detailedMode)
+      .attr('transform', (d, i) => {
+        let x = nodeCoordinate[i][0].x + nodeLength / 2;
+        let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+        return `translate(${x}, ${y})`;
+      })
+      .append('text')
+      .text(d => {
+        if (d.includes('conv')) { return 'conv' }
+        if (d.includes('relu')) { return 'relu' }
+        if (d.includes('max_pool')) { return 'max_pool'}
+        return d
+      });
 
     // Add layer color scale legends
     getLegendGradient(svg, layerColorScales.conv, 'convGradient');
@@ -492,8 +505,8 @@
         .tickValues([-range2, 0, range2]);
 
       let localLegend1 = legends.append('g')
-        .attr('class', 'localLegend')
-        .style('opacity', selectedScaleLevel === 'local' ? 1 : 0)
+        .attr('class', 'legend local-legend')
+        .classed('hidden', !detailedMode || selectedScaleLevel !== 'local')
         .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
       localLegend1.append('rect')
@@ -506,8 +519,8 @@
         .call(localLegendAxis1)
 
       let localLegend2 = legends.append('g')
-        .attr('class', 'localLegend')
-        .style('opacity', selectedScaleLevel === 'local' ? 1 : 0)
+        .attr('class', 'legend local-legend')
+        .classed('hidden', !detailedMode || selectedScaleLevel !== 'local')
         .attr('transform', `translate(${nodeCoordinate[start + 2][0].x}, ${0})`);
 
       localLegend2.append('rect')
@@ -535,8 +548,8 @@
         .tickValues([-range, -(range / 2), 0, range/2, range]);
 
       let moduleLegend = legends.append('g')
-        .attr('class', 'moduleLegend')
-        .style('opacity', selectedScaleLevel === 'module' ? 1 : 0)
+        .attr('class', 'legend module-legend')
+        .classed('hidden', !detailedMode || selectedScaleLevel !== 'module')
         .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
       moduleLegend.append('rect')
@@ -563,8 +576,8 @@
       .tickValues([-range, -(range / 2), 0, range/2, range]);
 
     let globalLegend = legends.append('g')
-      .attr('class', 'globalLegend')
-      .style('opacity', selectedScaleLevel === 'global' ? 1 : 0)
+      .attr('class', 'legend global-legend')
+      .classed('hidden', !detailedMode || selectedScaleLevel !== 'global')
       .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
     globalLegend.append('rect')
@@ -587,7 +600,8 @@
       .tickValues([0, 0.5, 1])
     
     let outputLegend = legends.append('g')
-      .attr('class', 'outputLegend')
+      .attr('class', 'legend output-legend')
+      .classed('hidden', !detailedMode)
       .attr('transform', `translate(${nodeCoordinate[11][0].x}, ${0})`);
     
     outputLegend.append('rect')
@@ -601,7 +615,8 @@
     
     // Add input image legend
     let inputLegend = legends.append('g')
-      .attr('class', 'inputLegend')
+      .attr('class', 'legend input-legend')
+      .classed('hidden', !detailedMode)
       .attr('transform', `translate(${nodeCoordinate[0][0].x}, ${0})`);
     
     inputLegend.append('rect')
@@ -642,6 +657,21 @@
       .style('opacity', edgeOpacity)
       .style('stroke', edgeInitColor);
   })
+
+  const detailedButtonClicked = () => {
+    detailedMode = !detailedMode;
+
+    // Show the legend
+    svg.selectAll(`.${selectedScaleLevel}-legend`)
+      .classed('hidden', !detailedMode);
+    
+    // Switch the layer name
+    svg.selectAll('.layer-detailed-label')
+      .classed('hidden', !detailedMode);
+    
+    svg.selectAll('.layer-label')
+      .classed('hidden', detailedMode);
+  }
 </script>
 
 <style>
@@ -657,6 +687,7 @@
 
   .control-container {
     padding: 15px 20px;
+    display: flex;
   }
 
   .cnn {
@@ -675,18 +706,43 @@
     font-size: 12px;
   }
 
+  #detailed-button {
+    margin: 0 10px;
+    color: #dbdbdb;
+    transition: border-color 300ms ease-in-out, color 200ms ease-in-out;
+  }
+
+  #detailed-button.is-activated, #detailed-button.is-activated:hover {
+    color: #3273dc;
+    border-color: #3273dc;
+  }
+
+  #detailed-button:hover {
+    color: #b5b5b5;
+  }
+
   :global(canvas) {
     image-rendering: crisp-edges;
   }
 
-  :global(.layer-label) {
+  :global(.layer-label, .layer-detailed-label) {
     font-size: 12px;
     dominant-baseline: middle;
     text-anchor: middle;
+    transition: opacity 300ms ease-in-out;
   }
 
   :global(.colorLegend) {
     font-size: 10px;
+  }
+
+  :global(.hidden) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  :global(.legend) {
+    transition: opacity 600ms ease-in-out;
   }
 
 </style>
@@ -695,6 +751,7 @@
   bind:this={overviewComponent}>
 
   <div class="control-container">
+
     <div class="control is-very-small has-icons-left">
       <span class="icon is-left">
         <i class="fas fa-palette"></i>
@@ -708,6 +765,16 @@
         </select>
       </div>
     </div>
+
+    <button class="button is-very-small"
+      id="detailed-button"
+      class:is-activated={detailedMode}
+      on:click={detailedButtonClicked}>
+      <span class="icon">
+        <i class="fas fa-eye"></i>
+      </span>
+    </button>
+
   </div>
 
   <div class="cnn">
