@@ -1,5 +1,3 @@
-import * as tf from '@tensorflow/tfjs';
-
 // Enum of node types
 const nodeType = {
   INPUT: 'input',

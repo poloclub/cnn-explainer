@@ -17,7 +17,7 @@
   // Configs
   let nodeLength = 40;
   let numLayers = 12;
-  let edgeOpacity = 0.7;
+  let edgeOpacity = 0.8;
   let edgeInitColor = 'rgb(230, 230, 230)';
   let edgeHoverColor = 'rgb(130, 130, 130)';
   let edgeHoverOuting = false;
@@ -46,6 +46,9 @@
     'max_pool_2': 10,
     'output': 11
   }
+
+  let classLists = ['lifeboat', 'ladybug', 'pizza', 'bell pepper', 'school bus',
+    'koala', 'espresso', 'red panda', 'orange', 'sport car']
 
   // Helper functions
   const selectedScaleLevelChanged = () => {
@@ -191,10 +194,11 @@
       0, 0, nodeLength, nodeLength);
   }
 
-  const drawOutputScore = (d, i, g) => {
+  const drawOutputScore = (d, i, g, scale) => {
+    // console.log(d.output, scale(d.output))
     let group = d3.select(g[i]);
     group.selectAll('rect.output-rect')
-      .attr('width', d.output * nodeLength)
+      .attr('width', scale(d.output))
       .style('fill', 'gray');
   }
 
@@ -218,14 +222,14 @@
     }
   }
 
-  const getOutputKnot = point => {
+  const getOutputKnot = (point) => {
     return {
       x: point.x + nodeLength,
       y: point.y + nodeLength / 2
     };
   }
 
-  const getInputKnot = point => {
+  const getInputKnot = (point) => {
     return {
       x: point.x,
       y: point.y + nodeLength / 2
@@ -237,11 +241,13 @@
     // Create links backward (starting for the first conv layer)
     for (let l = 1; l < cnn.length; l++) {
       for (let n = 0; n < cnn[l].length; n++) {
+        let isOutput = cnn[l][n].layerName === 'output';
         let curTarget = getInputKnot(nodeCoordinate[l][n]);
         for (let p = 0; p < cnn[l][n].inputLinks.length; p++) {
           // Specially handle output layer (since we are ignoring the flatten)
           let inputNodeIndex = cnn[l][n].inputLinks[p].source.index;
-          if (cnn[l][n].layerName === 'output') {
+          
+          if (isOutput) {
             let flattenDimension = cnn[l-1][0].output.length *
               cnn[l-1][0].output.length;
             if (inputNodeIndex % flattenDimension !== 0){
@@ -362,6 +368,7 @@
     cnnLayerRanges.local = cnnLayerRangesLocal;
     cnnLayerRanges.module = cnnLayerRangesComponent;
     cnnLayerRanges.global = cnnLayerRangesGlobal;
+    cnnLayerRanges.output = [0, d3.max(cnn[cnn.length - 1].map(d => d.output))];
 
     // Draw the CNN
     let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
@@ -425,15 +432,32 @@
         nodeGroups.append('rect')
           .attr('class', 'output-rect')
           .attr('x', left)
-          .attr('y', (d, i) => nodeCoordinate[l][i].y)
-          .attr('height', nodeLength)
+          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength / 4)
+          .attr('height', nodeLength / 2)
           .attr('width', 0);
+        nodeGroups.append('text')
+          .attr('class', 'output-text')
+          .attr('x', left)
+          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength * 3 / 4)
+          .style('dominant-baseline', 'hanging')
+          .style('font-size', '11px')
+          .style('color', 'gray')
+          .style('opacity', 0.5)
+          .text((d, i) => classLists[i]);
       }
     }
 
+    // Compute the scale of the output score width (mapping the the node
+    // width to the max output score)
+    let outputRectScale = d3.scaleLinear()
+          .domain(cnnLayerRanges.output)
+          .range([0, nodeLength]);
+
     // Draw the canvas
     svg.selectAll('canvas.node-canvas').each(drawOutput);
-    svg.selectAll('g.node-output').each(drawOutputScore);
+    svg.selectAll('g.node-output').each(
+      (d, i, g) => drawOutputScore(d, i, g, outputRectScale)
+    );
 
     // Add layer label
     let layerNames = cnn.map(d => d[0].layerName);
@@ -475,7 +499,7 @@
     getLegendGradient(svg, layerColorScales.conv, 'convGradient');
     getLegendGradient(svg, layerColorScales.input[0], 'inputGradient');
 
-    let legendHeight = 10;
+    let legendHeight = 5;
     let legends = svg.append('g')
         .attr('class', 'colorLegend')
         .attr('transform', `translate(${0}, ${530})`);
@@ -590,14 +614,10 @@
       .call(globalLegendAxis)
 
     // Add output legend
-    let outputLegendScale = d3.scaleLinear()
-      .range([0, nodeLength])
-      .domain([0, 1]);
-    
     let outputLegendAxis = d3.axisBottom()
-      .scale(outputLegendScale)
+      .scale(outputRectScale)
       .tickFormat(d3.format('.1f'))
-      .tickValues([0, 0.5, 1])
+      .tickValues([0, cnnLayerRanges.output[1]])
     
     let outputLegend = legends.append('g')
       .attr('class', 'legend output-legend')
@@ -614,6 +634,15 @@
       .call(outputLegendAxis);
     
     // Add input image legend
+    let inputScale = d3.scaleLinear()
+      .range([0, nodeLength])
+      .domain([0, 1]);
+
+    let inputLegendAxis = d3.axisBottom()
+      .scale(inputScale)
+      .tickFormat(d3.format('.1f'))
+      .tickValues([0, 0.5, 1]);
+
     let inputLegend = legends.append('g')
       .attr('class', 'legend input-legend')
       .classed('hidden', !detailedMode)
@@ -627,7 +656,7 @@
     
     inputLegend.append('g')
       .attr('transform', `translate(0, ${legendHeight})`)
-      .call(outputLegendAxis);
+      .call(inputLegendAxis);
 
     // Add edges between nodes
     let linkGen = d3.linkHorizontal()
@@ -664,6 +693,9 @@
     // Show the legend
     svg.selectAll(`.${selectedScaleLevel}-legend`)
       .classed('hidden', !detailedMode);
+    
+    svg.selectAll('.input-legend').classed('hidden', !detailedMode);
+    svg.selectAll('.output-legend').classed('hidden', !detailedMode);
     
     // Switch the layer name
     svg.selectAll('.layer-detailed-label')
@@ -729,6 +761,7 @@
     font-size: 12px;
     dominant-baseline: middle;
     text-anchor: middle;
+    opacity: 0.8;
     transition: opacity 300ms ease-in-out;
   }
 
@@ -736,13 +769,14 @@
     font-size: 10px;
   }
 
+  :global(.legend) {
+    opacity: 0.8;
+    transition: opacity 600ms ease-in-out;
+  }
+
   :global(.hidden) {
     opacity: 0;
     pointer-events: none;
-  }
-
-  :global(.legend) {
-    transition: opacity 600ms ease-in-out;
   }
 
 </style>
