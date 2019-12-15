@@ -21,6 +21,7 @@
   let edgeInitColor = 'rgb(230, 230, 230)';
   let edgeHoverColor = 'rgb(130, 130, 130)';
   let edgeHoverOuting = false;
+  let model = undefined;
 
   let svgPaddings = {top: 40, bottom: 40};
 
@@ -143,6 +144,7 @@
   }
 
   const drawOutput = (d, i, g) => {
+    // console.log(d);
     let canvas = g[i];
     let range = cnnLayerRanges[selectedScaleLevel][layerIndexDict[d.layerName]];
     let context = canvas.getContext('2d');
@@ -199,9 +201,10 @@
   }
 
   const drawOutputScore = (d, i, g, scale) => {
+    console.log(i);
     // console.log(d.output, scale(d.output))
     let group = d3.select(g[i]);
-    group.selectAll('rect.output-rect')
+    group.select('rect.output-rect')
       .attr('width', scale(d.output))
       .style('fill', 'gray');
   }
@@ -303,77 +306,7 @@
       .style('opacity', edgeOpacity);
   }
 
-  onMount(async () => {
-    // Create SVG
-    svg = d3.select(overviewComponent)
-      .select('#cnn-svg');
-    let width = svg.attr('width');
-    let height = svg.attr('height') - svgPaddings.top - svgPaddings.bottom;
-    let cnnGroup = svg.append('g')
-      .attr('class', 'cnn-group');
-    
-    console.time('Construct cnn');
-    let model = await loadTrainedModel('/assets/data/model.json');
-    let cnn = await constructCNN('/assets/img/boat_1.jpeg', model);
-    console.timeEnd('Construct cnn');
-    cnnStore.set(cnn);
-
-    // Ignore the flatten layer for now
-    let flatten = cnn[cnn.length - 2];
-    cnn.splice(cnn.length - 2, 1);
-    console.log(cnn);
-
-    // Iterate through all nodes to find a output ranges for each layer
-    let cnnLayerRangesLocal = [1];
-    let curRange = undefined;
-    for (let l = 0; l < cnn.length - 1; l++) {
-      let curLayer = cnn[l];
-
-      // conv layer refreshes curRange counting
-      if (curLayer[0].type === 'conv' || curLayer[0].type === 'fc') {
-        let outputExtents = curLayer.map(l => getExtent(l.output));
-        let aggregatedExtent = outputExtents.reduce((acc, cur) => {
-          return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
-        })
-        aggregatedExtent = aggregatedExtent.map(Math.abs);
-        curRange = 2 * (0.1 + 
-          Math.round(Math.max(...aggregatedExtent) * 1000) / 1000);
-      }
-
-      if (curRange !== undefined){
-        cnnLayerRangesLocal.push(curRange);
-      }
-    }
-
-    // Finally, add the output layer range
-    cnnLayerRangesLocal.push(1);
-
-    // Support different levels of scales (1) lcoal, (2) component, (3) global
-    let cnnLayerRangesComponent = [1];
-    let numOfComponent = (numLayers - 2) / 5;
-    for (let i = 0; i < numOfComponent; i++) {
-      let curArray = cnnLayerRangesLocal.slice(1 + 5 * i, 1 + 5 * i + 5);
-      let maxRange = Math.max(...curArray);
-      for (let j = 0; j < 5; j++) {
-        cnnLayerRangesComponent.push(maxRange);
-      }
-    }
-    cnnLayerRangesComponent.push(1);
-
-    let cnnLayerRangesGlobal = [1];
-    let maxRange = Math.max(...cnnLayerRangesLocal.slice(1,
-      cnnLayerRangesLocal.length - 1));
-    for (let i = 0; i < numLayers - 2; i++) {
-      cnnLayerRangesGlobal.push(maxRange);
-    }
-    cnnLayerRangesGlobal.push(1);
-
-    // Update the ranges dictionary
-    cnnLayerRanges.local = cnnLayerRangesLocal;
-    cnnLayerRanges.module = cnnLayerRangesComponent;
-    cnnLayerRanges.global = cnnLayerRangesGlobal;
-    cnnLayerRanges.output = [0, d3.max(cnn[cnn.length - 1].map(d => d.output))];
-
+  const drawCNN = (width, height, cnn, cnnGroup) => {
     // Draw the CNN
     let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
 
@@ -689,6 +622,120 @@
       .style('stroke-width', '0.5')
       .style('opacity', edgeOpacity)
       .style('stroke', edgeInitColor);
+  }
+
+  const updateCNN = (cnn) => {
+    // Compute the scale of the output score width (mapping the the node
+    // width to the max output score)
+    let outputRectScale = d3.scaleLinear()
+        .domain(cnnLayerRanges.output)
+        .range([0, nodeLength]);
+
+    // Rebind the cnn data to layer groups layer by layer
+    for (let l = 0; l < cnn.length; l++) {
+      let curLayer = cnn[l];
+      let layerGroup = svg.select(`g#cnn-layer-group-${l}`);
+
+      let nodeGroups = layerGroup.selectAll('g.node-group')
+        .data(curLayer);
+
+      if (l < cnn.length - 1) {
+        // Redraw the canvas and output node
+        nodeGroups.transition()
+          .duration(300)
+          .style('opacity', 0)
+          .on('end', function() {
+            d3.select(this).select('canvas.node-canvas').each(drawOutput);
+            d3.select(this).transition('different')
+              .duration(300)
+              .style('opacity', 1);
+          });
+        nodeGroups.select('canvas.node-canvas').each(drawOutput);
+      } else {
+        nodeGroups.each(
+          (d, i, g) => drawOutputScore(d, i, g, outputRectScale)
+        );
+      }
+    }
+  }
+
+  const updateCNNLayerRanges = (cnn) => {
+    // Iterate through all nodes to find a output ranges for each layer
+    let cnnLayerRangesLocal = [1];
+    let curRange = undefined;
+    for (let l = 0; l < cnn.length - 1; l++) {
+      let curLayer = cnn[l];
+
+      // conv layer refreshes curRange counting
+      if (curLayer[0].type === 'conv' || curLayer[0].type === 'fc') {
+        let outputExtents = curLayer.map(l => getExtent(l.output));
+        let aggregatedExtent = outputExtents.reduce((acc, cur) => {
+          return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
+        })
+        aggregatedExtent = aggregatedExtent.map(Math.abs);
+        curRange = 2 * (0.1 + 
+          Math.round(Math.max(...aggregatedExtent) * 1000) / 1000);
+      }
+
+      if (curRange !== undefined){
+        cnnLayerRangesLocal.push(curRange);
+      }
+    }
+
+    // Finally, add the output layer range
+    cnnLayerRangesLocal.push(1);
+
+    // Support different levels of scales (1) lcoal, (2) component, (3) global
+    let cnnLayerRangesComponent = [1];
+    let numOfComponent = (numLayers - 2) / 5;
+    for (let i = 0; i < numOfComponent; i++) {
+      let curArray = cnnLayerRangesLocal.slice(1 + 5 * i, 1 + 5 * i + 5);
+      let maxRange = Math.max(...curArray);
+      for (let j = 0; j < 5; j++) {
+        cnnLayerRangesComponent.push(maxRange);
+      }
+    }
+    cnnLayerRangesComponent.push(1);
+
+    let cnnLayerRangesGlobal = [1];
+    let maxRange = Math.max(...cnnLayerRangesLocal.slice(1,
+      cnnLayerRangesLocal.length - 1));
+    for (let i = 0; i < numLayers - 2; i++) {
+      cnnLayerRangesGlobal.push(maxRange);
+    }
+    cnnLayerRangesGlobal.push(1);
+
+    // Update the ranges dictionary
+    cnnLayerRanges.local = cnnLayerRangesLocal;
+    cnnLayerRanges.module = cnnLayerRangesComponent;
+    cnnLayerRanges.global = cnnLayerRangesGlobal;
+    cnnLayerRanges.output = [0, d3.max(cnn[cnn.length - 1].map(d => d.output))];
+  }
+
+  onMount(async () => {
+    // Create SVG
+    svg = d3.select(overviewComponent)
+      .select('#cnn-svg');
+    let width = svg.attr('width');
+    let height = svg.attr('height') - svgPaddings.top - svgPaddings.bottom;
+    let cnnGroup = svg.append('g')
+      .attr('class', 'cnn-group');
+    
+    console.time('Construct cnn');
+    model = await loadTrainedModel('/assets/data/model.json');
+    let cnn = await constructCNN(`/assets/img/${selectedImage}`, model);
+    console.timeEnd('Construct cnn');
+    cnnStore.set(cnn);
+
+    // Ignore the flatten layer for now
+    let flatten = cnn[cnn.length - 2];
+    cnn.splice(cnn.length - 2, 1);
+    console.log(cnn);
+
+    updateCNNLayerRanges(cnn);
+
+    // Create and draw the CNN view
+    drawCNN(width, height, cnn, cnnGroup);
   })
 
   const detailedButtonClicked = () => {
@@ -709,11 +756,23 @@
       .classed('hidden', detailedMode);
   }
 
-  const imageOptionClicked = (e) => {
-    console.log(e);
+  const imageOptionClicked = async (e) => {
     let newImageName = d3.select(e.target).attr('data-imageName');
+
     if (newImageName !== selectedImage) {
       selectedImage = newImageName;
+
+      // Re-compute the CNN using the new input image
+      let cnn = await constructCNN(`/assets/img/${selectedImage}`, model);
+
+      // Ignore the flatten layer for now
+      let flatten = cnn[cnn.length - 2];
+      cnn.splice(cnn.length - 2, 1);
+
+      // Update all scales used in the CNN view
+      updateCNNLayerRanges(cnn);
+
+      updateCNN(cnn);
     }
   }
 </script>
