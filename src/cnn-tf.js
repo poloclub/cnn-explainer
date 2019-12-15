@@ -1,3 +1,5 @@
+/* global tf */
+
 // Enum of node types
 const nodeType = {
   INPUT: 'input',

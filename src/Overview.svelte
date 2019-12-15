@@ -48,7 +48,11 @@
   }
 
   let classLists = ['lifeboat', 'ladybug', 'pizza', 'bell pepper', 'school bus',
-    'koala', 'espresso', 'red panda', 'orange', 'sport car']
+    'koala', 'espresso', 'red panda', 'orange', 'sport car'];
+  
+  let imageOptions = ['espresso_1.jpeg', 'panda_1.jpeg', 'car_1.jpeg',
+    'boat_1.jpeg', 'koala_1.jpeg', 'pizza_1.jpeg', 'pepper_1.jpeg', 'bug_1.jpeg'];
+  let selectedImage = imageOptions[0];
 
   // Helper functions
   const selectedScaleLevelChanged = () => {
@@ -310,7 +314,7 @@
     
     console.time('Construct cnn');
     let model = await loadTrainedModel('/assets/data/model.json');
-    let cnn = await constructCNN('/assets/img/koala.jpeg', model);
+    let cnn = await constructCNN('/assets/img/boat_1.jpeg', model);
     console.timeEnd('Construct cnn');
     cnnStore.set(cnn);
 
@@ -704,6 +708,14 @@
     svg.selectAll('.layer-label')
       .classed('hidden', detailedMode);
   }
+
+  const imageOptionClicked = (e) => {
+    console.log(e);
+    let newImageName = d3.select(e.target).attr('data-imageName');
+    if (newImageName !== selectedImage) {
+      selectedImage = newImageName;
+    }
+  }
 </script>
 
 <style>
@@ -718,7 +730,18 @@
   }
 
   .control-container {
-    padding: 15px 20px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .left-control {
+    display: flex;
+  }
+
+  .right-control {
     display: flex;
   }
 
@@ -739,7 +762,7 @@
   }
 
   #detailed-button {
-    margin: 0 10px;
+    margin-left: 10px;
     color: #dbdbdb;
     transition: border-color 300ms ease-in-out, color 200ms ease-in-out;
   }
@@ -751,6 +774,38 @@
 
   #detailed-button:hover {
     color: #b5b5b5;
+  }
+
+  .image-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    display: inline-block;
+    border: 2px solid black;
+    margin-left: 10px;
+    cursor: pointer;
+    pointer-events: all;
+    transition: border 300ms ease-in-out;
+  }
+
+  .image-container img {
+    object-fit: cover;
+    max-width: 100%;
+    max-height: 100%;
+    z-index: -1;
+    transition: opacity 300ms ease-in-out;
+  }
+
+  .image-container.inactive {
+    border: 2px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .image-container.inactive > img {
+    opacity: 0.3;
+  }
+
+  .image-container.inactive:hover {
+    border: 2px solid rgba(0, 0, 0, 0.3);
   }
 
   :global(canvas) {
@@ -786,29 +841,44 @@
 
   <div class="control-container">
 
-    <div class="control is-very-small has-icons-left">
-      <span class="icon is-left">
-        <i class="fas fa-palette"></i>
-      </span>
+    <div class="left-control">
+      <div class="control is-very-small has-icons-left">
+        <span class="icon is-left">
+          <i class="fas fa-palette"></i>
+        </span>
 
-      <div class="select">
-        <select bind:value={selectedScaleLevel}>
-          <option value="local">Local</option>
-          <option value="module">Module</option>
-          <option value="global">Global</option>
-        </select>
+        <div class="select">
+          <select bind:value={selectedScaleLevel}>
+            <option value="local">Local</option>
+            <option value="module">Module</option>
+            <option value="global">Global</option>
+          </select>
+        </div>
       </div>
+
+      <button class="button is-very-small"
+        id="detailed-button"
+        class:is-activated={detailedMode}
+        on:click={detailedButtonClicked}>
+        <span class="icon">
+          <i class="fas fa-eye"></i>
+        </span>
+      </button>
     </div>
 
-    <button class="button is-very-small"
-      id="detailed-button"
-      class:is-activated={detailedMode}
-      on:click={detailedButtonClicked}>
-      <span class="icon">
-        <i class="fas fa-eye"></i>
-      </span>
-    </button>
-
+    <div class="right-control">
+      {#each imageOptions as image, i}
+        <div class="image-container"
+          on:click={imageOptionClicked}
+          class:inactive={selectedImage !== image}
+          data-imageName={image}>
+          <img src="/assets/img/{image}"
+            alt="image option"
+            data-imageName={image}/>
+        </div>
+      {/each}
+    </div>
+    
   </div>
 
   <div class="cnn">
