@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { loadTrainedModel, constructCNN } from './cnn-tf.js';
   import { cnnStore } from './stores.js';
+  import ConvolutionView from './Convolutionview.svelte';
 
   // View bindings
   let overviewComponent;
@@ -55,6 +56,8 @@
   let imageOptions = ['espresso_1.jpeg', 'panda_1.jpeg', 'car_1.jpeg',
     'boat_1.jpeg', 'koala_1.jpeg', 'pizza_1.jpeg', 'pepper_1.jpeg', 'bug_1.jpeg'];
   let selectedImage = imageOptions[0];
+
+  let nodeData;
 
   // Helper functions
   const selectedScaleLevelChanged = () => {
@@ -280,6 +283,22 @@
     return linkData;
   }
 
+  // Opens low-level convolution animation when a conv node is clicked.
+  const nodeClickHandler = (d, i) => {
+    if (d.type === 'conv') {
+      var data = new Array();
+      for (let j = 0; j < d.inputLinks.length; j++) {
+        data.push(new Array());
+        data[j].push({
+          input: d.inputLinks[j].source.output,
+          kernel: d.inputLinks[j].weight,
+          output: d.inputLinks[j].dest.output,
+        })
+      }
+      nodeData = data[i];
+    }
+  }
+
   const nodeMouseoverHandler = (d, i) => {
     let layerIndex = layerIndexDict[d.layerName];
     let nodeIndex = d.index;
@@ -494,6 +513,7 @@
         .enter()
         .append('g')
         .attr('class', 'node-group')
+        .on('click', nodeClickHandler)
         .on('mouseover', nodeMouseoverHandler)
         .on('mouseout', nodeMouseoutHandler)
         .classed('node-output', isOutput)
@@ -955,3 +975,4 @@
     <svg id="cnn-svg" width="1080" height="560"></svg>
   </div>
 </div>
+<ConvolutionView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].input} kernel={nodeData == undefined ? [[1,2], [3,4]] : nodeData[0].kernel} output={nodeData == undefined ? [[1,2,3], [4,5,6], [7,8,9]] : nodeData[0].output} />

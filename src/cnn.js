@@ -303,7 +303,7 @@ const getInputImageArray = (imgFile) => {
  * @param {int} stride Stride size
  * @param {int} padding Padding size
  */
-const singleConv = (input, kernel, stride=1, padding=0) => {
+export const singleConv = (input, kernel, stride=1, padding=0) => {
   // TODO: implement padding
 
   // Only support square input and kernel
