@@ -11,6 +11,7 @@
   let previousSelectedScaleLevel = selectedScaleLevel;
   let svg = undefined;
   let detailedMode = false;
+  let nodeCoordinate = [];
 
   $: selectedScaleLevel, selectedScaleLevelChanged();
 
@@ -201,12 +202,13 @@
   }
 
   const drawOutputScore = (d, i, g, scale) => {
-    console.log(i);
     // console.log(d.output, scale(d.output))
     let group = d3.select(g[i]);
     group.select('rect.output-rect')
+      .transition('bar')
+      .duration(800)
+      .ease(d3.easeCubicIn)
       .attr('width', scale(d.output))
-      .style('fill', 'gray');
   }
 
   const getLegendGradient = (g, colorScale, gradientName) => {
@@ -306,141 +308,7 @@
       .style('opacity', edgeOpacity);
   }
 
-  const drawCNN = (width, height, cnn, cnnGroup) => {
-    // Draw the CNN
-    let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
-
-    let nodeCoordinate = [];
-    let vSpaceAroundGap = undefined;
-
-    // Iterate through the cnn to draw nodes in each layer
-    for (let l = 0; l < cnn.length; l++) {
-      let curLayer = cnn[l];
-      let isOutput = curLayer[0].layerName === 'output';
-      nodeCoordinate.push([]);
-
-      // All nodes share the same x coordiante (left in div style)
-      let left = l * nodeLength + (l + 1) * hSpaceAroundGap;
-
-      let layerGroup = cnnGroup.append('g')
-        .attr('class', 'cnn-layer-group')
-        .attr('id', `cnn-layer-group-${l}`);
-
-      vSpaceAroundGap = (height - nodeLength * curLayer.length) /
-        (curLayer.length + 1);
-
-      let nodeGroups = layerGroup.selectAll('g.node-group')
-        .data(curLayer)
-        .enter()
-        .append('g')
-        .attr('class', 'node-group')
-        .on('mouseover', nodeMouseoverHandler)
-        .on('mouseout', nodeMouseoutHandler)
-        .classed('node-output', isOutput)
-        .attr('id', (d, i) => {
-          // Compute the coordinate
-          // Not using transform on the group object because of a decade old
-          // bug on webkit (safari)
-          // https://bugs.webkit.org/show_bug.cgi?id=23113
-          let top = i * nodeLength + (i + 1) * vSpaceAroundGap;
-          top += svgPaddings.top;
-          nodeCoordinate[l].push({x: left, y: top});
-          return `layer-${l}-node-${i}`
-        });
-      
-      if (curLayer[0].layerName !== 'output') {
-        // Embed canvas in these groups
-        nodeGroups.append('foreignObject')
-          .attr('width', nodeLength)
-          .attr('height', nodeLength)
-          .attr('x', left)
-          .attr('y', (d, i) => nodeCoordinate[l][i].y)
-          .append('xhtml:body')
-          .style('margin', 0)
-          .style('padding', 0)
-          .style('background-color', 'none')
-          .style('width', '100%')
-          .style('height', '100%')
-          .append('canvas')
-          .attr('class', 'node-canvas')
-          .attr('width', nodeLength)
-          .attr('height', nodeLength);
-      } else {
-        nodeGroups.append('rect')
-          .attr('class', 'output-rect')
-          .attr('x', left)
-          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength / 4)
-          .attr('height', nodeLength / 2)
-          .attr('width', 0);
-        nodeGroups.append('text')
-          .attr('class', 'output-text')
-          .attr('x', left)
-          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength * 3 / 4)
-          .style('dominant-baseline', 'hanging')
-          .style('font-size', '11px')
-          .style('color', 'gray')
-          .style('opacity', 0.5)
-          .text((d, i) => classLists[i]);
-      }
-    }
-
-    // Compute the scale of the output score width (mapping the the node
-    // width to the max output score)
-    let outputRectScale = d3.scaleLinear()
-          .domain(cnnLayerRanges.output)
-          .range([0, nodeLength]);
-
-    // Draw the canvas
-    svg.selectAll('canvas.node-canvas').each(drawOutput);
-    svg.selectAll('g.node-output').each(
-      (d, i, g) => drawOutputScore(d, i, g, outputRectScale)
-    );
-
-    // Add layer label
-    let layerNames = cnn.map(d => d[0].layerName);
-    console.log(nodeCoordinate);
-    svg.selectAll('g.layer-detailed-label')
-      .data(layerNames)
-      .enter()
-      .append('g')
-      .attr('class', 'layer-detailed-label')
-      .classed('hidden', !detailedMode)
-      .attr('transform', (d, i) => {
-        let x = nodeCoordinate[i][0].x + nodeLength / 2;
-        let y = (svgPaddings.top + vSpaceAroundGap) / 2;
-        return `translate(${x}, ${y})`;
-      })
-      .append('text')
-      .text(d => d);
-    
-    svg.selectAll('g.layer-label')
-      .data(layerNames)
-      .enter()
-      .append('g')
-      .attr('class', 'layer-label')
-      .classed('hidden', detailedMode)
-      .attr('transform', (d, i) => {
-        let x = nodeCoordinate[i][0].x + nodeLength / 2;
-        let y = (svgPaddings.top + vSpaceAroundGap) / 2;
-        return `translate(${x}, ${y})`;
-      })
-      .append('text')
-      .text(d => {
-        if (d.includes('conv')) { return 'conv' }
-        if (d.includes('relu')) { return 'relu' }
-        if (d.includes('max_pool')) { return 'max_pool'}
-        return d
-      });
-
-    // Add layer color scale legends
-    getLegendGradient(svg, layerColorScales.conv, 'convGradient');
-    getLegendGradient(svg, layerColorScales.input[0], 'inputGradient');
-
-    let legendHeight = 5;
-    let legends = svg.append('g')
-        .attr('class', 'colorLegend')
-        .attr('transform', `translate(${0}, ${530})`);
-
+  const drawLegends = (legends, hSpaceAroundGap, legendHeight) => {
     // Add local legends
     for (let i = 0; i < 2; i++){
       let start = 1 + i * 5;
@@ -551,6 +419,10 @@
       .call(globalLegendAxis)
 
     // Add output legend
+    let outputRectScale = d3.scaleLinear()
+          .domain(cnnLayerRanges.output)
+          .range([0, nodeLength]);
+
     let outputLegendAxis = d3.axisBottom()
       .scale(outputRectScale)
       .tickFormat(d3.format('.1f'))
@@ -594,6 +466,143 @@
     inputLegend.append('g')
       .attr('transform', `translate(0, ${legendHeight})`)
       .call(inputLegendAxis);
+  }
+
+  const drawCNN = (width, height, cnn, cnnGroup) => {
+    // Draw the CNN
+    let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
+    let vSpaceAroundGap = undefined;
+
+    // Iterate through the cnn to draw nodes in each layer
+    for (let l = 0; l < cnn.length; l++) {
+      let curLayer = cnn[l];
+      let isOutput = curLayer[0].layerName === 'output';
+      nodeCoordinate.push([]);
+
+      // All nodes share the same x coordiante (left in div style)
+      let left = l * nodeLength + (l + 1) * hSpaceAroundGap;
+
+      let layerGroup = cnnGroup.append('g')
+        .attr('class', 'cnn-layer-group')
+        .attr('id', `cnn-layer-group-${l}`);
+
+      vSpaceAroundGap = (height - nodeLength * curLayer.length) /
+        (curLayer.length + 1);
+
+      let nodeGroups = layerGroup.selectAll('g.node-group')
+        .data(curLayer)
+        .enter()
+        .append('g')
+        .attr('class', 'node-group')
+        .on('mouseover', nodeMouseoverHandler)
+        .on('mouseout', nodeMouseoutHandler)
+        .classed('node-output', isOutput)
+        .attr('id', (d, i) => {
+          // Compute the coordinate
+          // Not using transform on the group object because of a decade old
+          // bug on webkit (safari)
+          // https://bugs.webkit.org/show_bug.cgi?id=23113
+          let top = i * nodeLength + (i + 1) * vSpaceAroundGap;
+          top += svgPaddings.top;
+          nodeCoordinate[l].push({x: left, y: top});
+          return `layer-${l}-node-${i}`
+        });
+      
+      if (curLayer[0].layerName !== 'output') {
+        // Embed canvas in these groups
+        nodeGroups.append('foreignObject')
+          .attr('width', nodeLength)
+          .attr('height', nodeLength)
+          .attr('x', left)
+          .attr('y', (d, i) => nodeCoordinate[l][i].y)
+          .append('xhtml:body')
+          .style('margin', 0)
+          .style('padding', 0)
+          .style('background-color', 'none')
+          .style('width', '100%')
+          .style('height', '100%')
+          .append('canvas')
+          .attr('class', 'node-canvas')
+          .attr('width', nodeLength)
+          .attr('height', nodeLength);
+      } else {
+        nodeGroups.append('rect')
+          .attr('class', 'output-rect')
+          .attr('x', left)
+          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength / 4)
+          .attr('height', nodeLength / 2)
+          .attr('width', 0)
+          .style('fill', 'gray');
+        nodeGroups.append('text')
+          .attr('class', 'output-text')
+          .attr('x', left)
+          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength * 3 / 4)
+          .style('dominant-baseline', 'hanging')
+          .style('font-size', '11px')
+          .style('color', 'gray')
+          .style('opacity', 0.5)
+          .text((d, i) => classLists[i]);
+      }
+    }
+
+    // Compute the scale of the output score width (mapping the the node
+    // width to the max output score)
+    let outputRectScale = d3.scaleLinear()
+          .domain(cnnLayerRanges.output)
+          .range([0, nodeLength]);
+
+    // Draw the canvas
+    svg.selectAll('canvas.node-canvas').each(drawOutput);
+    svg.selectAll('g.node-output').each(
+      (d, i, g) => drawOutputScore(d, i, g, outputRectScale)
+    );
+
+    // Add layer label
+    let layerNames = cnn.map(d => d[0].layerName);
+    console.log(nodeCoordinate);
+    svg.selectAll('g.layer-detailed-label')
+      .data(layerNames)
+      .enter()
+      .append('g')
+      .attr('class', 'layer-detailed-label')
+      .classed('hidden', !detailedMode)
+      .attr('transform', (d, i) => {
+        let x = nodeCoordinate[i][0].x + nodeLength / 2;
+        let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+        return `translate(${x}, ${y})`;
+      })
+      .append('text')
+      .text(d => d);
+    
+    svg.selectAll('g.layer-label')
+      .data(layerNames)
+      .enter()
+      .append('g')
+      .attr('class', 'layer-label')
+      .classed('hidden', detailedMode)
+      .attr('transform', (d, i) => {
+        let x = nodeCoordinate[i][0].x + nodeLength / 2;
+        let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+        return `translate(${x}, ${y})`;
+      })
+      .append('text')
+      .text(d => {
+        if (d.includes('conv')) { return 'conv' }
+        if (d.includes('relu')) { return 'relu' }
+        if (d.includes('max_pool')) { return 'max_pool'}
+        return d
+      });
+
+    // Add layer color scale legends
+    getLegendGradient(svg, layerColorScales.conv, 'convGradient');
+    getLegendGradient(svg, layerColorScales.input[0], 'inputGradient');
+
+    let legendHeight = 5;
+    let legends = svg.append('g')
+        .attr('class', 'colorLegend')
+        .attr('transform', `translate(${0}, ${530})`);
+    
+    drawLegends(legends, hSpaceAroundGap, legendHeight);
 
     // Add edges between nodes
     let linkGen = d3.linkHorizontal()
@@ -641,22 +650,25 @@
 
       if (l < cnn.length - 1) {
         // Redraw the canvas and output node
-        nodeGroups.transition()
+        nodeGroups.transition('disappear')
           .duration(300)
+          .ease(d3.easeCubicOut)
           .style('opacity', 0)
           .on('end', function() {
             d3.select(this).select('canvas.node-canvas').each(drawOutput);
-            d3.select(this).transition('different')
-              .duration(300)
+            d3.select(this).transition('appear')
+              .duration(700)
+              .ease(d3.easeCubicIn)
               .style('opacity', 1);
           });
-        nodeGroups.select('canvas.node-canvas').each(drawOutput);
       } else {
         nodeGroups.each(
           (d, i, g) => drawOutputScore(d, i, g, outputRectScale)
         );
       }
     }
+
+    // Update the color scale legend
   }
 
   const updateCNNLayerRanges = (cnn) => {
@@ -771,7 +783,6 @@
 
       // Update all scales used in the CNN view
       updateCNNLayerRanges(cnn);
-
       updateCNN(cnn);
     }
   }
