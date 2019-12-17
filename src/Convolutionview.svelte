@@ -4,7 +4,7 @@
 
   export let input;
   export let kernel;
-  export let output;
+  // export let output;
   
 	let stride = 1;
   const dilation = 1;
