@@ -24,6 +24,8 @@
   let edgeHoverColor = 'rgb(130, 130, 130)';
   let edgeHoverOuting = false;
   let model = undefined;
+  let hSpaceAroundGap = undefined;
+  let vSpaceAroundGap = undefined;
 
   let svgPaddings = {top: 40, bottom: 40};
 
@@ -327,7 +329,7 @@
       .style('opacity', edgeOpacity);
   }
 
-  const drawLegends = (legends, hSpaceAroundGap, legendHeight) => {
+  const drawLegends = (legends, legendHeight) => {
     // Add local legends
     for (let i = 0; i < 2; i++){
       let start = 1 + i * 5;
@@ -354,6 +356,7 @@
 
       let localLegend1 = legends.append('g')
         .attr('class', 'legend local-legend')
+        .attr('id', `local-legend-${i}-1`)
         .classed('hidden', !detailedMode || selectedScaleLevel !== 'local')
         .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
@@ -368,6 +371,7 @@
 
       let localLegend2 = legends.append('g')
         .attr('class', 'legend local-legend')
+        .attr('id', `local-legend-${i}-2`)
         .classed('hidden', !detailedMode || selectedScaleLevel !== 'local')
         .attr('transform', `translate(${nodeCoordinate[start + 2][0].x}, ${0})`);
 
@@ -397,6 +401,7 @@
 
       let moduleLegend = legends.append('g')
         .attr('class', 'legend module-legend')
+        .attr('id', `module-legend-${i}`)
         .classed('hidden', !detailedMode || selectedScaleLevel !== 'module')
         .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
@@ -425,6 +430,7 @@
 
     let globalLegend = legends.append('g')
       .attr('class', 'legend global-legend')
+      .attr('id', 'global-legend')
       .classed('hidden', !detailedMode || selectedScaleLevel !== 'global')
       .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
@@ -449,6 +455,7 @@
     
     let outputLegend = legends.append('g')
       .attr('class', 'legend output-legend')
+      .attr('id', 'output-legend')
       .classed('hidden', !detailedMode)
       .attr('transform', `translate(${nodeCoordinate[11][0].x}, ${0})`);
     
@@ -489,8 +496,8 @@
 
   const drawCNN = (width, height, cnn, cnnGroup) => {
     // Draw the CNN
-    let hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
-    let vSpaceAroundGap = undefined;
+    hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
+    vSpaceAroundGap = undefined;
 
     // Iterate through the cnn to draw nodes in each layer
     for (let l = 0; l < cnn.length; l++) {
@@ -622,7 +629,7 @@
         .attr('class', 'colorLegend')
         .attr('transform', `translate(${0}, ${530})`);
     
-    drawLegends(legends, hSpaceAroundGap, legendHeight);
+    drawLegends(legends, legendHeight);
 
     // Add edges between nodes
     let linkGen = d3.linkHorizontal()
@@ -689,6 +696,73 @@
     }
 
     // Update the color scale legend
+    // Local legends
+    for (let i = 0; i < 2; i++){
+      let start = 1 + i * 5;
+      let range1 = cnnLayerRanges.local[start];
+      let range2 = cnnLayerRanges.local[start + 2];
+
+      let localLegendScale1 = d3.scaleLinear()
+        .range([0, 2 * nodeLength + hSpaceAroundGap])
+        .domain([-range1, range1]);
+      
+      let localLegendScale2 = d3.scaleLinear()
+        .range([0, 3 * nodeLength + 2 * hSpaceAroundGap])
+        .domain([-range2, range2]);
+
+      let localLegendAxis1 = d3.axisBottom()
+        .scale(localLegendScale1)
+        .tickFormat(d3.format('.2f'))
+        .tickValues([-range1, 0, range1]);
+      
+      let localLegendAxis2 = d3.axisBottom()
+        .scale(localLegendScale2)
+        .tickFormat(d3.format('.2f'))
+        .tickValues([-range2, 0, range2]);
+      
+      svg.select(`g#local-legend-${i}-1`).select('g').call(localLegendAxis1);
+      svg.select(`g#local-legend-${i}-2`).select('g').call(localLegendAxis2);
+    }
+
+    // Module legend
+    for (let i = 0; i < 2; i++){
+      let start = 1 + i * 5;
+      let range = cnnLayerRanges.local[start];
+
+      let moduleLegendScale = d3.scaleLinear()
+        .range([0, 5 * nodeLength + 4 * hSpaceAroundGap])
+        .domain([-range, range]);
+
+      let moduleLegendAxis = d3.axisBottom()
+        .scale(moduleLegendScale)
+        .tickFormat(d3.format('.2f'))
+        .tickValues([-range, -(range / 2), 0, range/2, range]);
+      
+      svg.select(`g#module-legend-${i}`).select('g').call(moduleLegendAxis);
+    }
+
+    // Global legend
+    let start = 1;
+    let range = cnnLayerRanges.global[start];
+
+    let globalLegendScale = d3.scaleLinear()
+      .range([0, 10 * nodeLength + 9 * hSpaceAroundGap])
+      .domain([-range, range]);
+
+    let globalLegendAxis = d3.axisBottom()
+      .scale(globalLegendScale)
+      .tickFormat(d3.format('.2f'))
+      .tickValues([-range, -(range / 2), 0, range/2, range]);
+
+    svg.select(`g#global-legend`).select('g').call(globalLegendAxis);
+
+    // Output legend
+    let outputLegendAxis = d3.axisBottom()
+      .scale(outputRectScale)
+      .tickFormat(d3.format('.1f'))
+      .tickValues([0, cnnLayerRanges.output[1]]);
+    
+    svg.select('g#output-legend').select('g').call(outputLegendAxis);
   }
 
   const updateCNNLayerRanges = (cnn) => {
@@ -915,8 +989,15 @@
   }
 
   :global(.legend) {
-    opacity: 0.8;
     transition: opacity 600ms ease-in-out;
+  }
+
+  :global(.legend > rect) {
+    opacity: 0.8;
+  }
+
+  :global(.legend#output-legend > rect) {
+    opacity: 1;
   }
 
   :global(.hidden) {
