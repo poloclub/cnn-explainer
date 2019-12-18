@@ -212,7 +212,8 @@
     // console.log(d.output, scale(d.output))
     let group = d3.select(g[i]);
     group.select('rect.output-rect')
-      .transition('bar')
+      .transition('output')
+      .delay(500)
       .duration(800)
       .ease(d3.easeCubicIn)
       .attr('width', scale(d.output))
@@ -303,7 +304,8 @@
     }
   }
 
-  const nodeMouseoverHandler = (d, i) => {
+  const nodeMouseoverHandler = (d, i, g) => {
+    console.log(g[i]);
     let layerIndex = layerIndexDict[d.layerName];
     let nodeIndex = d.index;
     let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
@@ -533,6 +535,8 @@
         .enter()
         .append('g')
         .attr('class', 'node-group')
+        .style('cursor', 'pointer')
+        .style('pointer-events', 'all')
         .on('click', nodeClickHandler)
         .on('mouseover', nodeMouseoverHandler)
         .on('mouseout', nodeMouseoutHandler)
@@ -565,6 +569,17 @@
           .attr('class', 'node-canvas')
           .attr('width', nodeLength)
           .attr('height', nodeLength);
+        
+        // Add a rectangle to show the border
+        nodeGroups.append('rect')
+          .attr('width', nodeLength)
+          .attr('height', nodeLength)
+          .attr('x', left)
+          .attr('y', (d, i) => nodeCoordinate[l][i].y)
+          .style('fill', 'none')
+          .style('stroke', 'gray')
+          .style('stroke-width', 1.5)
+          .classed('hidden', true);
       } else {
         nodeGroups.append('rect')
           .attr('class', 'output-rect')
