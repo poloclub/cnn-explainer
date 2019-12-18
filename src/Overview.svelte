@@ -9,7 +9,6 @@
   let cnnLayerRanges = {};
   let scaleLevelSet = new Set(['local', 'module', 'global']);
   let selectedScaleLevel = 'local';
-  let previousSelectedScaleLevel = selectedScaleLevel;
   let svg = undefined;
   let detailedMode = false;
   let nodeCoordinate = [];
@@ -894,7 +893,7 @@
   }
 
   .control-container {
-    padding: 10px 20px;
+    padding: 5px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
