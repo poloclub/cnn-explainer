@@ -23,6 +23,9 @@
   let edgeHoverColor = 'rgb(130, 130, 130)';
   let edgeHoverOuting = false;
   let model = undefined;
+  // gapRatio = long gap / short gap
+  let gapRatio = 4;
+  // hSpaceAroundGap is the short gap
   let hSpaceAroundGap = undefined;
   let vSpaceAroundGap = undefined;
 
@@ -495,17 +498,28 @@
 
   const drawCNN = (width, height, cnn, cnnGroup) => {
     // Draw the CNN
-    hSpaceAroundGap = (width - nodeLength * numLayers) / (numLayers + 1);
+    // There are 8 short gaps and 5 long gaps
+    hSpaceAroundGap = (width - nodeLength * numLayers) / (8 + 5 * gapRatio);
     vSpaceAroundGap = undefined;
+    let leftAccuumulatedSpace = 0;
 
     // Iterate through the cnn to draw nodes in each layer
     for (let l = 0; l < cnn.length; l++) {
       let curLayer = cnn[l];
       let isOutput = curLayer[0].layerName === 'output';
+
       nodeCoordinate.push([]);
 
+      // Compute the x coordinate of the whole layer
+      // Output layer and conv layer has long gaps
+      if (isOutput || curLayer[0].type === 'conv') {
+        leftAccuumulatedSpace += hSpaceAroundGap * gapRatio;
+      } else {
+        leftAccuumulatedSpace += hSpaceAroundGap;
+      }
+
       // All nodes share the same x coordiante (left in div style)
-      let left = l * nodeLength + (l + 1) * hSpaceAroundGap;
+      let left = leftAccuumulatedSpace;
 
       let layerGroup = cnnGroup.append('g')
         .attr('class', 'cnn-layer-group')
@@ -569,6 +583,7 @@
           .style('opacity', 0.5)
           .text((d, i) => classLists[i]);
       }
+      leftAccuumulatedSpace += nodeLength;
     }
 
     // Compute the scale of the output score width (mapping the the node
@@ -659,7 +674,7 @@
         `edge-${d.targetLayerIndex}-${d.targetNodeIndex}-${d.sourceNodeIndex}`)
       .attr('d', d => linkGen({source: d.source, target: d.target}))
       .style('fill', 'none')
-      .style('stroke-width', '0.5')
+      .style('stroke-width', '0.7')
       .style('opacity', edgeOpacity)
       .style('stroke', edgeInitColor);
   }
@@ -994,7 +1009,7 @@
   }
 
   :global(.legend) {
-    transition: opacity 600ms ease-in-out;
+    transition: opacity 400ms ease-in-out;
   }
 
   :global(.legend > rect) {
