@@ -26,7 +26,7 @@
   let hSpaceAroundGap = undefined;
   let vSpaceAroundGap = undefined;
 
-  let svgPaddings = {top: 40, bottom: 40};
+  let svgPaddings = {top: 20, bottom: 30};
 
   let layerColorScales = {
     input: [d3.interpolateGreys, d3.interpolateGreys, d3.interpolateGreys],
@@ -598,6 +598,7 @@
         return `translate(${x}, ${y})`;
       })
       .append('text')
+      .style('dominant-baseline', 'middle')
       .text(d => d);
     
     svg.selectAll('g.layer-label')
@@ -612,6 +613,7 @@
         return `translate(${x}, ${y})`;
       })
       .append('text')
+      .style('dominant-baseline', 'middle')
       .text(d => {
         if (d.includes('conv')) { return 'conv' }
         if (d.includes('relu')) { return 'relu' }
@@ -625,8 +627,11 @@
 
     let legendHeight = 5;
     let legends = svg.append('g')
-        .attr('class', 'colorLegend')
-        .attr('transform', `translate(${0}, ${530})`);
+        .attr('class', 'color-legend')
+        .attr('transform', `translate(${0}, ${
+          svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap +
+          nodeLength * 10
+        })`);
     
     drawLegends(legends, legendHeight);
 
@@ -821,8 +826,9 @@
     // Create SVG
     svg = d3.select(overviewComponent)
       .select('#cnn-svg');
-    let width = svg.attr('width');
-    let height = svg.attr('height') - svgPaddings.top - svgPaddings.bottom;
+    let width = Number(svg.style('width').replace('px', ''));
+    let height = Number(svg.style('height').replace('px', '')) -
+      svgPaddings.top - svgPaddings.bottom;
     let cnnGroup = svg.append('g')
       .attr('class', 'cnn-group');
     
@@ -910,14 +916,15 @@
 
   .cnn {
     width: 100%;
-    height: 560px;
     padding: 0;
     background: var(--light-gray);
     display: flex;
   }
 
   svg {
-    margin: auto;
+    margin: 0 auto;
+    height: calc(100vh - 100px);
+    width: calc(100vw - 100px);
   }
 
   .is-very-small {
@@ -977,7 +984,6 @@
 
   :global(.layer-label, .layer-detailed-label) {
     font-size: 12px;
-    dominant-baseline: middle;
     text-anchor: middle;
     opacity: 0.8;
     transition: opacity 300ms ease-in-out;
@@ -1052,7 +1058,7 @@
   </div>
 
   <div class="cnn">
-    <svg id="cnn-svg" width="1080" height="560"></svg>
+    <svg id="cnn-svg"></svg>
   </div>
 </div>
 <ConvolutionView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].input} kernel={nodeData == undefined ? [[1,2], [3,4]] : nodeData[0].kernel} output={nodeData == undefined ? [[1,2,3], [4,5,6], [7,8,9]] : nodeData[0].output} />
