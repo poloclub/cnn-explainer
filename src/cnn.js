@@ -218,7 +218,7 @@ const matrixAdd = (mat1, mat2) => {
  * @param {int} ys Second dimension (column) starting index
  * @param {int} ye Second dimension (column) ending index
  */
-const matrixSlice = (mat, xs, xe, ys, ye) => {
+export const matrixSlice = (mat, xs, xe, ys, ye) => {
   return mat.slice(xs, xe).map(s => s.slice(ys, ye));
 }
 

@@ -1,5 +1,6 @@
 <script>
-import Dataview from './Dataview.svelte';
+  import Dataview from './Dataview.svelte';
+  import { matrixSlice } from './cnn.js';
   // image: nxn array -- prepadded.
   // kernel: mxm array.
   // stride: int
@@ -9,15 +10,19 @@ import Dataview from './Dataview.svelte';
   export let image;
   export let output;
   export let isPaused;
+
   const padding = 0;
   let padded_input_size = image.length + padding * 2;
   $: padded_input_size = image.length + padding * 2;
+
   function array1d(length, f) {
     return Array.from({length: length}, f ? ((v, i) => f(i)) : undefined);
   }
+
   function array2d(height, width, f) {
     return Array.from({length: height}, (v, i) => Array.from({length: width}, f ? ((w, j) => f(i, j)) : undefined));
   }
+
   function generateOutputMappings(stride) {
     const outputMapping = array2d(output.length, output.length, (i, j) => array2d(kernel.length, kernel.length));
     for (let h_out = 0; h_out < output.length; h_out++) {
@@ -33,6 +38,7 @@ import Dataview from './Dataview.svelte';
     }
     return outputMapping;
   }
+
   function compute_input_multiplies_with_weight(hoverH, hoverW, 
                                                 padded_input_size, weight_dims, outputMappings) {
     
@@ -47,12 +53,37 @@ import Dataview from './Dataview.svelte';
     }
     return input_multiplies_with_weight;
   }
+
+  function getMatrixSliceFromInputHighlights(matrix, highlights) {
+    var indices = highlights.reduce((total, value, index) => {
+    if (value != undefined) total.push(index);
+      return total;
+    }, []);
+    return matrixSlice(matrix, Math.floor(indices[0] / matrix.length), Math.floor(indices[0] / matrix.length) + kernel.length, indices[0] % matrix.length, indices[0] % matrix.length + kernel.length);
+  }
+
+  function getMatrixSliceFromOutputHighlights(matrix, highlights) {
+    var indices = highlights.reduce((total, value, index) => {
+    if (value != false) total.push(index);
+      return total;
+    }, []);
+    return matrixSlice(matrix, Math.floor(indices[0] / matrix.length), Math.floor(indices[0] / matrix.length) + 1, indices[0] % matrix.length, indices[0] % matrix.length + 1);
+  }
+
+  function getVisualizationSizeConstraint(image) {
+    return Math.floor(500 / image.length) > 50 ? 50 : Math.floor(500 / image.length)
+  }
+
+  let constraint;
+
   function gridData(image) {
+    // Constrain grids based on input image size.
+    constraint = getVisualizationSizeConstraint(image);
     var data = new Array();
     var xpos = 1;
     var ypos = 1;
-    var width = 50;
-    var height = 50;
+    var width = constraint;
+    var height = constraint;
     for (var row = 0; row < image.length; row++) {
       data.push( new Array() );
       for (var column = 0; column < image[0].length; column++) {
@@ -72,14 +103,19 @@ import Dataview from './Dataview.svelte';
     }
     return data;
   }
+
+  let testInputMatrixSlice = [];
+  let testOutputMatrixSlice = [];
+
   let inputHighlights = [];
   let outputHighlights = array1d(output.length * output.length, (i) => true);
-  var interval;
+  let interval;
   $ : {
     let inputHighlights = [];
     let outputHighlights = array1d(output.length * output.length, (i) => true);
-    var interval;
+    let interval;
   }
+
   function startConvolution(stride) {
     var counter = 0;
     let outputMappings = generateOutputMappings(stride);
@@ -94,19 +130,23 @@ import Dataview from './Dataview.svelte';
       const animatedW = flat_animated % output.length;
       outputHighlights[animatedH * output.length + animatedW] = true;
       inputHighlights = compute_input_multiplies_with_weight(animatedH, animatedW, padded_input_size, kernel.length, outputMappings)
+      const inputMatrixSlice = getMatrixSliceFromInputHighlights(image, inputHighlights);
+      testInputMatrixSlice = gridData(inputMatrixSlice);
+      const outputMatrixSlice = getMatrixSliceFromOutputHighlights(output, outputHighlights);
+      testOutputMatrixSlice = gridData(outputMatrixSlice);
       counter++;
-    
     }, 1000)
   }
+
   startConvolution(stride);
-  var test_image = gridData(image)
-  var test_output = gridData(output)
-  var test_kernel = gridData(kernel)
+  let testImage = gridData(image)
+  let testOutput = gridData(output)
+  let testKernel = gridData(kernel)
   $ : {
     startConvolution(stride);
-    test_image = gridData(image)
-    test_output = gridData(output)
-    test_kernel = gridData(kernel)
+    testImage = gridData(image)
+    testOutput = gridData(output)
+    testKernel = gridData(kernel)
   }
 </script>
 
@@ -116,17 +156,25 @@ import Dataview from './Dataview.svelte';
   <header>
     Input
   </header>
-  <Dataview data={test_image} highlights={inputHighlights} isConvolve={true}/>  
+  <Dataview data={testImage} highlights={inputHighlights} isKernelMath={false} constraint={getVisualizationSizeConstraint(image)}/>  
 </div>
 <div class="column has-text-centered">
   <header>
     Kernel
   </header>
-  <Dataview data={test_kernel} highlights={outputHighlights} isConvolve={false}/>  
+  <Dataview data={testKernel} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)}/>
+  <body>
+    *
+  </body>  
+  <Dataview data={testInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)}/>
+  <body>
+    =
+  </body> 
+  <Dataview data={testOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)}/>
 </div>
 <div class="column has-text-centered">
   <header>
     Output
   </header>
-  <Dataview data={test_output} highlights={outputHighlights} isConvolve={true}/>
+  <Dataview data={testOutput} highlights={outputHighlights} isKernelMath={false} constraint={getVisualizationSizeConstraint(output)}/>
 </div>
