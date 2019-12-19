@@ -9,6 +9,7 @@
   let cnnLayerRanges = {};
   let scaleLevelSet = new Set(['local', 'module', 'global']);
   let selectedScaleLevel = 'local';
+  let previousSelectedScaleLevel = selectedScaleLevel;
   let svg = undefined;
   let detailedMode = false;
   let nodeCoordinate = [];
@@ -288,9 +289,10 @@
     return linkData;
   }
 
-  // Opens low-level convolution animation when a conv node is clicked.
   const nodeClickHandler = (d, i) => {
+    // Opens low-level convolution animation when a conv node is clicked.
     if (d.type === 'conv') {
+      /*
       var data = new Array();
       for (let j = 0; j < d.inputLinks.length; j++) {
         data.push(new Array());
@@ -301,6 +303,16 @@
         })
       }
       nodeData = data[i];
+      */
+    }
+
+    // Enter the second view (layer-view) when user clicks a conv node
+    if (d.type === 'conv') {
+      if (d.layerName === 'conv_1_1') {
+        console.log(1);
+        // Compute the target location
+
+      }
     }
   }
 
@@ -419,7 +431,8 @@
       let range = cnnLayerRanges.local[start];
 
       let moduleLegendScale = d3.scaleLinear()
-        .range([0, 5 * nodeLength + 4 * hSpaceAroundGap])
+        .range([0, 5 * nodeLength + 3 * hSpaceAroundGap +
+          1 * hSpaceAroundGap * gapRatio])
         .domain([-range, range]);
 
       let moduleLegendAxis = d3.axisBottom()
@@ -434,7 +447,8 @@
         .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
       moduleLegend.append('rect')
-        .attr('width', 5 * nodeLength + 4 * hSpaceAroundGap)
+        .attr('width', 5 * nodeLength + 3 * hSpaceAroundGap +
+          1 * hSpaceAroundGap * gapRatio)
         .attr('height', legendHeight)
         .style('fill', 'url(#convGradient)');
       
@@ -448,7 +462,8 @@
     let range = cnnLayerRanges.global[start];
 
     let globalLegendScale = d3.scaleLinear()
-      .range([0, 10 * nodeLength + 9 * hSpaceAroundGap])
+      .range([0, 10 * nodeLength + 6 * hSpaceAroundGap +
+        3 * hSpaceAroundGap * gapRatio])
       .domain([-range, range]);
 
     let globalLegendAxis = d3.axisBottom()
@@ -463,7 +478,8 @@
       .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
     globalLegend.append('rect')
-      .attr('width', 10 * nodeLength + 9 * hSpaceAroundGap)
+      .attr('width', 10 * nodeLength + 6 * hSpaceAroundGap +
+        3 * hSpaceAroundGap * gapRatio)
       .attr('height', legendHeight)
       .style('fill', 'url(#convGradient)');
     
@@ -698,8 +714,6 @@
     let source = nodeCoordinate[0][0];
     let target = nodeCoordinate[1][0];
     let linkData = getLinkData(cnn, nodeCoordinate);
-
-    console.log(linkData);
 
     let edgeGroup = cnnGroup.append('g')
       .attr('class', 'edge-group');
