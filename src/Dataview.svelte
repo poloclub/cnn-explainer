@@ -11,11 +11,11 @@
   const textConstraintDivisor = 2.6;
   const standardCellColor = "ddd";
 
-  beforeUpdate(() => {
-    d3.selectAll("#grid > *").remove();
-  });
+  let oldHighlight = highlights;
+  let oldData = data;
 
-  afterUpdate(() => {
+  const redraw = () => {
+    d3.select(grid_final).selectAll("#grid > *").remove();
     const constrainedSvgSize = data.length * constraint + 2;
     var grid = d3.select(grid_final).select("#grid")
       .attr("width", constrainedSvgSize + "px")
@@ -38,7 +38,6 @@
       .style("opacity", 0.5)
       .style("fill", function(d) { return isKernelMath || (highlights.length && highlights[d.row * data.length + d.col]) ? d3.interpolateGnBu(d.text) : standardCellColor; })
       .style("stroke", "#222")
-      // .on('click', d3.select(this).style("fill", "#ff0000"));
     var text = row.selectAll(".text")
       .data(function(d) { return d; })
       .enter().append("text")
@@ -47,6 +46,26 @@
       .attr("x", function(d) { return d.x; })
       .attr("y", function(d) { return d.y + d.width; })
       .text(function(d) { return d.text; })
+  }
+
+  afterUpdate(() => {
+    
+    if (data != oldData) {
+      redraw();
+      oldData = data;
+    }    
+
+    if (highlights != oldHighlight) {
+      var grid = d3.select(grid_final).select('#grid').select("svg")
+      grid.selectAll(".square")
+        .style("fill", (d) => isKernelMath || (highlights.length && highlights[d.row * data.length + d.col]) ? d3.interpolateGnBu(d.text) : standardCellColor )
+      oldHighlight = highlights;
+    }
+
+  });
+
+  onMount(() => {
+    redraw();
   });
 
 </script>
