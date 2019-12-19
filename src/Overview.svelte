@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { loadTrainedModel, constructCNN } from './cnn-tf.js';
+  import { singleConv, init2DArray, matrixAdd } from './cnn.js';
   import { cnnStore } from './stores.js';
   import ConvolutionView from './Convolutionview.svelte';
 
@@ -34,6 +35,9 @@
   let vSpaceAroundGap = undefined;
   let selectedNode = {layerName: '', index: -1, data: null};
   let svgPaddings = {top: 20, bottom: 30};
+
+  // Wait to load
+  let cnn = undefined;
 
   let layerColorScales = {
     input: [d3.interpolateGreys, d3.interpolateGreys, d3.interpolateGreys],
@@ -256,7 +260,7 @@
     }
   }
 
-  const getLinkData = (cnn, nodeCoordinate) => {
+  const getLinkData = (nodeCoordinate) => {
     let linkData = [];
     // Create links backward (starting for the first conv layer)
     for (let l = 1; l < cnn.length; l++) {
@@ -348,6 +352,73 @@
     })
   }
 
+  const drawIntermidiateCanvas = (context, range, colorScale, length,
+    dataMatrix) => {
+    // Set up a second convas in order to resize image
+    let imageLength = length;
+    let bufferCanvas = document.createElement("canvas");
+    let bufferContext = bufferCanvas.getContext("2d");
+    bufferCanvas.width = imageLength;
+    bufferCanvas.height = imageLength;
+
+    // Fill image pixel array
+    let imageSingle = bufferContext.getImageData(0, 0, imageLength, imageLength);
+    let imageSingleArray = imageSingle.data;
+
+    for (let i = 0; i < imageSingleArray.length; i+=4) {
+      let pixeIndex = Math.floor(i / 4);
+      let row = Math.floor(pixeIndex / imageLength);
+      let column = pixeIndex % imageLength;
+      let color = d3.rgb(colorScale((dataMatrix[row][column] + range / 2)
+        / range));
+
+      imageSingleArray[i] = color.r;
+      imageSingleArray[i + 1] = color.g;
+      imageSingleArray[i + 2] = color.b;
+      imageSingleArray[i + 3] = 255;
+    }
+
+    // Use drawImage to resize the original pixel array, and put the new image
+    // (canvas) into corresponding canvas
+    bufferContext.putImageData(imageSingle, 0, 0);
+    context.drawImage(bufferCanvas, 0, 0, imageLength, imageLength,
+      0, 0, nodeLength, nodeLength);
+  }
+
+  const createIntermediateNode = (groupLayer, x, y) => {
+    let newNode = groupLayer.append('g')
+      .attr('class', 'intermediate-node')
+    
+    let canvas = newNode.append('foreignObject')
+      .attr('width', nodeLength)
+      .attr('height', nodeLength)
+      .attr('x', x)
+      .attr('y', y)
+      .append('xhtml:body')
+      .style('margin', 0)
+      .style('padding', 0)
+      .style('background-color', 'none')
+      .style('width', '100%')
+      .style('height', '100%')
+      .append('canvas')
+      .attr('class', 'node-canvas')
+      .attr('width', nodeLength)
+      .attr('height', nodeLength);
+
+    // Add a rectangle to show the border
+    newNode.append('rect')
+      .attr('class', 'bounding')
+      .attr('width', nodeLength)
+      .attr('height', nodeLength)
+      .attr('x', x)
+      .attr('y', y)
+      .style('fill', 'none')
+      .style('stroke', 'gray')
+      .style('stroke-width', 1);
+    
+    return newNode;
+  }
+
   const nodeClickHandler = (d, i, g) => {
     // Opens low-level convolution animation when a conv node is clicked.
     if (d.type === 'conv') {
@@ -392,8 +463,9 @@
       if (d.layerName === 'conv_1_1') {
         // Compute the target location
         let curLayerIndex = layerIndexDict[d.layerName];
-        let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 2 * nodeLength +
+        let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 3 * nodeLength +
           2 * hSpaceAroundGap * gapRatio;
+        let intermediateGap = 2 * hSpaceAroundGap * gapRatio / 3;
 
         // Move the selected layer
         moveLayerX(curLayerIndex, targetX, 0.15, i);
@@ -432,78 +504,113 @@
           .ease(d3.easeCubicInOut)
           .style('opacity', 1);
         
-
         // Add the intermediate layer
         let intermediateLayer = svg.select('.cnn-group')
           .append('g')
           .attr('class', 'intermediate-layer')
           .style('opacity', 0);
 
-        let intermediateX = targetX - hSpaceAroundGap * gapRatio - nodeLength;
+        let intermediateX1 = nodeCoordinate[curLayerIndex - 1][0].x +
+          nodeLength + intermediateGap;
+        let intermediateX2 = intermediateX1 + nodeLength + intermediateGap;
+
+        let range = cnnLayerRanges[selectedScaleLevel][curLayerIndex];
+        let colorScale = layerColorScales[d.type];
         
-        // Copy the previsious layer
+        // Copy the previsious layer to construct foreignObject placeholder
         // Also add edges from/to the intermediate layer in this loop
         let linkData = [];
-        nodeCoordinate[curLayerIndex - 1].forEach((n, ni) => {
-          let newNode = intermediateLayer.append('g')
-            .attr('class', 'intermediate-node')
-          
-          newNode.append('foreignObject')
-            .attr('width', nodeLength)
-            .attr('height', nodeLength)
-            .attr('x', intermediateX)
-            .attr('y', n.y)
-            .append('xhtml:body')
-            .style('margin', 0)
-            .style('padding', 0)
-            .style('background-color', 'none')
-            .style('width', '100%')
-            .style('height', '100%')
-            .append('canvas')
-            .attr('class', 'node-canvas')
-            .attr('width', nodeLength)
-            .attr('height', nodeLength);
-          
-          // Add a rectangle to show the border
-          newNode.append('rect')
-            .attr('class', 'bounding')
-            .attr('width', nodeLength)
-            .attr('height', nodeLength)
-            .attr('x', intermediateX)
-            .attr('y', n.y)
-            .style('fill', 'none')
-            .style('stroke', 'gray')
-            .style('stroke-width', 1);          
 
-          // Input -> intermediate
+        // Accumulate the intermediate sum
+        let itnermediateSumMatrix = init2DArray(d.output.length,
+          d.output.length, 0);
+
+        // First intermediate layer
+        nodeCoordinate[curLayerIndex - 1].forEach((n, ni) => {
+
+          // Compute the intermediate value
+          let inputMatrix = cnn[curLayerIndex - 1][ni].output;
+          let kernelMatrix = cnn[curLayerIndex][i].inputLinks[ni].weight;
+          let interMatrix = singleConv(inputMatrix, kernelMatrix);
+
+          // Update the intermediate sum
+          itnermediateSumMatrix = matrixAdd(itnermediateSumMatrix, interMatrix);
+
+          // Layout the canvas and rect
+          let newNode = createIntermediateNode(intermediateLayer, intermediateX1, n.y);
+          
+          // Draw the canvas
+          let context = newNode.select('canvas').node().getContext('2d');
+          drawIntermidiateCanvas(context, range, colorScale, d.output.length,
+            interMatrix);      
+
+          // Edge: input -> intermediate1
           linkData.push({
             source: getOutputKnot(n),
-            target: getInputKnot({x: intermediateX, y: n.y}),
-            name: `input-${ni}-inter-${ni}`
+            target: getInputKnot({x: intermediateX1, y: n.y}),
+            name: `input-${ni}-inter1-${ni}`
           });
 
-          // Intermediate -> output
+          // Edge: intermediate1 -> intermediate2-1
           linkData.push({
-            source: getOutputKnot({x: intermediateX, y: n.y}),
-            target: getInputKnot({x: targetX,
+            source: getOutputKnot({x: intermediateX1, y: n.y}),
+            target: getInputKnot({x: intermediateX2,
               y: nodeCoordinate[curLayerIndex][i].y}),
-            name: `inter-${ni}-output-${i}`
+            name: `inter1-${ni}-inter2-1`
           });
         });
 
+        // Second intermediate layer (first node - sum)
+        let newNode = createIntermediateNode(intermediateLayer, intermediateX2,
+          nodeCoordinate[curLayerIndex][i].y);
+
+        linkData.push({
+          source: getOutputKnot({x: intermediateX2,
+            y: nodeCoordinate[curLayerIndex][i].y}),
+          target: getInputKnot({x: targetX,
+            y: nodeCoordinate[curLayerIndex][i].y}),
+          name: `inter2-1-output`
+        });
+
+        // Draw the canvas
+        let context = newNode.select('canvas').node().getContext('2d');
+        drawIntermidiateCanvas(context, range, colorScale, d.output.length,
+          itnermediateSumMatrix);
+        
+        // Second intermediate layer (second node - bias)
+        newNode = createIntermediateNode(intermediateLayer, intermediateX2,
+          nodeCoordinate[curLayerIndex][i].y + vSpaceAroundGap + nodeLength);
+        
+        // Rrepresent bias number as a matrix
+        let biasMatrix = init2DArray(d.output.length, d.output.length, d.bias)
+
+        // Draw the canvas
+        context = newNode.select('canvas').node().getContext('2d');
+        drawIntermidiateCanvas(context, range, colorScale, d.output.length,
+          biasMatrix);
+
+        linkData.push({
+          source: getOutputKnot({x: intermediateX2,
+            y: nodeCoordinate[curLayerIndex][i].y + vSpaceAroundGap + nodeLength}),
+          target: getInputKnot({x: targetX,
+            y: nodeCoordinate[curLayerIndex][i].y}),
+          name: `inter2-1-output`
+        });
+        
+        // Output -> next layer
         linkData.push({
           source: getOutputKnot({x: targetX,
             y: nodeCoordinate[curLayerIndex][i].y}),
           target: getInputKnot({x: rightStart,
             y: nodeCoordinate[curLayerIndex][i].y}),
           name: `output-next`
-        })
+        });
 
         // Draw the layer label
         intermediateLayer.append('g')
           .attr('class', 'layer-label')
           .attr('transform', (d, i) => {
-            let x = intermediateX + nodeLength / 2;
+            let x = intermediateX1 + nodeLength + intermediateGap / 2;
             let y = (svgPaddings.top + vSpaceAroundGap) / 2;
             return `translate(${x}, ${y})`;
           })
@@ -768,7 +875,7 @@
       .call(inputLegendAxis);
   }
 
-  const drawCNN = (width, height, cnn, cnnGroup) => {
+  const drawCNN = (width, height, cnnGroup) => {
     // Draw the CNN
     // There are 8 short gaps and 5 long gaps
     hSpaceAroundGap = (width - nodeLength * numLayers) / (8 + 5 * gapRatio);
@@ -942,7 +1049,7 @@
       .x(d => d.x)
       .y(d => d.y);
     
-    let linkData = getLinkData(cnn, nodeCoordinate);
+    let linkData = getLinkData(nodeCoordinate);
 
     let edgeGroup = cnnGroup.append('g')
       .attr('class', 'edge-group');
@@ -1132,7 +1239,7 @@
     
     console.time('Construct cnn');
     model = await loadTrainedModel('/assets/data/model.json');
-    let cnn = await constructCNN(`/assets/img/${selectedImage}`, model);
+    cnn = await constructCNN(`/assets/img/${selectedImage}`, model);
     console.timeEnd('Construct cnn');
     cnnStore.set(cnn);
 
@@ -1144,7 +1251,7 @@
     updateCNNLayerRanges(cnn);
 
     // Create and draw the CNN view
-    drawCNN(width, height, cnn, cnnGroup);
+    drawCNN(width, height, cnnGroup);
   })
 
   const detailedButtonClicked = () => {
