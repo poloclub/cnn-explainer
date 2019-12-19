@@ -161,7 +161,7 @@ export const constructNN = (inputImageFile) => {
  * @param {int} width Width (number of columns) for the matrix
  * @param {int} fill Default value to fill this matrix
  */
-const init2DArray = (height, width, fill) => {
+export const init2DArray = (height, width, fill) => {
   let array = [];
   // Itereate through rows
   for (let r = 0; r < height; r++) {
@@ -195,7 +195,7 @@ const matrixDot = (mat1, mat2) => {
  * @param {[[number]]} mat1 Matrix 1
  * @param {[[number]]} mat2 Matrix 2
  */
-const matrixAdd = (mat1, mat2) => {
+export const matrixAdd = (mat1, mat2) => {
   console.assert(mat1.length === mat2.length, 'Dimension not matching');
   console.assert(mat1[0].length === mat2[0].length, 'Dimension not matching');
 
