@@ -22,6 +22,7 @@
   let edgeInitColor = 'rgb(230, 230, 230)';
   let edgeHoverColor = 'rgb(130, 130, 130)';
   let edgeHoverOuting = false;
+  let edgeStrokeWidth = 0.7;
   let model = undefined;
   // gapRatio = long gap / short gap
   let gapRatio = 4;
@@ -152,7 +153,6 @@
   }
 
   const drawOutput = (d, i, g) => {
-    // console.log(d);
     let canvas = g[i];
     let range = cnnLayerRanges[selectedScaleLevel][layerIndexDict[d.layerName]];
     let context = canvas.getContext('2d');
@@ -305,7 +305,7 @@
   }
 
   const nodeMouseoverHandler = (d, i, g) => {
-    console.log(g[i]);
+    // Highlight the edges
     let layerIndex = layerIndexDict[d.layerName];
     let nodeIndex = d.index;
     let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
@@ -313,13 +313,27 @@
     edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
       .raise()
       .transition()
-      .duration(500)
+      .ease(d3.easeCubicInOut)
+      .duration(400)
       .style('stroke', edgeHoverColor)
       .style('stroke-width', '1')
       .style('opacity', 1);
+    
+    // Highlight its border
+    d3.select(g[i]).select('rect.bounding')
+      .classed('hidden', false);
+    
+    // Highlight source's border
+    d.inputLinks.forEach(link => {
+      let layerIndex = layerIndexDict[link.source.layerName];
+      let nodeIndex = link.source.index;
+      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+        .select('rect.bounding')
+        .classed('hidden', false);
+    })
   }
 
-  const nodeMouseoutHandler = (d, i) => {
+  const nodeMouseoutHandler = (d, i, g) => {
     let layerIndex = layerIndexDict[d.layerName];
     let nodeIndex = d.index;
     let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
@@ -329,8 +343,18 @@
       .ease(d3.easeCubicOut)
       .duration(200)
       .style('stroke', edgeInitColor)
-      .style('stroke-width', '0.5')
+      .style('stroke-width', edgeStrokeWidth)
       .style('opacity', edgeOpacity);
+    
+    d3.select(g[i]).select('rect').classed('hidden', true);
+
+    d.inputLinks.forEach(link => {
+      let layerIndex = layerIndexDict[link.source.layerName];
+      let nodeIndex = link.source.index;
+      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+        .select('rect.bounding')
+        .classed('hidden', true);
+    })
   }
 
   const drawLegends = (legends, legendHeight) => {
@@ -572,13 +596,14 @@
         
         // Add a rectangle to show the border
         nodeGroups.append('rect')
+          .attr('class', 'bounding')
           .attr('width', nodeLength)
           .attr('height', nodeLength)
           .attr('x', left)
           .attr('y', (d, i) => nodeCoordinate[l][i].y)
           .style('fill', 'none')
           .style('stroke', 'gray')
-          .style('stroke-width', 1.5)
+          .style('stroke-width', 1)
           .classed('hidden', true);
       } else {
         nodeGroups.append('rect')
@@ -689,7 +714,7 @@
         `edge-${d.targetLayerIndex}-${d.targetNodeIndex}-${d.sourceNodeIndex}`)
       .attr('d', d => linkGen({source: d.source, target: d.target}))
       .style('fill', 'none')
-      .style('stroke-width', '0.7')
+      .style('stroke-width', edgeStrokeWidth)
       .style('opacity', edgeOpacity)
       .style('stroke', edgeInitColor);
   }
@@ -1038,6 +1063,10 @@
   :global(.hidden) {
     opacity: 0;
     pointer-events: none;
+  }
+
+  :global(.bounding) {
+    transition: opacity 400ms ease-in-out;
   }
 
 </style>
