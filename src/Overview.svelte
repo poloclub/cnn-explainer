@@ -24,13 +24,15 @@
   let edgeHoverColor = 'rgb(130, 130, 130)';
   let edgeHoverOuting = false;
   let edgeStrokeWidth = 0.7;
+  let width = undefined;
+  let height = undefined;
   let model = undefined;
   // gapRatio = long gap / short gap
   let gapRatio = 4;
   // hSpaceAroundGap is the short gap
   let hSpaceAroundGap = undefined;
   let vSpaceAroundGap = undefined;
-
+  let selectedNode = {layerName: '', index: -1, data: null};
   let svgPaddings = {top: 20, bottom: 30};
 
   let layerColorScales = {
@@ -289,7 +291,51 @@
     return linkData;
   }
 
-  const nodeClickHandler = (d, i) => {
+  const moveLayerX = (layerIndex, targetX, opacity, specialIndex) => {
+    // Move the selected layer
+    let curLayer = svg.select(`g#cnn-layer-group-${layerIndex}`);
+    curLayer.selectAll('g.node-group').each((d, i, g) => {
+      d3.select(g[i])
+        .style('cursor', 'default')
+        .style('pointer-events', 'none')
+        .select('foreignObject')
+        .transition('move')
+        .ease(d3.easeCubicInOut)
+        .duration(500)
+        .attr('x', targetX);
+      
+      d3.select(g[i])
+        .select('rect.bounding')
+        .transition('move')
+        .ease(d3.easeCubicInOut)
+        .duration(500)
+        .attr('x', targetX);
+      
+      if (opacity !== undefined && i !== specialIndex) {
+        d3.select(g[i])
+          .select('foreignObject')
+          .style('opacity', opacity);
+      }
+    });
+    
+    // Also move the layer labels
+    svg.select(`g#layer-label-${layerIndex}`)
+      .transition('move')
+      .ease(d3.easeCubicInOut)
+      .duration(500)
+      .attr('transform', d => {
+        let x = targetX + nodeLength / 2;
+        let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+        return `translate(${x}, ${y})`;
+      });
+    
+    if (opacity !== undefined) {
+      svg.select(`g#layer-label-${layerIndex}`)
+        .style('opacity', opacity);
+    }
+  }
+
+  const nodeClickHandler = (d, i, g) => {
     // Opens low-level convolution animation when a conv node is clicked.
     if (d.type === 'conv') {
       /*
@@ -306,12 +352,94 @@
       */
     }
 
+    // If clicked a new node, deselect the old clicked node
+    if ((selectedNode.layerName !== d.layerName ||
+      selectedNode.index !== d.index) && selectedNode.index !== -1) {
+      let layerIndex = layerIndexDict[selectedNode.layerName];
+      let nodeIndex = selectedNode.index;
+      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+        .select('rect')
+        .classed('hidden', true);
+
+      selectedNode.data.inputLinks.forEach(link => {
+        let layerIndex = layerIndexDict[link.source.layerName];
+        let nodeIndex = link.source.index;
+        svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+          .select('rect.bounding')
+          .classed('hidden', true);
+      })
+    }
+    // Record the current clicked node
+    selectedNode.layerName = d.layerName;
+    selectedNode.index = d.index;
+    selectedNode.data = d;
+
     // Enter the second view (layer-view) when user clicks a conv node
     if (d.type === 'conv') {
       if (d.layerName === 'conv_1_1') {
-        console.log(1);
         // Compute the target location
+        let curLayerIndex = layerIndexDict[d.layerName];
+        let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 2 * nodeLength +
+          2 * hSpaceAroundGap * gapRatio;
 
+        // Move the selected layer
+        moveLayerX(curLayerIndex, targetX, 0.15, i);
+
+        // Hide the edges
+        svg.select('g.edge-group').classed('hidden', true);
+
+        // Compute the gap in the right shrink region
+        let rightStart = targetX + nodeLength + hSpaceAroundGap * gapRatio;
+        let rightGap = (width - rightStart - 10 * nodeLength) / 10;
+
+        // Move the right layers
+        for (let i = curLayerIndex + 1; i < numLayers; i++) {
+          let curX = rightStart + (i - (curLayerIndex + 1)) * (nodeLength + rightGap);
+          moveLayerX(i, curX);
+        }
+
+        // Add an overlay
+        // Create a gradient
+        let defs = svg.append("defs");
+        let gradient = defs.append("linearGradient")
+          .attr("id", "overlay-gradient")
+          .attr("x1", "0%")
+          .attr("x2", "100%")
+          .attr("y1", "100%")
+          .attr("y2", "100%");
+
+        gradient.append("stop")
+          .attr('class', 'start')
+          .attr("offset", "0%")
+          .attr("stop-color", "rgb(250, 250, 250)")
+          .attr("stop-opacity", 0.85);
+
+        gradient.append("stop")
+          .attr('class', 'start')
+          .attr("offset", "50%")
+          .attr("stop-color", "rgb(250, 250, 250)")
+          .attr("stop-opacity", 0.95);
+
+        gradient.append("stop")
+          .attr('class', 'end')
+          .attr("offset", "100%")
+          .attr("stop-color", "rgb(250, 250, 250)")
+          .attr("stop-opacity", 1);
+
+        let overlayRect = svg.append('rect')
+          .attr('class', 'overlay')
+          .style('fill', 'url(#overlay-gradient)')
+          .style('stroke', 'none')
+          .attr('width', width - rightStart)
+          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
+          .attr('x', rightStart)
+          .attr('y', 0)
+          .style('opacity', 0);
+        
+        overlayRect.transition('move')
+          .duration(800)
+          .ease(d3.easeCubicInOut)
+          .style('opacity', 1);
       }
     }
   }
@@ -358,15 +486,19 @@
       .style('stroke-width', edgeStrokeWidth)
       .style('opacity', edgeOpacity);
     
-    d3.select(g[i]).select('rect').classed('hidden', true);
+    // Keep the highlight if user has clicked
+    if (d.layerName !== selectedNode.layerName || d.index !== selectedNode.index){
+      d3.select(g[i]).select('rect').classed('hidden', true);
 
-    d.inputLinks.forEach(link => {
-      let layerIndex = layerIndexDict[link.source.layerName];
-      let nodeIndex = link.source.index;
-      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
-        .select('rect.bounding')
-        .classed('hidden', true);
-    })
+      d.inputLinks.forEach(link => {
+        let layerIndex = layerIndexDict[link.source.layerName];
+        let nodeIndex = link.source.index;
+        svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+          .select('rect.bounding')
+          .classed('hidden', true);
+      })
+    }
+
   }
 
   const drawLegends = (legends, legendHeight) => {
@@ -677,6 +809,7 @@
       .enter()
       .append('g')
       .attr('class', 'layer-label')
+      .attr('id', (d, i) => `layer-label-${i}`)
       .classed('hidden', detailedMode)
       .attr('transform', (d, i) => {
         let x = nodeCoordinate[i][0].x + nodeLength / 2;
@@ -895,8 +1028,8 @@
     // Create SVG
     svg = d3.select(overviewComponent)
       .select('#cnn-svg');
-    let width = Number(svg.style('width').replace('px', ''));
-    let height = Number(svg.style('height').replace('px', '')) -
+    width = Number(svg.style('width').replace('px', ''));
+    height = Number(svg.style('height').replace('px', '')) -
       svgPaddings.top - svgPaddings.bottom;
     let cnnGroup = svg.append('g')
       .attr('class', 'cnn-group');
