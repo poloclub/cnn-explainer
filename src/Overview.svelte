@@ -328,11 +328,24 @@
         let y = (svgPaddings.top + vSpaceAroundGap) / 2;
         return `translate(${x}, ${y})`;
       });
+  }
+
+  const addOverlayGradient = (gradientID, stops) => {
+    // Create a gradient
+    let defs = svg.append("defs");
+    let gradient = defs.append("linearGradient")
+      .attr("id", "overlay-gradient")
+      .attr("x1", "0%")
+      .attr("x2", "100%")
+      .attr("y1", "100%")
+      .attr("y2", "100%");
     
-    if (opacity !== undefined) {
-      svg.select(`g#layer-label-${layerIndex}`)
-        .style('opacity', opacity);
-    }
+    stops.forEach(s => {
+      gradient.append('stop')
+        .attr('offset', s.offset)
+        .attr('stop-color', s.color)
+        .attr('stop-opacity', s.opacity);
+    })
   }
 
   const nodeClickHandler = (d, i, g) => {
@@ -399,32 +412,10 @@
         }
 
         // Add an overlay
-        // Create a gradient
-        let defs = svg.append("defs");
-        let gradient = defs.append("linearGradient")
-          .attr("id", "overlay-gradient")
-          .attr("x1", "0%")
-          .attr("x2", "100%")
-          .attr("y1", "100%")
-          .attr("y2", "100%");
-
-        gradient.append("stop")
-          .attr('class', 'start')
-          .attr("offset", "0%")
-          .attr("stop-color", "rgb(250, 250, 250)")
-          .attr("stop-opacity", 0.85);
-
-        gradient.append("stop")
-          .attr('class', 'start')
-          .attr("offset", "50%")
-          .attr("stop-color", "rgb(250, 250, 250)")
-          .attr("stop-opacity", 0.95);
-
-        gradient.append("stop")
-          .attr('class', 'end')
-          .attr("offset", "100%")
-          .attr("stop-color", "rgb(250, 250, 250)")
-          .attr("stop-opacity", 1);
+        let stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 0.85},
+          {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
+          {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
+        addOverlayGradient('overlay-gradient', stops);
 
         let overlayRect = svg.append('rect')
           .attr('class', 'overlay')
@@ -438,6 +429,113 @@
         
         overlayRect.transition('move')
           .duration(800)
+          .ease(d3.easeCubicInOut)
+          .style('opacity', 1);
+        
+
+        // Add the intermediate layer
+        let intermediateLayer = svg.select('.cnn-group')
+          .append('g')
+          .attr('class', 'intermediate-layer')
+          .style('opacity', 0);
+
+        let intermediateX = targetX - hSpaceAroundGap * gapRatio - nodeLength;
+        
+        // Copy the previsious layer
+        // Also add edges from/to the intermediate layer in this loop
+        let linkData = [];
+        nodeCoordinate[curLayerIndex - 1].forEach((n, ni) => {
+          let newNode = intermediateLayer.append('g')
+            .attr('class', 'intermediate-node')
+          
+          newNode.append('foreignObject')
+            .attr('width', nodeLength)
+            .attr('height', nodeLength)
+            .attr('x', intermediateX)
+            .attr('y', n.y)
+            .append('xhtml:body')
+            .style('margin', 0)
+            .style('padding', 0)
+            .style('background-color', 'none')
+            .style('width', '100%')
+            .style('height', '100%')
+            .append('canvas')
+            .attr('class', 'node-canvas')
+            .attr('width', nodeLength)
+            .attr('height', nodeLength);
+          
+          // Add a rectangle to show the border
+          newNode.append('rect')
+            .attr('class', 'bounding')
+            .attr('width', nodeLength)
+            .attr('height', nodeLength)
+            .attr('x', intermediateX)
+            .attr('y', n.y)
+            .style('fill', 'none')
+            .style('stroke', 'gray')
+            .style('stroke-width', 1);          
+
+          // Input -> intermediate
+          linkData.push({
+            source: getOutputKnot(n),
+            target: getInputKnot({x: intermediateX, y: n.y}),
+            name: `input-${ni}-inter-${ni}`
+          });
+
+          // Intermediate -> output
+          linkData.push({
+            source: getOutputKnot({x: intermediateX, y: n.y}),
+            target: getInputKnot({x: targetX,
+              y: nodeCoordinate[curLayerIndex][i].y}),
+            name: `inter-${ni}-output-${i}`
+          });
+        });
+
+        linkData.push({
+          source: getOutputKnot({x: targetX,
+            y: nodeCoordinate[curLayerIndex][i].y}),
+          target: getInputKnot({x: rightStart,
+            y: nodeCoordinate[curLayerIndex][i].y}),
+          name: `output-next`
+        })
+
+        // Draw the layer label
+        intermediateLayer.append('g')
+          .attr('class', 'layer-label')
+          .attr('transform', (d, i) => {
+            let x = intermediateX + nodeLength / 2;
+            let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+            return `translate(${x}, ${y})`;
+          })
+          .append('text')
+          .style('dominant-baseline', 'middle')
+          .text('intermediate')
+
+        // Draw the edges
+        let linkGen = d3.linkHorizontal()
+          .x(d => d.x)
+          .y(d => d.y);
+        
+        let edgeGroup = intermediateLayer.append('g')
+          .attr('class', 'edge-group');
+        
+        edgeGroup.selectAll('path.edge')
+          .data(linkData)
+          .enter()
+          .append('path')
+          .attr('id', d => `edge-${d.name}`)
+          .attr('d', d => linkGen({source: d.source, target: d.target}))
+          .style('fill', 'none')
+          .style('stroke-width', 1)
+          .style('stroke', edgeHoverColor);
+        
+        edgeGroup.select('#edge-output-next')
+          .style('opacity', 0.1);
+        
+        // Show everything
+        intermediateLayer.transition()
+          .delay(500)
+          .duration(500)
           .ease(d3.easeCubicInOut)
           .style('opacity', 1);
       }
@@ -844,8 +942,6 @@
       .x(d => d.x)
       .y(d => d.y);
     
-    let source = nodeCoordinate[0][0];
-    let target = nodeCoordinate[1][0];
     let linkData = getLinkData(cnn, nodeCoordinate);
 
     let edgeGroup = cnnGroup.append('g')
