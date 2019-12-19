@@ -35,6 +35,7 @@
   let vSpaceAroundGap = undefined;
   let selectedNode = {layerName: '', index: -1, data: null};
   let svgPaddings = {top: 20, bottom: 30};
+  let isInLayerView = false;
 
   // Wait to load
   let cnn = undefined;
@@ -295,16 +296,25 @@
     return linkData;
   }
 
-  const moveLayerX = (layerIndex, targetX, opacity, specialIndex) => {
+  const moveLayerX = (arg) => {
+    let layerIndex = arg.layerIndex;
+    let targetX = arg.targetX;
+    let disable = arg.disable;
+    let delay = arg.delay;
+    let opacity = arg.opacity;
+    let specialIndex = arg.specialIndex;
+    let onEndFunc = arg.onEndFunc;
+
     // Move the selected layer
     let curLayer = svg.select(`g#cnn-layer-group-${layerIndex}`);
     curLayer.selectAll('g.node-group').each((d, i, g) => {
       d3.select(g[i])
-        .style('cursor', 'default')
-        .style('pointer-events', 'none')
+        .style('cursor', disable ? 'default' : 'pointer')
+        .style('pointer-events', disable ? 'none' : 'all')
         .select('foreignObject')
         .transition('move')
         .ease(d3.easeCubicInOut)
+        .delay(delay)
         .duration(500)
         .attr('x', targetX);
       
@@ -312,6 +322,7 @@
         .select('rect.bounding')
         .transition('move')
         .ease(d3.easeCubicInOut)
+        .delay(delay)
         .duration(500)
         .attr('x', targetX);
       
@@ -326,17 +337,21 @@
     svg.select(`g#layer-label-${layerIndex}`)
       .transition('move')
       .ease(d3.easeCubicInOut)
+      .delay(delay)
       .duration(500)
       .attr('transform', d => {
         let x = targetX + nodeLength / 2;
         let y = (svgPaddings.top + vSpaceAroundGap) / 2;
         return `translate(${x}, ${y})`;
-      });
+      })
+      .on('end', onEndFunc);
   }
 
   const addOverlayGradient = (gradientID, stops) => {
     // Create a gradient
-    let defs = svg.append("defs");
+    let defs = svg.append("defs")
+      .attr('class', 'overlay-gradient');
+
     let gradient = defs.append("linearGradient")
       .attr("id", "overlay-gradient")
       .attr("x1", "0%")
@@ -459,7 +474,8 @@
     selectedNode.data = d;
 
     // Enter the second view (layer-view) when user clicks a conv node
-    if (d.type === 'conv') {
+    if (d.type === 'conv' && !isInLayerView) {
+      isInLayerView = true;
       if (d.layerName === 'conv_1_1') {
         // Compute the target location
         let curLayerIndex = layerIndexDict[d.layerName];
@@ -468,7 +484,13 @@
         let intermediateGap = 2 * hSpaceAroundGap * gapRatio / 3;
 
         // Move the selected layer
-        moveLayerX(curLayerIndex, targetX, 0.15, i);
+        moveLayerX({layerIndex: curLayerIndex, targetX: targetX, disable: true,
+          delay: 0, opacity: 0.15, specialIndex: i});
+
+        // Keep the selected node clickable
+        d3.select(g[i])
+          .style('pointer-events', 'all')
+          .style('cursor', 'pointer');
 
         // Hide the edges
         svg.select('g.edge-group').classed('hidden', true);
@@ -480,7 +502,7 @@
         // Move the right layers
         for (let i = curLayerIndex + 1; i < numLayers; i++) {
           let curX = rightStart + (i - (curLayerIndex + 1)) * (nodeLength + rightGap);
-          moveLayerX(i, curX);
+          moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
         }
 
         // Add an overlay
@@ -578,8 +600,14 @@
           itnermediateSumMatrix);
         
         // Second intermediate layer (second node - bias)
+        // If the selected node is near bottom, draw the bias node above the
+        // summation node
+        let biasY = nodeCoordinate[curLayerIndex][i].y + vSpaceAroundGap + nodeLength;
+        if (i === 10 - 1) {
+          biasY = nodeCoordinate[curLayerIndex][i].y - (vSpaceAroundGap + nodeLength);
+        }
         newNode = createIntermediateNode(intermediateLayer, intermediateX2,
-          nodeCoordinate[curLayerIndex][i].y + vSpaceAroundGap + nodeLength);
+          biasY);
         
         // Rrepresent bias number as a matrix
         let biasMatrix = init2DArray(d.output.length, d.output.length, d.bias)
@@ -590,10 +618,8 @@
           biasMatrix);
 
         linkData.push({
-          source: getOutputKnot({x: intermediateX2,
-            y: nodeCoordinate[curLayerIndex][i].y + vSpaceAroundGap + nodeLength}),
-          target: getInputKnot({x: targetX,
-            y: nodeCoordinate[curLayerIndex][i].y}),
+          source: getOutputKnot({x: intermediateX2, y: biasY}),
+          target: getInputKnot({x: targetX, y: nodeCoordinate[curLayerIndex][i].y}),
           name: `inter2-1-output`
         });
         
@@ -646,6 +672,50 @@
           .ease(d3.easeCubicInOut)
           .style('opacity', 1);
       }
+    }
+
+    // Quit the layerview
+    else if (d.type === 'conv' && isInLayerView) {
+      isInLayerView = false;
+
+      // Also unclick the node
+      // Record the current clicked node
+      selectedNode.layerName = '';
+      selectedNode.index = -1;
+      selectedNode.data = null;
+
+      // Remove the intermediate layer
+      let intermediateLayer = svg.select('g.intermediate-layer');
+      intermediateLayer.transition('remove')
+        .duration(500)
+        .ease(d3.easeCubicInOut)
+        .style('opacity', 0)
+        .on('end', (d, i, g) => { d3.select(g[i]).remove()});
+      
+      // Remove the overlay rect
+      svg.select('rect.overlay')
+        .transition('remove')
+        .duration(500)
+        .ease(d3.easeCubicInOut)
+        .style('opacity', 0)
+        .on('end', (d, i, g) => {
+          d3.select(g[i]).remove();
+          svg.select('defs.overlay-gradient').remove();
+        });
+      
+      // Move all layers to their original place
+      for (let i = 0; i < numLayers - 1; i++) {
+        moveLayerX({layerIndex: i, targetX: nodeCoordinate[i][0].x,
+          disable:false, delay:500, opacity: 1});
+      }
+
+      moveLayerX({layerIndex: numLayers - 2,
+        targetX: nodeCoordinate[numLayers - 2][0].x, opacity: 1,
+        disable:false, delay:500, onEndFunc: () => {
+          // Show all edges on the last moving animation end
+          svg.select('g.edge-group').classed('hidden', false);
+        }});
+      
     }
   }
 
@@ -1415,7 +1485,7 @@
     pointer-events: none;
   }
 
-  :global(.bounding) {
+  :global(.bounding, .edge-group, foreignObject) {
     transition: opacity 400ms ease-in-out;
   }
 
