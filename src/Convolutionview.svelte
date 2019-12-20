@@ -17,8 +17,14 @@
       console.log("Cannot handle stride of " + stride);
     }
   }
+  
   function handleClickPause() {
     isPaused = !isPaused;
+    console.log(isPaused)
+  }
+
+  function handlePauseFromInteraction(event) {
+    isPaused = event.detail.text;
   }
 </script>
 
@@ -31,13 +37,13 @@
         </p>
         <p class="control">
           <button class="button is-success" on:click={handleClickPause}>
-            {isPaused ? 'Resume' : 'Pause'}
+            Toggle Movement
           </button>
         </p>
       </div>
     </div>
   </div>
   <div class="columns is-centered is-vcentered">
-    <ConvolutionAnimator kernel={kernel} image={input} output={outputFinal} stride={stride} dilation={dilation} isPaused={isPaused}/>
+    <ConvolutionAnimator on:message={handlePauseFromInteraction} kernel={kernel} image={input} output={outputFinal} stride={stride} dilation={dilation} isPaused={isPaused}/>
   </div>
 </div>

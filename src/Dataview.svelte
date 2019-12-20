@@ -3,16 +3,27 @@
   export let highlights;
   export let isKernelMath;
   export let constraint;
+  export let dataRange;
+
   import { onMount } from 'svelte';
   import { onDestroy } from 'svelte';
   import { beforeUpdate, afterUpdate } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
 
   let grid_final;
   const textConstraintDivisor = 2.6;
   const standardCellColor = "ddd";
+  const dispatch = createEventDispatcher();
 
   let oldHighlight = highlights;
   let oldData = data;
+
+  function getHighlightWindowSize() {
+    let count = highlights.reduce(function(n, val) {
+      return n + (val != undefined);
+    }, 0);
+    return Math.sqrt(count);
+  }
 
   const redraw = () => {
     d3.select(grid_final).selectAll("#grid > *").remove();
@@ -36,20 +47,39 @@
       .attr("width", function(d) { return d.width; })
       .attr("height", function(d) { return d.height; })
       .style("opacity", 0.5)
-      .style("fill", function(d) { return isKernelMath || (highlights.length && highlights[d.row * data.length + d.col]) ? d3.interpolateGnBu(d.text) : standardCellColor; })
-      .style("stroke", "#222")
-    var text = row.selectAll(".text")
-      .data(function(d) { return d; })
-      .enter().append("text")
-      .attr("class","text")
-      .style("font-size", Math.floor(constraint / textConstraintDivisor) + "px")
-      .attr("x", function(d) { return d.x; })
-      .attr("y", function(d) { return d.y + d.width; })
-      .text(function(d) { return d.text; })
+      .style("fill", function(d) { return d3.interpolateRdBu(((d.text + dataRange) / 2) / dataRange); })
+      .on('mouseover', function(d) {
+        // On mouseover on the input, pause conv visualization and allow interactivity with conv.
+        // Mouse position represents the top left corner of the convolving kernel.
+        // Conditionals cover hovering near the edges of the input.
+        let convIndex;
+        let highlightWindowSize = getHighlightWindowSize()
+        if (d.row > data.length - highlightWindowSize && d.col > data.length - highlightWindowSize) {
+          convIndex = (d.row - (d.row - (data.length - highlightWindowSize))) * (data.length - highlightWindowSize + 1) + d.col - (d.col - (data.length - highlightWindowSize));
+        } else if (d.row > data.length - highlightWindowSize) {
+          convIndex = (d.row - (d.row - (data.length - highlightWindowSize))) * (data.length - highlightWindowSize + 1) + d.col;
+        } else if (d.col > data.length - highlightWindowSize) {
+          convIndex = d.row * (data.length - highlightWindowSize + 1) + d.col - (d.col - (data.length - highlightWindowSize));
+        } else {
+          convIndex = d.row * (data.length - highlightWindowSize + 1) + d.col;
+        }
+        dispatch('message', {
+          text: convIndex
+        });
+      });
+    if (isKernelMath) {
+      var text = row.selectAll(".text")
+        .data(function(d) { return d; })
+        .enter().append("text")
+        .attr("class","text")
+        .style("font-size", Math.floor(constraint / textConstraintDivisor) + "px")
+        .attr("x", function(d) { return d.x; })
+        .attr("y", function(d) { return d.y + d.width; })
+        .text(function(d) { return d.text; })
+    }
   }
 
   afterUpdate(() => {
-    
     if (data != oldData) {
       redraw();
       oldData = data;
@@ -58,7 +88,7 @@
     if (highlights != oldHighlight) {
       var grid = d3.select(grid_final).select('#grid').select("svg")
       grid.selectAll(".square")
-        .style("fill", (d) => isKernelMath || (highlights.length && highlights[d.row * data.length + d.col]) ? d3.interpolateGnBu(d.text) : standardCellColor )
+        .style("stroke", (d) => isKernelMath || (highlights.length && highlights[d.row * data.length + d.col]) ? "black" : null )
       oldHighlight = highlights;
     }
 
