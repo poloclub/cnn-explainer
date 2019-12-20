@@ -754,12 +754,12 @@
 
       else if (d.layerName === 'conv_2_1') {
         let curLayerIndex = layerIndexDict[d.layerName];
-        let targetX = nodeCoordinate[curLayerIndex][0].x - (3 * nodeLength +
+        let leftX = nodeCoordinate[curLayerIndex][0].x - (3 * nodeLength +
           2 * hSpaceAroundGap * gapRatio);
         let intermediateGap = 2 * hSpaceAroundGap * gapRatio / 3;
 
         // Move the previous layer
-        moveLayerX({layerIndex: curLayerIndex - 1, targetX: targetX,
+        moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
           disable: true, delay: 0});
 
         moveLayerX({layerIndex: curLayerIndex,
@@ -770,7 +770,7 @@
         svg.select('g.edge-group').classed('hidden', true);
 
         // Compute the gap in the left shrink region
-        let leftEnd = targetX - hSpaceAroundGap;
+        let leftEnd = leftX - hSpaceAroundGap;
         let leftGap = (leftEnd - nodeCoordinate[0][0].x - 5 * nodeLength) / 5;
         let rightStart = nodeCoordinate[curLayerIndex][0].x +
           nodeLength + hSpaceAroundGap;
@@ -819,7 +819,78 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        drawIntermediateLayer(curLayerIndex, targetX,
+        drawIntermediateLayer(curLayerIndex, leftX,
+          nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
+      }
+      
+      else if (d.layerName === 'conv_2_2') {
+        let curLayerIndex = layerIndexDict[d.layerName];
+        let leftX = nodeCoordinate[curLayerIndex][0].x - (3 * nodeLength +
+          2 * hSpaceAroundGap * gapRatio);
+        let intermediateGap = 2 * hSpaceAroundGap * gapRatio / 3;
+
+        // Move the previous layer
+        moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
+          disable: true, delay: 0});
+
+        moveLayerX({layerIndex: curLayerIndex,
+          targetX: nodeCoordinate[curLayerIndex][0].x, disable: true,
+          delay: 0, opacity: 0.15, specialIndex: i});
+
+        // Hide the edges
+        svg.select('g.edge-group').classed('hidden', true);
+
+        // Compute the gap in the left shrink region
+        let leftEnd = leftX - hSpaceAroundGap;
+        let leftGap = (leftEnd - nodeCoordinate[0][0].x - 7 * nodeLength) / 7;
+        let rightStart = nodeCoordinate[curLayerIndex][0].x +
+          nodeLength + hSpaceAroundGap;
+
+        // Move the left layers
+        for (let i = 0; i < curLayerIndex - 1; i++) {
+          let curX = nodeCoordinate[0][0].x + i * (nodeLength + leftGap);
+          moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
+        }
+
+        // Add an overlay
+        let stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 1},
+          {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
+          {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 0.85}];
+        addOverlayGradient('overlay-gradient-left', stops);
+
+        stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 0.85},
+          {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
+          {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
+        addOverlayGradient('overlay-gradient-right', stops);
+
+        svg.append('rect')
+          .attr('class', 'overlay')
+          .style('fill', 'url(#overlay-gradient-left)')
+          .style('stroke', 'none')
+          .attr('width', leftEnd - nodeCoordinate[0][0].x)
+          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
+          .attr('x', nodeCoordinate[0][0].x)
+          .attr('y', 0)
+          .style('opacity', 0);
+        
+        svg.append('rect')
+          .attr('class', 'overlay')
+          .style('fill', 'url(#overlay-gradient-right)')
+          .style('stroke', 'none')
+          .attr('width', width - rightStart)
+          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
+          .attr('x', rightStart)
+          .attr('y', 0)
+          .style('opacity', 0);
+        
+        svg.selectAll('rect.overlay')
+          .transition('move')
+          .duration(800)
+          .ease(d3.easeCubicInOut)
+          .style('opacity', 1);
+        
+        // Draw the intermediate layer
+        drawIntermediateLayer(curLayerIndex, leftX,
           nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
       }
     }
@@ -1289,7 +1360,7 @@
       .style('stroke', edgeInitColor);
   }
 
-  const updateCNN = (cnn) => {
+  const updateCNN = () => {
     // Compute the scale of the output score width (mapping the the node
     // width to the max output score)
     let outputRectScale = d3.scaleLinear()
@@ -1394,7 +1465,7 @@
     svg.select('g#output-legend').select('g').call(outputLegendAxis);
   }
 
-  const updateCNNLayerRanges = (cnn) => {
+  const updateCNNLayerRanges = () => {
     // Iterate through all nodes to find a output ranges for each layer
     let cnnLayerRangesLocal = [1];
     let curRange = undefined;
@@ -1468,7 +1539,7 @@
     cnn.splice(cnn.length - 2, 1);
     console.log(cnn);
 
-    updateCNNLayerRanges(cnn);
+    updateCNNLayerRanges();
 
     // Create and draw the CNN view
     drawCNN(width, height, cnnGroup);
@@ -1499,15 +1570,16 @@
       selectedImage = newImageName;
 
       // Re-compute the CNN using the new input image
-      let cnn = await constructCNN(`/assets/img/${selectedImage}`, model);
+      cnn = await constructCNN(`/assets/img/${selectedImage}`, model);
 
       // Ignore the flatten layer for now
       let flatten = cnn[cnn.length - 2];
       cnn.splice(cnn.length - 2, 1);
+      cnnStore.set(cnn);
 
       // Update all scales used in the CNN view
-      updateCNNLayerRanges(cnn);
-      updateCNN(cnn);
+      updateCNNLayerRanges();
+      updateCNN();
     }
   }
 </script>
