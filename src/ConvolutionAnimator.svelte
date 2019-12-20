@@ -11,6 +11,9 @@
   export let output;
   export let isPaused;
 
+  import { createEventDispatcher } from 'svelte';
+
+  const dispatch = createEventDispatcher();
   const padding = 0;
   let padded_input_size = image.length + padding * 2;
   $: padded_input_size = image.length + padding * 2;
@@ -70,8 +73,19 @@
     return matrixSlice(matrix, Math.floor(indices[0] / matrix.length), Math.floor(indices[0] / matrix.length) + 1, indices[0] % matrix.length, indices[0] % matrix.length + 1);
   }
 
+  // Edit these values to change size of low-level conv visualization.
   function getVisualizationSizeConstraint(image) {
-    return Math.floor(500 / image.length) > 50 ? 50 : Math.floor(500 / image.length)
+    let sizeOfGrid = 150;
+    let maxSizeOfGridCell = 20;
+    return sizeOfGrid / image.length > maxSizeOfGridCell ? maxSizeOfGridCell : sizeOfGrid / image.length
+  }
+
+  function getDataRange(image) {
+    let maxRow = image.map(function(row){ return Math.max.apply(Math, row); });
+    let max = Math.max.apply(null, maxRow);
+    let minRow = image.map(function(row){ return Math.min.apply(Math, row); });
+    let min = Math.min.apply(null, minRow);
+    return Math.max(Math.abs(min), Math.abs(max));
   }
 
   let constraint;
@@ -106,7 +120,6 @@
 
   let testInputMatrixSlice = [];
   let testOutputMatrixSlice = [];
-
   let inputHighlights = [];
   let outputHighlights = array1d(output.length * output.length, (i) => true);
   let interval;
@@ -115,15 +128,16 @@
     let outputHighlights = array1d(output.length * output.length, (i) => true);
     let interval;
   }
+  
+  let counter;
 
   function startConvolution(stride) {
-    var counter = 0;
+    counter = 0;
     let outputMappings = generateOutputMappings(stride);
     if (stride <= 0) return;
     if (interval) clearInterval(interval);
     interval = setInterval(() => {
       if (isPaused) return;
-      
       const flat_animated = counter % (output.length * output.length);
       outputHighlights = array1d(output.length * output.length, (i) => false);
       const animatedH = Math.floor(flat_animated / output.length);
@@ -136,6 +150,25 @@
       testOutputMatrixSlice = gridData(outputMatrixSlice);
       counter++;
     }, 1000)
+  }
+
+  function handleMouseover(event) {
+    counter = event.detail.text;
+    let outputMappings = generateOutputMappings(stride);
+    const flat_animated = counter % (output.length * output.length);
+    outputHighlights = array1d(output.length * output.length, (i) => false);
+    const animatedH = Math.floor(flat_animated / output.length);
+    const animatedW = flat_animated % output.length;
+    outputHighlights[animatedH * output.length + animatedW] = true;
+    inputHighlights = compute_input_multiplies_with_weight(animatedH, animatedW, padded_input_size, kernel.length, outputMappings)
+    const inputMatrixSlice = getMatrixSliceFromInputHighlights(image, inputHighlights);
+    testInputMatrixSlice = gridData(inputMatrixSlice);
+    const outputMatrixSlice = getMatrixSliceFromOutputHighlights(output, outputHighlights);
+    testOutputMatrixSlice = gridData(outputMatrixSlice);
+    isPaused = true;
+    dispatch('message', {
+      text: isPaused
+    });
   }
 
   startConvolution(stride);
@@ -156,25 +189,25 @@
   <header>
     Input
   </header>
-  <Dataview data={testImage} highlights={inputHighlights} isKernelMath={false} constraint={getVisualizationSizeConstraint(image)}/>  
+  <Dataview on:message={handleMouseover} data={testImage} highlights={inputHighlights} isKernelMath={false} constraint={getVisualizationSizeConstraint(image)} dataRange={getDataRange(image)}/>  
 </div>
 <div class="column has-text-centered">
   <header>
     Kernel
   </header>
-  <Dataview data={testKernel} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)}/>
+  <Dataview data={testKernel} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(kernel)}/>
   <body>
-    *
+    &#183;
   </body>  
-  <Dataview data={testInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)}/>
+  <Dataview data={testInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(image)}/>
   <body>
     =
   </body> 
-  <Dataview data={testOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)}/>
+  <Dataview data={testOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(output)}/>
 </div>
 <div class="column has-text-centered">
   <header>
     Output
   </header>
-  <Dataview data={testOutput} highlights={outputHighlights} isKernelMath={false} constraint={getVisualizationSizeConstraint(output)}/>
+  <Dataview data={testOutput} highlights={outputHighlights} isKernelMath={false} constraint={getVisualizationSizeConstraint(output)} dataRange={getDataRange(output)}/>
 </div>
