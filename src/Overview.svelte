@@ -498,6 +498,89 @@
           y: nodeCoordinate[curLayerIndex][i].y}),
         name: `inter1-${ni}-inter2-1`
       });
+
+      // Create a small kernel illustration
+      let kernelRectLength = 8/3;
+      // Here we minus 2 because of no padding
+      let tickTime1D = nodeLength / kernelRectLength - 2;
+      let kernelRectX = intermediateX1 - intermediateGap / 2 - 3 * kernelRectLength / 2;
+      let kernelGroup = intermediateLayer.append('g')
+        .attr('class', `kernel-${i}`)
+        .attr('transform', d => {
+          let y = n.y + (nodeLength / 4 - kernelRectLength * 3 / 2);
+          return `translate(${kernelRectX}, ${y})`;
+        });
+
+      for (let r = 0; r < kernelMatrix.length; r++) {
+        for (let c = 0; c < kernelMatrix[0].length; c++) {
+          kernelGroup.append('rect')
+            .attr('class', 'kernel')
+            .attr('x', kernelRectLength * c)
+            .attr('y', kernelRectLength * r)
+            .attr('width', kernelRectLength)
+            .attr('height', kernelRectLength)
+            .attr('fill', d3.rgb(colorScale((kernelMatrix[r][c] + range / 2) / range)));
+        }
+      }
+
+      kernelGroup.append('rect')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('width', kernelRectLength * 3)
+        .attr('height', kernelRectLength * 3)
+        .attr('fill', 'none')
+        .attr('stroke', 'gray');
+
+      // Sliding the kernel on the input channel and result channel at the same
+      // time
+      let kernelGroupInput = kernelGroup.clone(true);
+      kernelGroupInput.style('opacity', 0.9)
+        .selectAll('rect.kernel')
+        .style('opacity', 0.7);
+
+      kernelGroupInput.attr('transform',
+        `translate(${leftX}, ${n.y})`)
+        .attr('data-tick', 0)
+        .attr('data-origin-x', leftX)
+        .attr('data-origin-y', n.y);
+
+      let kernelGroupResult = kernelGroup.clone(true);
+      kernelGroupResult.style('opacity', 0.9)
+        .selectAll('rect.kernel')
+        .style('fill', 'none');
+
+      kernelGroupResult.attr('transform',
+        `translate(${intermediateX1}, ${n.y})`)
+        .attr('data-origin-x', intermediateX1)
+        .attr('data-origin-y', n.y);
+      
+      const slidingAnimation = () => {
+        let originX = +kernelGroupInput.attr('data-origin-x');
+        let originY = +kernelGroupInput.attr('data-origin-y');
+        let originXResult = +kernelGroupResult.attr('data-origin-x');
+        let oldTick = +kernelGroupInput.attr('data-tick');
+        let x = originX + (oldTick % tickTime1D) * kernelRectLength;
+        let y = originY + Math.floor(oldTick / tickTime1D) * kernelRectLength;
+        let xResult = originXResult + (oldTick % tickTime1D) * kernelRectLength;
+
+        kernelGroupInput.attr('data-tick', (oldTick + 1) % (tickTime1D * tickTime1D))
+          .transition('window-sliding-input')
+          .delay(800)
+          .duration(0)
+          .attr('transform', `translate(${x}, ${y})`);
+
+        
+        kernelGroupResult.attr('data-tick', (oldTick + 1) % (tickTime1D * tickTime1D))
+          .transition('window-sliding-result')
+          .delay(800)
+          .duration(0)
+          .attr('transform', `translate(${xResult}, ${y})`)
+          .on('end', slidingAnimation);
+        
+      }
+
+      slidingAnimation();
+      
     });
 
     // Second intermediate layer (first node - sum)
