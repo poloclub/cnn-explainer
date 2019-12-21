@@ -19,12 +19,14 @@
 
   // Configs
   let nodeLength = 40;
+  let plusSymbolRadius = nodeLength / 5;
   let numLayers = 12;
   let edgeOpacity = 0.8;
   let edgeInitColor = 'rgb(230, 230, 230)';
   let edgeHoverColor = 'rgb(130, 130, 130)';
   let edgeHoverOuting = false;
   let edgeStrokeWidth = 0.7;
+  let intermediateColor = 'gray';
   let width = undefined;
   let height = undefined;
   let model = undefined;
@@ -401,9 +403,28 @@
       0, 0, nodeLength, nodeLength);
   }
 
-  const createIntermediateNode = (groupLayer, x, y) => {
+  const intermediateNodeMouseOverHandler = (d, i, g) => {
+    d3.select(g[i])
+      .select('rect.bounding')
+      .classed('very-strong', true);
+  }
+
+  const intermediateNodeMouseLeaveHandler = (d, i, g) => {
+
+  }
+
+  const intermediateNodeClicked = (d, i, g) => {
+
+  }
+
+  const createIntermediateNode = (groupLayer, x, y, interaction=false) => {
     let newNode = groupLayer.append('g')
       .attr('class', 'intermediate-node')
+      .attr('cursor', interaction ? 'pointer': 'default')
+      .attr('pointer-events', interaction ? 'all': 'none')
+      .on('mouseover', intermediateNodeMouseOverHandler)
+      .on('mouseleave', intermediateNodeMouseLeaveHandler)
+      .on('click', intermediateNodeClicked);
     
     let canvas = newNode.append('foreignObject')
       .attr('width', nodeLength)
@@ -429,7 +450,7 @@
       .attr('x', x)
       .attr('y', y)
       .style('fill', 'none')
-      .style('stroke', 'gray')
+      .style('stroke', intermediateColor)
       .style('stroke-width', 1);
     
     return newNode;
@@ -452,7 +473,7 @@
     //      stacking order on webkit
 
     let intermediateX1 = leftX + nodeLength + intermediateGap;
-    let intermediateX2 = intermediateX1 + nodeLength + intermediateGap;
+    let intermediateX2 = intermediateX1 + nodeLength + intermediateGap * 1.5;
 
     let range = cnnLayerRanges[selectedScaleLevel][curLayerIndex];
     let colorScale = layerColorScales[d.type];
@@ -477,7 +498,8 @@
       itnermediateSumMatrix = matrixAdd(itnermediateSumMatrix, interMatrix);
 
       // Layout the canvas and rect
-      let newNode = createIntermediateNode(intermediateLayer, intermediateX1, n.y);
+      let newNode = createIntermediateNode(intermediateLayer, intermediateX1,
+        n.y, true);
       
       // Draw the canvas
       let context = newNode.select('canvas').node().getContext('2d');
@@ -529,7 +551,7 @@
         .attr('width', kernelRectLength * 3)
         .attr('height', kernelRectLength * 3)
         .attr('fill', 'none')
-        .attr('stroke', 'gray');
+        .attr('stroke', intermediateColor);
 
       // Sliding the kernel on the input channel and result channel at the same
       // time
@@ -569,21 +591,57 @@
           .duration(0)
           .attr('transform', `translate(${x}, ${y})`);
 
-        
         kernelGroupResult.attr('data-tick', (oldTick + 1) % (tickTime1D * tickTime1D))
           .transition('window-sliding-result')
           .delay(800)
           .duration(0)
           .attr('transform', `translate(${xResult}, ${y})`)
           .on('end', slidingAnimation);
-        
       }
 
       slidingAnimation();
-      
     });
 
+    // Draw the plus operation symbol
+    let symbolY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2;
+    let symbolRectHeight = 1;
+    let symbolGroup = intermediateLayer.append('g')
+      .attr('class', 'plus-symbol')
+      .attr('transform', `translate(${intermediateX2 + plusSymbolRadius}, ${symbolY})`);
+    
+    symbolGroup.append('circle')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', plusSymbolRadius)
+      .style('fill', 'none')
+      .style('stroke', intermediateColor);
+    
+    symbolGroup.append('rect')
+      .attr('x', -(plusSymbolRadius - 3))
+      .attr('y', -symbolRectHeight / 2)
+      .attr('width', 2 * (plusSymbolRadius - 3))
+      .attr('height', symbolRectHeight)
+      .style('fill', intermediateColor);
+
+    symbolGroup.append('rect')
+      .attr('x', -symbolRectHeight / 2)
+      .attr('y', -(plusSymbolRadius - 3))
+      .attr('width', symbolRectHeight)
+      .attr('height', 2 * (plusSymbolRadius - 3))
+      .style('fill', intermediateColor);
+    
+    // Link from the symbol to the output
+    linkData.push({
+      source: getOutputKnot({x: intermediateX2 + 2 * plusSymbolRadius - nodeLength,
+        y: nodeCoordinate[curLayerIndex][i].y}),
+      target: getInputKnot({x: rightX,
+        y: nodeCoordinate[curLayerIndex][i].y}),
+      name: `symbol-output`
+    });
+
+
     // Second intermediate layer (first node - sum)
+    /*
     let newNode = createIntermediateNode(intermediateLayer, intermediateX2,
       nodeCoordinate[curLayerIndex][i].y);
 
@@ -623,6 +681,7 @@
       target: getInputKnot({x: rightX, y: nodeCoordinate[curLayerIndex][i].y}),
       name: `inter2-1-output`
     });
+    */
     
     // Output -> next layer
     linkData.push({
@@ -661,7 +720,7 @@
       .attr('d', d => linkGen({source: d.source, target: d.target}))
       .style('fill', 'none')
       .style('stroke-width', 1)
-      .style('stroke', edgeHoverColor);
+      .style('stroke', intermediateColor);
     
     edgeGroup.select('#edge-output-next')
       .style('opacity', 0.1);
@@ -677,7 +736,6 @@
   const nodeClickHandler = (d, i, g) => {
     // Opens low-level convolution animation when a conv node is clicked.
     if (d.type === 'conv') {
-      /*
       var data = new Array();
       for (let j = 0; j < d.inputLinks.length; j++) {
         data.push(new Array());
@@ -688,7 +746,6 @@
         })
       }
       nodeData = data[i];
-      */
     }
 
     // If clicked a new node, deselect the old clicked node
@@ -719,9 +776,10 @@
       if (d.layerName === 'conv_1_1') {
         // Compute the target location
         let curLayerIndex = layerIndexDict[d.layerName];
-        let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 3 * nodeLength +
-          2 * hSpaceAroundGap * gapRatio;
-        let intermediateGap = 2 * hSpaceAroundGap * gapRatio / 3;
+        let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 2 * nodeLength +
+          2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2;
+        let intermediateGap = (hSpaceAroundGap * gapRatio * 2 +
+          plusSymbolRadius * 2) / 3;
 
         // Move the selected layer
         moveLayerX({layerIndex: curLayerIndex, targetX: targetX, disable: true,
@@ -1788,6 +1846,10 @@
   :global(.hidden) {
     opacity: 0;
     pointer-events: none;
+  }
+
+  :global(.very-strong) {
+    stroke-width: 3px;
   }
 
   :global(.bounding, .edge-group, foreignObject) {
