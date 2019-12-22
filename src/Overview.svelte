@@ -37,7 +37,7 @@
   let vSpaceAroundGap = undefined;
   let selectedNode = {layerName: '', index: -1, data: null};
   let svgPaddings = {top: 20, bottom: 30};
-  let isInLayerView = false;
+  let isInIntermediateView = false;
 
   // Wait to load
   let cnn = undefined;
@@ -528,13 +528,10 @@
       let kernelRectLength = 8/3;
       // Here we minus 2 because of no padding
       let tickTime1D = nodeLength / kernelRectLength - 2;
-      let kernelRectX = intermediateX1 - intermediateGap / 2 - 3 * kernelRectLength / 2;
+      let kernelRectX = leftX - kernelRectLength * 3 * 2;
       let kernelGroup = intermediateLayer.append('g')
         .attr('class', `kernel-${i}`)
-        .attr('transform', d => {
-          let y = n.y + (nodeLength / 4 - kernelRectLength * 3 / 2);
-          return `translate(${kernelRectX}, ${y})`;
-        });
+        .attr('transform', `translate(${kernelRectX}, ${n.y})`);
 
       for (let r = 0; r < kernelMatrix.length; r++) {
         for (let c = 0; c < kernelMatrix[0].length; c++) {
@@ -633,23 +630,45 @@
       .attr('height', 2 * (plusSymbolRadius - 3))
       .style('fill', intermediateColor);
 
-    // Add bias symbol to the plus symbol
-    symbolGroup.append('rect')
-      .attr('x', -plusSymbolRadius)
-      .attr('y', -nodeLength / 2 - 2 * plusSymbolRadius)
-      .attr('width', 2 * plusSymbolRadius)
-      .attr('height', 2 * plusSymbolRadius)
-      .style('stroke', intermediateColor)
-      .style('fill', d3.rgb(colorScale((d.bias + range / 2) / range)));
-    
-    // Link from bias to the plus symbol
-    linkData.push({
-      source: {x: intermediateX2 + plusSymbolRadius,
-        y: nodeCoordinate[curLayerIndex][i].y},
-      target: {x: intermediateX2 + plusSymbolRadius,
-        y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 - plusSymbolRadius},
-      name: `bias-plus`
-    });
+    // Place the bias rectangle below the plus sign if user clicks the firrst
+    // conv node
+    if (i == 0) {
+      // Add bias symbol to the plus symbol
+      symbolGroup.append('rect')
+        .attr('x', -plusSymbolRadius)
+        .attr('y', nodeLength / 2)
+        .attr('width', 2 * plusSymbolRadius)
+        .attr('height', 2 * plusSymbolRadius)
+        .style('stroke', intermediateColor)
+        .style('fill', d3.rgb(colorScale((d.bias + range / 2) / range)));
+      
+      // Link from bias to the plus symbol
+      linkData.push({
+        source: {x: intermediateX2 + plusSymbolRadius,
+          y: nodeCoordinate[curLayerIndex][i].y + nodeLength},
+        target: {x: intermediateX2 + plusSymbolRadius,
+          y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius},
+        name: `bias-plus`
+      });
+    } else {
+      // Add bias symbol to the plus symbol
+      symbolGroup.append('rect')
+        .attr('x', -plusSymbolRadius)
+        .attr('y', -nodeLength / 2 - 2 * plusSymbolRadius)
+        .attr('width', 2 * plusSymbolRadius)
+        .attr('height', 2 * plusSymbolRadius)
+        .style('stroke', intermediateColor)
+        .style('fill', d3.rgb(colorScale((d.bias + range / 2) / range)));
+      
+      // Link from bias to the plus symbol
+      linkData.push({
+        source: {x: intermediateX2 + plusSymbolRadius,
+          y: nodeCoordinate[curLayerIndex][i].y},
+        target: {x: intermediateX2 + plusSymbolRadius,
+          y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 - plusSymbolRadius},
+        name: `bias-plus`
+      });
+    }
 
     // Link from the plus symbol to the output
     linkData.push({
@@ -690,19 +709,35 @@
     let edgeGroup = intermediateLayer.append('g')
       .attr('class', 'edge-group');
     
-    edgeGroup.selectAll('path.edge')
+    let dashoffset = 0;
+    const animateEdge = (d, i, g, dashoffset) => {
+      let curPath = d3.select(g[i]);
+      curPath.transition()
+        .duration(8000)
+        .ease(d3.easeLinear)
+        .attr('stroke-dashoffset', dashoffset)
+        .on('end', (d, i, g) => animateEdge(d, i, g, dashoffset - 160));
+    }
+
+    edgeGroup.selectAll('path')
       .data(linkData)
       .enter()
       .append('path')
+      .classed('flow-edge', d => d.name !== 'output-next')
       .attr('id', d => `edge-${d.name}`)
       .attr('d', d => linkGen({source: d.source, target: d.target}))
       .style('fill', 'none')
       .style('stroke-width', 1)
       .style('stroke', intermediateColor);
-    
+
     edgeGroup.select('#edge-output-next')
       .style('opacity', 0.1);
     
+    edgeGroup.selectAll('path.flow-edge')
+      .attr('stroke-dasharray', '4 2')
+      .attr('stroke-dashoffset', 0)
+      .each((d, i, g) => animateEdge(d, i, g, dashoffset - 160));
+
     // Show everything
     intermediateLayer.transition()
       .delay(500)
@@ -747,8 +782,8 @@
     selectedNode.data = d;
 
     // Enter the second view (layer-view) when user clicks a conv node
-    if (d.type === 'conv' && !isInLayerView) {
-      isInLayerView = true;
+    if (d.type === 'conv' && !isInIntermediateView) {
+      isInIntermediateView = true;
       if (d.layerName === 'conv_1_1') {
         // Compute the target location
         let curLayerIndex = layerIndexDict[d.layerName];
@@ -1012,8 +1047,8 @@
     }
 
     // Quit the layerview
-    else if (d.type === 'conv' && isInLayerView) {
-      isInLayerView = false;
+    else if (d.type === 'conv' && isInIntermediateView) {
+      isInIntermediateView = false;
 
       // Also unclick the node
       // Record the current clicked node
@@ -1056,7 +1091,9 @@
     }
   }
 
-  const nodeMouseoverHandler = (d, i, g) => {
+  const nodeMouseOverHandler = (d, i, g) => {
+    if (isInIntermediateView) { return; }
+
     // Highlight the edges
     let layerIndex = layerIndexDict[d.layerName];
     let nodeIndex = d.index;
@@ -1085,7 +1122,9 @@
     })
   }
 
-  const nodeMouseoutHandler = (d, i, g) => {
+  const nodeMouseLeaveHandler = (d, i, g) => {
+    if (isInIntermediateView) { return; }
+
     let layerIndex = layerIndexDict[d.layerName];
     let nodeIndex = d.index;
     let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
@@ -1322,8 +1361,8 @@
         .style('cursor', 'pointer')
         .style('pointer-events', 'all')
         .on('click', nodeClickHandler)
-        .on('mouseover', nodeMouseoverHandler)
-        .on('mouseout', nodeMouseoutHandler)
+        .on('mouseover', nodeMouseOverHandler)
+        .on('mouseleave', nodeMouseLeaveHandler)
         .classed('node-output', isOutput)
         .attr('id', (d, i) => {
           // Compute the coordinate
