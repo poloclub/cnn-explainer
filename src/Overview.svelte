@@ -632,8 +632,26 @@
       .attr('width', symbolRectHeight)
       .attr('height', 2 * (plusSymbolRadius - 3))
       .style('fill', intermediateColor);
+
+    // Add bias symbol to the plus symbol
+    symbolGroup.append('rect')
+      .attr('x', -plusSymbolRadius)
+      .attr('y', -nodeLength / 2 - 2 * plusSymbolRadius)
+      .attr('width', 2 * plusSymbolRadius)
+      .attr('height', 2 * plusSymbolRadius)
+      .style('stroke', intermediateColor)
+      .style('fill', d3.rgb(colorScale((d.bias + range / 2) / range)));
     
-    // Link from the symbol to the output
+    // Link from bias to the plus symbol
+    linkData.push({
+      source: {x: intermediateX2 + plusSymbolRadius,
+        y: nodeCoordinate[curLayerIndex][i].y},
+      target: {x: intermediateX2 + plusSymbolRadius,
+        y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 - plusSymbolRadius},
+      name: `bias-plus`
+    });
+
+    // Link from the plus symbol to the output
     linkData.push({
       source: getOutputKnot({x: intermediateX2 + 2 * plusSymbolRadius - nodeLength,
         y: nodeCoordinate[curLayerIndex][i].y}),
@@ -641,50 +659,6 @@
         y: nodeCoordinate[curLayerIndex][i].y}),
       name: `symbol-output`
     });
-
-
-    // Second intermediate layer (first node - sum)
-    /*
-    let newNode = createIntermediateNode(intermediateLayer, intermediateX2,
-      nodeCoordinate[curLayerIndex][i].y);
-
-    linkData.push({
-      source: getOutputKnot({x: intermediateX2,
-        y: nodeCoordinate[curLayerIndex][i].y}),
-      target: getInputKnot({x: rightX,
-        y: nodeCoordinate[curLayerIndex][i].y}),
-      name: `inter2-1-output`
-    });
-
-    // Draw the canvas
-    let context = newNode.select('canvas').node().getContext('2d');
-    drawIntermidiateCanvas(context, range, colorScale, d.output.length,
-      itnermediateSumMatrix);
-    
-    // Second intermediate layer (second node - bias)
-    // If the selected node is near bottom, draw the bias node above the
-    // summation node
-    let biasY = nodeCoordinate[curLayerIndex][i].y + vSpaceAroundGap + nodeLength;
-    if (i === 10 - 1) {
-      biasY = nodeCoordinate[curLayerIndex][i].y - (vSpaceAroundGap + nodeLength);
-    }
-    newNode = createIntermediateNode(intermediateLayer, intermediateX2,
-      biasY);
-    
-    // Rrepresent bias number as a matrix
-    let biasMatrix = init2DArray(d.output.length, d.output.length, d.bias)
-
-    // Draw the canvas
-    context = newNode.select('canvas').node().getContext('2d');
-    drawIntermidiateCanvas(context, range, colorScale, d.output.length,
-      biasMatrix);
-
-    linkData.push({
-      source: getOutputKnot({x: intermediateX2, y: biasY}),
-      target: getInputKnot({x: rightX, y: nodeCoordinate[curLayerIndex][i].y}),
-      name: `inter2-1-output`
-    });
-    */
     
     // Output -> next layer
     linkData.push({
@@ -699,7 +673,8 @@
     intermediateLayer.append('g')
       .attr('class', 'layer-label')
       .attr('transform', (d, i) => {
-        let x = intermediateX1 + nodeLength + intermediateGap / 2;
+        let x = leftX + nodeLength + (nodeLength + 2 * plusSymbolRadius + 2 *
+          hSpaceAroundGap * gapRatio) / 2;
         let y = (svgPaddings.top + vSpaceAroundGap) / 2;
         return `translate(${x}, ${y})`;
       })
@@ -779,8 +754,7 @@
         let curLayerIndex = layerIndexDict[d.layerName];
         let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2;
-        let intermediateGap = (hSpaceAroundGap * gapRatio * 2 +
-          plusSymbolRadius * 2) / 3;
+        let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
         // Move the selected layer
         moveLayerX({layerIndex: curLayerIndex, targetX: targetX, disable: true,
@@ -828,9 +802,9 @@
 
       else if (d.layerName === 'conv_1_2') {
         let curLayerIndex = layerIndexDict[d.layerName];
-        let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 3 * nodeLength +
-          2 * hSpaceAroundGap * gapRatio;
-        let intermediateGap = 2 * hSpaceAroundGap * gapRatio / 3;
+        let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 2 * nodeLength +
+          2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2;
+        let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
         // Move the selected layer
         moveLayerX({layerIndex: curLayerIndex, targetX: targetX, disable: true,
@@ -896,9 +870,9 @@
 
       else if (d.layerName === 'conv_2_1') {
         let curLayerIndex = layerIndexDict[d.layerName];
-        let leftX = nodeCoordinate[curLayerIndex][0].x - (3 * nodeLength +
-          2 * hSpaceAroundGap * gapRatio);
-        let intermediateGap = 2 * hSpaceAroundGap * gapRatio / 3;
+        let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
+          2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
+        let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
         // Move the previous layer
         moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
@@ -967,9 +941,9 @@
       
       else if (d.layerName === 'conv_2_2') {
         let curLayerIndex = layerIndexDict[d.layerName];
-        let leftX = nodeCoordinate[curLayerIndex][0].x - (3 * nodeLength +
-          2 * hSpaceAroundGap * gapRatio);
-        let intermediateGap = 2 * hSpaceAroundGap * gapRatio / 3;
+        let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
+          2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
+        let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
         // Move the previous layer
         moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
