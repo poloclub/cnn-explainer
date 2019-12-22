@@ -73,6 +73,7 @@
   let selectedImage = imageOptions[0];
 
   let nodeData;
+  let selectedNodeIndex = 0;
 
   // Helper functions
   const selectedScaleLevelChanged = () => {
@@ -414,14 +415,16 @@
   }
 
   const intermediateNodeClicked = (d, i, g) => {
-
+    selectedNodeIndex = +g[0].getAttribute('node-index');
+    // debugger;
   }
 
-  const createIntermediateNode = (groupLayer, x, y, interaction=false) => {
+  const createIntermediateNode = (groupLayer, x, y, nodeIndex, interaction=false) => {
     let newNode = groupLayer.append('g')
       .attr('class', 'intermediate-node')
       .attr('cursor', interaction ? 'pointer': 'default')
       .attr('pointer-events', interaction ? 'all': 'none')
+      .attr('node-index', nodeIndex)
       .on('mouseover', intermediateNodeMouseOverHandler)
       .on('mouseleave', intermediateNodeMouseLeaveHandler)
       .on('click', intermediateNodeClicked);
@@ -499,7 +502,7 @@
 
       // Layout the canvas and rect
       let newNode = createIntermediateNode(intermediateLayer, intermediateX1,
-        n.y, true);
+        n.y, ni, true);
       
       // Draw the canvas
       let context = newNode.select('canvas').node().getContext('2d');
@@ -736,18 +739,16 @@
   const nodeClickHandler = (d, i, g) => {
     // Opens low-level convolution animation when a conv node is clicked.
     if (d.type === 'conv') {
-      var data = new Array();
+      var data = [];
       for (let j = 0; j < d.inputLinks.length; j++) {
-        data.push(new Array());
-        data[j].push({
+        data.push({
           input: d.inputLinks[j].source.output,
           kernel: d.inputLinks[j].weight,
           output: d.inputLinks[j].dest.output,
         })
       }
-      nodeData = data[i];
+      nodeData = data;
     }
-
     // If clicked a new node, deselect the old clicked node
     if ((selectedNode.layerName !== d.layerName ||
       selectedNode.index !== d.index) && selectedNode.index !== -1) {
@@ -1907,4 +1908,7 @@
     <svg id="cnn-svg"></svg>
   </div>
 </div>
-<ConvolutionView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].input} kernel={nodeData == undefined ? [[1,2], [3,4]] : nodeData[0].kernel} output={nodeData == undefined ? [[1,2,3], [4,5,6], [7,8,9]] : nodeData[0].output} />
+
+<ConvolutionView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[selectedNodeIndex].input} 
+                  kernel={nodeData == undefined ? [[1,2], [3,4]] : nodeData[selectedNodeIndex].kernel} 
+                  output={nodeData == undefined ? [[1,2,3], [4,5,6], [7,8,9]] : nodeData[selectedNodeIndex].output} />

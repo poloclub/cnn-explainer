@@ -131,6 +131,7 @@
   
   let counter;
 
+  // lots of replication between mouseover and start-conv. TODO: fix this.
   function startConvolution(stride) {
     counter = 0;
     let outputMappings = generateOutputMappings(stride);
@@ -199,16 +200,18 @@
   <body>
     &#183;
   </body>  
-  <Dataview data={testInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(image)}/>
+  <Dataview data={testInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
+      constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(image)}/>
   <body>
     =
   </body> 
-  <Dataview data={testOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(output)}/>
+  <Dataview data={testOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
+      constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(output)}/>
 </div>
 <div class="column has-text-centered">
   <header>
     Output
   </header>
-  <Dataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights} isKernelMath={false} outputLength={output.length}
-      constraint={getVisualizationSizeConstraint(output)} dataRange={getDataRange(output)}/>
+  <Dataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights} isKernelMath={false} 
+      outputLength={output.length} constraint={getVisualizationSizeConstraint(output)} dataRange={getDataRange(output)}/>
 </div>
