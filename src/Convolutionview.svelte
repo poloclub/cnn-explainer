@@ -29,7 +29,9 @@
 </script>
 
 <div class="container">
-  <div class="columns is-mobile">
+
+  <!-- old stride input -->
+  <!-- <div class="columns is-mobile">
     <div class="column is-half is-offset-one-quarter">
       <div class="field is-grouped">
         <p class="control is-expanded">
@@ -42,8 +44,19 @@
         </p>
       </div>
     </div>
+  </div> -->
+
+  <div style="margin-top: 2%; margin-bottom: 2%;" class="box">
+    <div class="has-text-centered">
+      <button style="margin-bottom: 1%" class="button is-success" on:click={handleClickPause}>
+        Toggle Movement
+      </button>    
+    </div>
+    <div class="columns is-centered is-vcentered">
+      <ConvolutionAnimator on:message={handlePauseFromInteraction} 
+        kernel={kernel} image={input} output={outputFinal} 
+        stride={stride} dilation={dilation} isPaused={isPaused}/>
+    </div>
   </div>
-  <div class="columns is-centered is-vcentered">
-    <ConvolutionAnimator on:message={handlePauseFromInteraction} kernel={kernel} image={input} output={outputFinal} stride={stride} dilation={dilation} isPaused={isPaused}/>
-  </div>
+
 </div>
