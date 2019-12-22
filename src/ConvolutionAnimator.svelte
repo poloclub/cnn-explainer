@@ -153,12 +153,10 @@
   }
 
   function handleMouseover(event) {
-    counter = event.detail.text;
     let outputMappings = generateOutputMappings(stride);
-    const flat_animated = counter % (output.length * output.length);
     outputHighlights = array1d(output.length * output.length, (i) => false);
-    const animatedH = Math.floor(flat_animated / output.length);
-    const animatedW = flat_animated % output.length;
+    const animatedH = event.detail.hoverH;
+    const animatedW = event.detail.hoverW;
     outputHighlights[animatedH * output.length + animatedW] = true;
     inputHighlights = compute_input_multiplies_with_weight(animatedH, animatedW, padded_input_size, kernel.length, outputMappings)
     const inputMatrixSlice = getMatrixSliceFromInputHighlights(image, inputHighlights);
@@ -189,13 +187,15 @@
   <header>
     Input
   </header>
-  <Dataview on:message={handleMouseover} data={testImage} highlights={inputHighlights} isKernelMath={false} constraint={getVisualizationSizeConstraint(image)} dataRange={getDataRange(image)}/>  
+  <Dataview on:message={handleMouseover} data={testImage} highlights={inputHighlights} outputLength={output.length}
+      isKernelMath={false} constraint={getVisualizationSizeConstraint(image)} dataRange={getDataRange(image)}/>  
 </div>
 <div class="column has-text-centered">
   <header>
     Kernel
   </header>
-  <Dataview data={testKernel} highlights={outputHighlights} isKernelMath={true} constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(kernel)}/>
+  <Dataview data={testKernel} highlights={outputHighlights} isKernelMath={true} 
+    constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(kernel)}/>
   <body>
     &#183;
   </body>  
@@ -209,5 +209,6 @@
   <header>
     Output
   </header>
-  <Dataview data={testOutput} highlights={outputHighlights} isKernelMath={false} constraint={getVisualizationSizeConstraint(output)} dataRange={getDataRange(output)}/>
+  <Dataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights} isKernelMath={false} outputLength={output.length}
+      constraint={getVisualizationSizeConstraint(output)} dataRange={getDataRange(output)}/>
 </div>

@@ -4,6 +4,7 @@
   export let isKernelMath;
   export let constraint;
   export let dataRange;
+  export let outputLength;
 
   import { onMount } from 'svelte';
   import { onDestroy } from 'svelte';
@@ -49,22 +50,10 @@
       .style("opacity", 0.5)
       .style("fill", function(d) { return d3.interpolateRdBu(((d.text + dataRange) / 2) / dataRange); })
       .on('mouseover', function(d) {
-        // On mouseover on the input, pause conv visualization and allow interactivity with conv.
-        // Mouse position represents the top left corner of the convolving kernel.
-        // Conditionals cover hovering near the edges of the input.
-        let convIndex;
-        let highlightWindowSize = getHighlightWindowSize()
-        if (d.row > data.length - highlightWindowSize && d.col > data.length - highlightWindowSize) {
-          convIndex = (d.row - (d.row - (data.length - highlightWindowSize))) * (data.length - highlightWindowSize + 1) + d.col - (d.col - (data.length - highlightWindowSize));
-        } else if (d.row > data.length - highlightWindowSize) {
-          convIndex = (d.row - (d.row - (data.length - highlightWindowSize))) * (data.length - highlightWindowSize + 1) + d.col;
-        } else if (d.col > data.length - highlightWindowSize) {
-          convIndex = d.row * (data.length - highlightWindowSize + 1) + d.col - (d.col - (data.length - highlightWindowSize));
-        } else {
-          convIndex = d.row * (data.length - highlightWindowSize + 1) + d.col;
-        }
         dispatch('message', {
-          text: convIndex
+          // div by stride
+          hoverH: Math.min(Math.floor(d.row / 1), outputLength - 1),
+          hoverW: Math.min(Math.floor(d.col / 1), outputLength - 1)
         });
       });
     if (isKernelMath) {
