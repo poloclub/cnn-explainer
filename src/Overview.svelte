@@ -11,6 +11,7 @@
   let scaleLevelSet = new Set(['local', 'module', 'global']);
   let selectedScaleLevel = 'local';
   let previousSelectedScaleLevel = selectedScaleLevel;
+  let wholeSvg = undefined;
   let svg = undefined;
   let detailedMode = false;
   let nodeCoordinate = [];
@@ -36,8 +37,9 @@
   let hSpaceAroundGap = undefined;
   let vSpaceAroundGap = undefined;
   let selectedNode = {layerName: '', index: -1, data: null};
-  let svgPaddings = {top: 20, bottom: 30};
+  let svgPaddings = {top: 20, bottom: 30, left: 50, right: 50};
   let isInIntermediateView = false;
+  let kernelRectLength = 8/3;
 
   // Wait to load
   let cnn = undefined;
@@ -525,7 +527,6 @@
       });
 
       // Create a small kernel illustration
-      let kernelRectLength = 8/3;
       // Here we minus 2 because of no padding
       let tickTime1D = nodeLength / kernelRectLength - 2;
       let kernelRectX = leftX - kernelRectLength * 3 * 2;
@@ -744,6 +745,36 @@
       .duration(500)
       .ease(d3.easeCubicInOut)
       .style('opacity', 1);
+    
+    return intermediateLayer;
+  }
+
+  const drawArrow = (arg) => {
+      let group = arg.group,
+        sx = arg.sx,
+        sy = arg.sy,
+        tx = arg.tx,
+        ty = arg.ty,
+        dr = arg.dr,
+        vFlip = arg.vFlip,
+        hFlip = arg.hFlip,
+        cx = sx + (tx - sx) / 2,
+        cy = sy + (ty - sy) / 2,
+        scaleX = hFlip ? -1 : 1,
+        scaleY = vFlip ? -1 : 1,
+        translateX = (1 - scaleX) * tx,
+        translateY = (1 - scaleY) * ty;
+      
+      let arrow = group.append('g')
+        .attr('class', 'arrow-group');
+
+      arrow.append('path')
+        .attr("d", `M${sx},${sy}A${dr},${dr} 0 0,1 ${tx},${ty}`)
+        .attr('marker-end', 'url(#marker)')
+        .style('stroke', 'gray')
+        .style('fill', 'none')
+        .attr('transform', `translate(${translateX}, ${translateY})
+          scale(${scaleX}, ${scaleY})`);
   }
 
   const nodeClickHandler = (d, i, g) => {
@@ -776,6 +807,7 @@
           .classed('hidden', true);
       })
     }
+
     // Record the current clicked node
     selectedNode.layerName = d.layerName;
     selectedNode.index = d.index;
@@ -830,9 +862,105 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        drawIntermediateLayer(curLayerIndex,
-          nodeCoordinate[curLayerIndex - 1][0].x, targetX, rightStart,
-          intermediateGap, d, i);
+        let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
+        let intermediateLayer = drawIntermediateLayer(curLayerIndex,
+          leftX, targetX, rightStart, intermediateGap, d, i);
+        
+        // Add annotation to the intermediate layer
+        // Add an annotation for the kernel and the sliding
+        let kernelAnnotation = intermediateLayer.append('g')
+          .attr('class', 'kernel-annotation');
+        
+        kernelAnnotation.append('text')
+          .text('Kernel')
+          .attr('class', 'annotation-text')
+          .attr('x', leftX - 2.5 * kernelRectLength * 3)
+          .attr('y', nodeCoordinate[curLayerIndex - 1][0].y + kernelRectLength * 3)
+          .style('dominant-baseline', 'baseline')
+          .style('text-anchor', 'end');
+
+        let slideText = kernelAnnotation.append('text')
+          .attr('x', leftX)
+          .attr('y', nodeCoordinate[curLayerIndex - 1][0].y + nodeLength +
+            kernelRectLength * 3)
+          .attr('class', 'annotation-text')
+          .style('dominant-baseline', 'hanging')
+          .style('text-anchor', 'start');
+        
+        slideText.append('tspan')
+          .text('Slide kernel over ');
+
+        slideText.append('tspan')
+          .attr('x', leftX)
+          .attr('dy', '1em')
+          .text('input channel to');
+
+        slideText.append('tspan')
+          .attr('x', leftX)
+          .attr('dy', '1em')
+          .text('get intermediate result');
+
+        drawArrow({
+          group: intermediateLayer,
+          tx: leftX - 5,
+          ty: nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2,
+          sx: leftX - 5,
+          sy: nodeCoordinate[curLayerIndex - 1][0].y + nodeLength
+            + kernelRectLength * 3 + 5,
+          dr: 20
+        });
+
+        // Add annotation for the sum operation
+        let plusAnnotation = intermediateLayer.append('g')
+          .attr('class', 'plus-annotation');
+        
+        let intermediateX2 = leftX + 2 * nodeLength + 2.5 * intermediateGap;
+        let textX = intermediateX2;
+
+        if (i == 0) {
+          textX += 30;
+        }
+
+        let plusText = plusAnnotation.append('text')
+          .attr('x', textX)
+          .attr('y', nodeCoordinate[curLayerIndex][i].y + nodeLength +
+            kernelRectLength * 3)
+          .attr('class', 'annotation-text')
+          .style('dominant-baseline', 'hanging')
+          .style('text-anchor', 'start');
+        
+        plusText.append('tspan')
+          .text('Sum up all intermediate');
+        
+        plusText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '1em')
+          .text('results and then add bias');
+        
+        drawArrow({
+          group: intermediateLayer,
+          sx: intermediateX2 + 5,
+          sy: nodeCoordinate[curLayerIndex][i].y + nodeLength + kernelRectLength * 2,
+          tx: intermediateX2 + 2 * plusSymbolRadius + 3,
+          ty: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius,
+          dr: 30,
+          hFlip: true
+        });
+
+        // Add annotation for the bias
+        let biasTextY = nodeCoordinate[curLayerIndex][i].y;
+        if (i === 0) {
+          biasTextY += nodeLength + 2 * plusSymbolRadius;
+        } else {
+          biasTextY -= 2 * plusSymbolRadius + 5;
+        }
+        plusAnnotation.append('text')
+          .attr('class', 'annotation-text')
+          .attr('x', intermediateX2 + plusSymbolRadius)
+          .attr('y', biasTextY)
+          .style('text-anchor', 'middle')
+          .style('dominant-baseline', i === 0 ? 'hanging' : 'baseline')
+          .text('Bias');
       }
 
       else if (d.layerName === 'conv_1_2') {
@@ -1076,7 +1204,7 @@
         });
       
       // Move all layers to their original place
-      for (let i = 0; i < numLayers - 1; i++) {
+      for (let i = 0; i < numLayers; i++) {
         moveLayerX({layerIndex: i, targetX: nodeCoordinate[i][0].x,
           disable:false, delay:500, opacity: 1});
       }
@@ -1139,7 +1267,7 @@
     
     // Keep the highlight if user has clicked
     if (d.layerName !== selectedNode.layerName || d.index !== selectedNode.index){
-      d3.select(g[i]).select('rect').classed('hidden', true);
+      d3.select(g[i]).select('rect.bounding').classed('hidden', true);
 
       d.inputLinks.forEach(link => {
         let layerIndex = layerIndexDict[link.source.layerName];
@@ -1675,13 +1803,33 @@
 
   onMount(async () => {
     // Create SVG
-    svg = d3.select(overviewComponent)
+    wholeSvg = d3.select(overviewComponent)
       .select('#cnn-svg');
-    width = Number(svg.style('width').replace('px', ''));
-    height = Number(svg.style('height').replace('px', '')) -
+    svg = wholeSvg.append('g')
+      .attr('class', 'main-svg')
+      .attr('transform', `translate(${svgPaddings.left}, 0)`);
+
+    width = Number(wholeSvg.style('width').replace('px', '')) -
+      svgPaddings.left - svgPaddings.right;
+    height = Number(wholeSvg.style('height').replace('px', '')) -
       svgPaddings.top - svgPaddings.bottom;
+
     let cnnGroup = svg.append('g')
       .attr('class', 'cnn-group');
+    
+    // Define global arrow marker end
+    svg.append("defs")
+      .append("marker")
+      .attr("id", 'marker')
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 6)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr('fill', 'gray')
+      .attr("d", "M0,-5L10,0L0,5");
     
     console.time('Construct cnn');
     model = await loadTrainedModel('/assets/data/model.json');
@@ -1776,7 +1924,7 @@
   svg {
     margin: 0 auto;
     height: calc(100vh - 100px);
-    width: calc(100vw - 100px);
+    width: 100vw;
   }
 
   .is-very-small {
@@ -1868,6 +2016,12 @@
 
   :global(.bounding, .edge-group, foreignObject) {
     transition: opacity 300ms ease-in-out;
+  }
+
+  :global(.annotation-text) {
+    font-size: 10px;
+    font-style: italic;
+    fill: gray;
   }
 
 </style>
