@@ -738,15 +738,128 @@
       .attr('stroke-dasharray', '4 2')
       .attr('stroke-dashoffset', 0)
       .each((d, i, g) => animateEdge(d, i, g, dashoffset - 160));
-
-    // Show everything
-    intermediateLayer.transition()
-      .delay(500)
-      .duration(500)
-      .ease(d3.easeCubicInOut)
-      .style('opacity', 1);
     
     return intermediateLayer;
+  }
+
+  // Add an annotation for the kernel and the sliding
+  const drawIntermediateLayerAnnotation = (arg) => {
+    let leftX = arg.leftX,
+      curLayerIndex = arg.curLayerIndex,
+      group = arg.group,
+      intermediateGap = arg.intermediateGap,
+      isFirstConv = arg.isFirstConv,
+      i = arg.i;
+
+    let kernelAnnotation = group.append('g')
+      .attr('class', 'kernel-annotation');
+    
+    kernelAnnotation.append('text')
+      .text('Kernel')
+      .attr('class', 'annotation-text')
+      .attr('x', leftX - 2.5 * kernelRectLength * 3)
+      .attr('y', nodeCoordinate[curLayerIndex - 1][0].y + kernelRectLength * 3)
+      .style('dominant-baseline', 'baseline')
+      .style('text-anchor', 'end');
+
+    let sliderX, sliderY, arrowSX, arrowSY, dr;
+    
+    if (isFirstConv) {
+      sliderX = leftX;
+      sliderY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength +
+        kernelRectLength * 3;
+      arrowSX = leftX - 5;
+      arrowSY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength +
+        kernelRectLength * 3 + 5;
+      dr = 20;
+    } else {
+      sliderX = leftX - 2.5 * kernelRectLength * 3;
+      sliderY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2;
+      arrowSX = leftX - 2 * kernelRectLength * 3 - 2;
+      arrowSY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength - 10;
+      dr = 40;
+    }
+
+    let slideText = kernelAnnotation.append('text')
+      .attr('x', sliderX)
+      .attr('y', sliderY)
+      .attr('class', 'annotation-text')
+      .style('dominant-baseline', 'hanging')
+      .style('text-anchor', isFirstConv ? 'start' : 'end');
+    
+    slideText.append('tspan')
+      .text('Slide kernel over');
+
+    slideText.append('tspan')
+      .attr('x', sliderX)
+      .attr('dy', '1em')
+      .text('input channel to get');
+
+    slideText.append('tspan')
+      .attr('x', sliderX)
+      .attr('dy', '1em')
+      .text('intermediate result');
+
+    drawArrow({
+      group: group,
+      tx: leftX - 5,
+      ty: nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2,
+      sx: arrowSX,
+      sy: arrowSY,
+      dr: dr
+    });
+
+    // Add annotation for the sum operation
+    let plusAnnotation = group.append('g')
+      .attr('class', 'plus-annotation');
+    
+    let intermediateX2 = leftX + 2 * nodeLength + 2.5 * intermediateGap;
+    let textX = intermediateX2;
+
+    if (i == 0) {
+      textX += 30;
+    }
+
+    let plusText = plusAnnotation.append('text')
+      .attr('x', textX)
+      .attr('y', nodeCoordinate[curLayerIndex][i].y + nodeLength +
+        kernelRectLength * 3)
+      .attr('class', 'annotation-text')
+      .style('dominant-baseline', 'hanging')
+      .style('text-anchor', 'start');
+    
+    plusText.append('tspan')
+      .text('Sum up all intermediate');
+    
+    plusText.append('tspan')
+      .attr('x', textX)
+      .attr('dy', '1em')
+      .text('results and then add bias');
+    
+    drawArrow({
+      group: group,
+      sx: intermediateX2 + 5,
+      sy: nodeCoordinate[curLayerIndex][i].y + nodeLength + kernelRectLength * 2,
+      tx: intermediateX2 + 2 * plusSymbolRadius + 3,
+      ty: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius,
+      dr: 30,
+      hFlip: true
+    });
+
+    // Add annotation for the bias
+    let biasTextY = nodeCoordinate[curLayerIndex][i].y;
+    if (i === 0) {
+      biasTextY += nodeLength + 2 * plusSymbolRadius;
+    } else {
+      biasTextY -= 2 * plusSymbolRadius + 5;
+    }
+    plusAnnotation.append('text')
+      .attr('class', 'annotation-text')
+      .attr('x', intermediateX2 + plusSymbolRadius)
+      .attr('y', biasTextY)
+      .style('text-anchor', 'middle')
+      .style('dominant-baseline', i === 0 ? 'hanging' : 'baseline')
+      .text('Bias');
   }
 
   const drawArrow = (arg) => {
@@ -846,7 +959,10 @@
           {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
         addOverlayGradient('overlay-gradient', stops);
 
-        let overlayRect = svg.append('rect')
+        let intermediateLayerOverlay = svg.append('g')
+          .attr('class', 'intermediate-layer-overlay');
+
+        let overlayRect = intermediateLayerOverlay.append('rect')
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient)')
           .style('stroke', 'none')
@@ -863,104 +979,30 @@
         
         // Draw the intermediate layer
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
-        let intermediateLayer = drawIntermediateLayer(curLayerIndex,
-          leftX, targetX, rightStart, intermediateGap, d, i);
+        drawIntermediateLayer(curLayerIndex, leftX, targetX, rightStart,
+          intermediateGap, d, i);
         
         // Add annotation to the intermediate layer
-        // Add an annotation for the kernel and the sliding
-        let kernelAnnotation = intermediateLayer.append('g')
-          .attr('class', 'kernel-annotation');
-        
-        kernelAnnotation.append('text')
-          .text('Kernel')
-          .attr('class', 'annotation-text')
-          .attr('x', leftX - 2.5 * kernelRectLength * 3)
-          .attr('y', nodeCoordinate[curLayerIndex - 1][0].y + kernelRectLength * 3)
-          .style('dominant-baseline', 'baseline')
-          .style('text-anchor', 'end');
+        let intermediateLayerAnnotation = svg.append('g')
+          .attr('class', 'intermediate-layer-annotation')
+          .style('opacity', 0);
 
-        let slideText = kernelAnnotation.append('text')
-          .attr('x', leftX)
-          .attr('y', nodeCoordinate[curLayerIndex - 1][0].y + nodeLength +
-            kernelRectLength * 3)
-          .attr('class', 'annotation-text')
-          .style('dominant-baseline', 'hanging')
-          .style('text-anchor', 'start');
-        
-        slideText.append('tspan')
-          .text('Slide kernel over ');
-
-        slideText.append('tspan')
-          .attr('x', leftX)
-          .attr('dy', '1em')
-          .text('input channel to');
-
-        slideText.append('tspan')
-          .attr('x', leftX)
-          .attr('dy', '1em')
-          .text('get intermediate result');
-
-        drawArrow({
-          group: intermediateLayer,
-          tx: leftX - 5,
-          ty: nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2,
-          sx: leftX - 5,
-          sy: nodeCoordinate[curLayerIndex - 1][0].y + nodeLength
-            + kernelRectLength * 3 + 5,
-          dr: 20
+        drawIntermediateLayerAnnotation({
+          leftX: leftX,
+          curLayerIndex: curLayerIndex,
+          group: intermediateLayerAnnotation,
+          intermediateGap: intermediateGap,
+          isFirstConv: true,
+          i: i
         });
-
-        // Add annotation for the sum operation
-        let plusAnnotation = intermediateLayer.append('g')
-          .attr('class', 'plus-annotation');
         
-        let intermediateX2 = leftX + 2 * nodeLength + 2.5 * intermediateGap;
-        let textX = intermediateX2;
-
-        if (i == 0) {
-          textX += 30;
-        }
-
-        let plusText = plusAnnotation.append('text')
-          .attr('x', textX)
-          .attr('y', nodeCoordinate[curLayerIndex][i].y + nodeLength +
-            kernelRectLength * 3)
-          .attr('class', 'annotation-text')
-          .style('dominant-baseline', 'hanging')
-          .style('text-anchor', 'start');
-        
-        plusText.append('tspan')
-          .text('Sum up all intermediate');
-        
-        plusText.append('tspan')
-          .attr('x', textX)
-          .attr('dy', '1em')
-          .text('results and then add bias');
-        
-        drawArrow({
-          group: intermediateLayer,
-          sx: intermediateX2 + 5,
-          sy: nodeCoordinate[curLayerIndex][i].y + nodeLength + kernelRectLength * 2,
-          tx: intermediateX2 + 2 * plusSymbolRadius + 3,
-          ty: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius,
-          dr: 30,
-          hFlip: true
-        });
-
-        // Add annotation for the bias
-        let biasTextY = nodeCoordinate[curLayerIndex][i].y;
-        if (i === 0) {
-          biasTextY += nodeLength + 2 * plusSymbolRadius;
-        } else {
-          biasTextY -= 2 * plusSymbolRadius + 5;
-        }
-        plusAnnotation.append('text')
-          .attr('class', 'annotation-text')
-          .attr('x', intermediateX2 + plusSymbolRadius)
-          .attr('y', biasTextY)
-          .style('text-anchor', 'middle')
-          .style('dominant-baseline', i === 0 ? 'hanging' : 'baseline')
-          .text('Bias');
+        // Show everything
+        svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
+          .transition()
+          .delay(500)
+          .duration(500)
+          .ease(d3.easeCubicInOut)
+          .style('opacity', 1);
       }
 
       else if (d.layerName === 'conv_1_2') {
@@ -999,7 +1041,10 @@
           {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 0.85}];
         addOverlayGradient('overlay-gradient-left', stops);
 
-        svg.append('rect')
+        let intermediateLayerOverlay = svg.append('g')
+          .attr('class', 'intermediate-layer-overlay');
+
+        intermediateLayerOverlay.append('rect')
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-right)')
           .style('stroke', 'none')
@@ -1009,7 +1054,7 @@
           .attr('y', 0)
           .style('opacity', 0);
         
-        svg.append('rect')
+        intermediateLayerOverlay.append('rect')
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-left)')
           .style('stroke', 'none')
@@ -1019,16 +1064,37 @@
           .attr('y', 0)
           .style('opacity', 0);
         
-        svg.selectAll('rect.overlay')
+        intermediateLayerOverlay.selectAll('rect.overlay')
           .transition('move')
           .duration(800)
           .ease(d3.easeCubicInOut)
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        drawIntermediateLayer(curLayerIndex,
-          nodeCoordinate[curLayerIndex - 1][0].x, targetX, rightStart,
+        let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
+        drawIntermediateLayer(curLayerIndex, leftX, targetX, rightStart,
           intermediateGap, d, i);
+        
+        // Add annotation to the intermediate layer
+        let intermediateLayerAnnotation = svg.append('g')
+          .attr('class', 'intermediate-layer-annotation')
+          .style('opacity', 0);
+
+        drawIntermediateLayerAnnotation({
+          leftX: leftX,
+          curLayerIndex: curLayerIndex,
+          group: intermediateLayerAnnotation,
+          intermediateGap: intermediateGap,
+          i: i
+        });
+
+        // Show everything
+        svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
+          .transition()
+          .delay(500)
+          .duration(500)
+          .ease(d3.easeCubicInOut)
+          .style('opacity', 1);
       }
 
       else if (d.layerName === 'conv_2_1') {
@@ -1071,7 +1137,10 @@
           {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
         addOverlayGradient('overlay-gradient-right', stops);
 
-        svg.append('rect')
+        let intermediateLayerOverlay = svg.append('g')
+          .attr('class', 'intermediate-layer-overlay');
+
+        intermediateLayerOverlay.append('rect')
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-left)')
           .style('stroke', 'none')
@@ -1081,7 +1150,7 @@
           .attr('y', 0)
           .style('opacity', 0);
         
-        svg.append('rect')
+        intermediateLayerOverlay.append('rect')
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-right)')
           .style('stroke', 'none')
@@ -1091,7 +1160,7 @@
           .attr('y', 0)
           .style('opacity', 0);
         
-        svg.selectAll('rect.overlay')
+        intermediateLayerOverlay.selectAll('rect.overlay')
           .transition('move')
           .duration(800)
           .ease(d3.easeCubicInOut)
@@ -1100,6 +1169,27 @@
         // Draw the intermediate layer
         drawIntermediateLayer(curLayerIndex, leftX,
           nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
+
+        // Add annotation to the intermediate layer
+        let intermediateLayerAnnotation = svg.append('g')
+          .attr('class', 'intermediate-layer-annotation')
+          .style('opacity', 0);
+
+        drawIntermediateLayerAnnotation({
+          leftX: leftX,
+          curLayerIndex: curLayerIndex,
+          group: intermediateLayerAnnotation,
+          intermediateGap: intermediateGap,
+          i: i
+        });
+
+        // Show everything
+        svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
+          .transition()
+          .delay(500)
+          .duration(500)
+          .ease(d3.easeCubicInOut)
+          .style('opacity', 1);
       }
       
       else if (d.layerName === 'conv_2_2') {
@@ -1142,7 +1232,10 @@
           {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
         addOverlayGradient('overlay-gradient-right', stops);
 
-        svg.append('rect')
+        let intermediateLayerOverlay = svg.append('g')
+          .attr('class', 'intermediate-layer-overlay');
+
+        intermediateLayerOverlay.append('rect')
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-left)')
           .style('stroke', 'none')
@@ -1152,7 +1245,7 @@
           .attr('y', 0)
           .style('opacity', 0);
         
-        svg.append('rect')
+        intermediateLayerOverlay.append('rect')
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-right)')
           .style('stroke', 'none')
@@ -1162,7 +1255,7 @@
           .attr('y', 0)
           .style('opacity', 0);
         
-        svg.selectAll('rect.overlay')
+        intermediateLayerOverlay.selectAll('rect.overlay')
           .transition('move')
           .duration(800)
           .ease(d3.easeCubicInOut)
@@ -1171,6 +1264,27 @@
         // Draw the intermediate layer
         drawIntermediateLayer(curLayerIndex, leftX,
           nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
+
+        // Add annotation to the intermediate layer
+        let intermediateLayerAnnotation = svg.append('g')
+          .attr('class', 'intermediate-layer-annotation')
+          .style('opacity', 0);
+
+        drawIntermediateLayerAnnotation({
+          leftX: leftX,
+          curLayerIndex: curLayerIndex,
+          group: intermediateLayerAnnotation,
+          intermediateGap: intermediateGap,
+          i: i
+        });
+
+        // Show everything
+        svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
+          .transition()
+          .delay(500)
+          .duration(500)
+          .ease(d3.easeCubicInOut)
+          .style('opacity', 1);
       }
     }
 
@@ -1193,13 +1307,13 @@
         .on('end', (d, i, g) => { d3.select(g[i]).remove()});
       
       // Remove the overlay rect
-      svg.selectAll('rect.overlay')
+      svg.selectAll('g.intermediate-layer-overlay, g.intermediate-layer-annotation')
         .transition('remove')
         .duration(500)
         .ease(d3.easeCubicInOut)
         .style('opacity', 0)
         .on('end', (d, i, g) => {
-          d3.selectAll('rect.overlay').remove();
+          svg.selectAll('g.intermediate-layer-overlay, g.intermediate-layer-annotation').remove();
           svg.selectAll('defs.overlay-gradient').remove();
         });
       
