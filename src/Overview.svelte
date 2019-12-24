@@ -8,6 +8,7 @@
   // View bindings
   let overviewComponent;
   let cnnLayerRanges = {};
+  let cnnLayerMinMax = [];
   let scaleLevelSet = new Set(['local', 'module', 'global']);
   let selectedScaleLevel = 'local';
   let previousSelectedScaleLevel = selectedScaleLevel;
@@ -355,9 +356,13 @@
       .on('end', onEndFunc);
   }
 
-  const addOverlayGradient = (gradientID, stops) => {
+  const addOverlayGradient = (gradientID, stops, group) => {
+    if (group === undefined) {
+      group = svg;
+    }
+
     // Create a gradient
-    let defs = svg.append("defs")
+    let defs = group.append("defs")
       .attr('class', 'overlay-gradient');
 
     let gradient = defs.append("linearGradient")
@@ -484,6 +489,7 @@
 
     let range = cnnLayerRanges[selectedScaleLevel][curLayerIndex];
     let colorScale = layerColorScales[d.type];
+    let intermediateMinMax = [];
     
     // Copy the previsious layer to construct foreignObject placeholder
     // Also add edges from/to the intermediate layer in this loop
@@ -500,6 +506,9 @@
       let inputMatrix = cnn[curLayerIndex - 1][ni].output;
       let kernelMatrix = cnn[curLayerIndex][i].inputLinks[ni].weight;
       let interMatrix = singleConv(inputMatrix, kernelMatrix);
+
+      // Compute the intermediate layer min max
+      intermediateMinMax.push(getExtent(interMatrix));
 
       // Update the intermediate sum
       itnermediateSumMatrix = matrixAdd(itnermediateSumMatrix, interMatrix);
@@ -604,6 +613,12 @@
 
       slidingAnimation();
     });
+
+    // Aggregate the intermediate min max
+    let aggregatedExtent = intermediateMinMax.reduce((acc, cur) => {
+      return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
+    })
+    let aggregatedMinMax = {min: aggregatedExtent[0], max: aggregatedExtent[1]};
 
     // Draw the plus operation symbol
     let symbolY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2;
@@ -741,7 +756,7 @@
       .attr('stroke-dashoffset', 0)
       .each((d, i, g) => animateEdge(d, i, g, dashoffset - 160));
     
-    return intermediateLayer;
+    return {intermediateLayer: intermediateLayer, intermediateMinMax: aggregatedMinMax};
   }
 
   // Add an annotation for the kernel and the sliding
@@ -892,7 +907,7 @@
           scale(${scaleX}, ${scaleY})`);
   }
 
-  const redrawLayerIfNeeded = (curLayerIndex) => {
+  const redrawLayerIfNeeded = (curLayerIndex, i) => {
     // Determine the range for this layerview, and redraw the layer with
     // smaller range so all layers have the same range
     let rangePre = cnnLayerRanges[selectedScaleLevel][curLayerIndex - 1];
@@ -919,7 +934,22 @@
       // the intermediate view
       needRedraw = [curLayerIndex - 1, undefined];
     }
-    return range;
+
+    // Compute the min, max value of all nodes in pre-layer and the selected
+    // node of cur-layer
+    let min = cnnLayerMinMax[curLayerIndex - 1].min,
+      max = cnnLayerMinMax[curLayerIndex - 1].max;
+
+    // Selected node
+    let n = cnn[curLayerIndex][i];
+    for (let r = 0; r < n.output.length; r++) {
+      for (let c = 0; c < n.output[0].length; c++) {
+        if (n.output[r][c] < min) { min = n.output[r][c]; }
+        if (n.output[r][c] > max) { max = n.output[r][c]; }
+      }
+    }
+
+    return {range: range, minMax: {min: min, max: max}};
   }
 
   // Draw the legend for intermediate layer
@@ -928,22 +958,41 @@
       curLayerIndex = arg.curLayerIndex,
       range = arg.range,
       group = arg.group,
+      minMax = arg.minMax,
       intermediateGap = arg.intermediateGap,
       x = arg.x,
       y = arg.y,
-      isInput = arg.isInput,
-      gradient = arg.gradient;
+      isInput = arg.isInput;
+    
+    // Add a legend color gradient
+    let gradientName = 'url(#inputGradient)';
+    if (!isInput) {
+      let leftValue = (minMax.min + range / 2) / range;
+      let zeroValue = (0 + range / 2) / range;
+      let rightValue = (minMax.max + range / 2) / range;
+      let totalRange = minMax.max - minMax.min;
+      let zeroLocation = (0 - minMax.min) / totalRange;
+      let stops = [
+        {offset: 0, color: layerColorScales.conv(leftValue), opacity: 1},
+        {offset: zeroLocation / 2, color: layerColorScales.conv(leftValue + (zeroValue - leftValue)/2), opacity: 1},
+        {offset: zeroLocation, color: layerColorScales.conv(zeroValue), opacity: 1},
+        {offset: zeroLocation + (1 - zeroValue) / 2, color: layerColorScales.conv(zeroValue + (rightValue - zeroValue)/2), opacity: 1},
+        {offset: 1, color: layerColorScales.conv(rightValue), opacity: 1}
+      ];
+      addOverlayGradient('intermediate-legend-gradient', stops, group);
+      gradientName = 'url(#intermediate-legend-gradient)';
+    }
 
     let width = 2 * nodeLength + intermediateGap + 1.5;
 
     let legendScale = d3.scaleLinear()
       .range([0, width - 1.5])
-      .domain(isInput ? [0, range] : [-range, range]);
+      .domain(isInput ? [0, range] : [minMax.min, minMax.max]);
 
     let legendAxis = d3.axisBottom()
       .scale(legendScale)
       .tickFormat(d3.format(isInput ? 'd' : '.2f'))
-      .tickValues(isInput ? [0, range] : [-range, 0, range]);
+      .tickValues(isInput ? [0, range] : [minMax.min, 0, minMax.max]);
     
     let intermediateLegend = group.append('g')
       .attr('id', `intermediate-legend-${curLayerIndex - 1}`)
@@ -965,7 +1014,7 @@
       .attr('height', legendHeight)
       .attr('transform', `rotate(${isInput ? 180 : 0},
         ${width / 2}, ${legendHeight / 2})`)
-      .style('fill', gradient);
+      .style('fill', gradientName);
   }
 
   const nodeClickHandler = (d, i, g) => {
@@ -1057,9 +1106,25 @@
         
         // Draw the intermediate layer
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
-        let intermediateLayer = drawIntermediateLayer(curLayerIndex, leftX,
-          targetX, rightStart, intermediateGap, d, i);
+        let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
+          curLayerIndex, leftX, targetX, rightStart, intermediateGap, d, i);
         
+        // Compute the selected node's min max
+        // Selected node
+        let min = Infinity, max = -Infinity;
+        let n = cnn[curLayerIndex][i];
+        for (let r = 0; r < n.output.length; r++) {
+          for (let c = 0; c < n.output[0].length; c++) {
+            if (n.output[r][c] < min) { min = n.output[r][c]; }
+            if (n.output[r][c] > max) { max = n.output[r][c]; }
+          }
+        }
+
+        let finalMinMax = {
+          min: Math.min(min, intermediateMinMax.min),
+          max: Math.max(max, intermediateMinMax.max)
+        }
+
         // Add annotation to the intermediate layer
         let intermediateLayerAnnotation = svg.append('g')
           .attr('class', 'intermediate-layer-annotation')
@@ -1085,18 +1150,17 @@
           isInput: true,
           x: leftX,
           y: nodeCoordinate[curLayerIndex][9].y,
-          gradient: 'url(#inputGradient)'
         });
 
         drawIntermediateLayerLegend({
           legendHeight: 5,
           curLayerIndex: curLayerIndex,
           range: range,
+          minMax: finalMinMax,
           group: intermediateLayer,
           intermediateGap: intermediateGap,
           x: nodeCoordinate[curLayerIndex - 1][2].x,
-          y: nodeCoordinate[curLayerIndex][9].y + 25,
-          gradient: 'url(#convGradient)'
+          y: nodeCoordinate[curLayerIndex][9].y + 25
         });
         
         // Show everything
@@ -1115,7 +1179,7 @@
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
         // Make sure two layers have the same range
-        let range = redrawLayerIfNeeded(curLayerIndex);
+        let {range, minMax} = redrawLayerIfNeeded(curLayerIndex, i);
 
         // Move the selected layer
         moveLayerX({layerIndex: curLayerIndex, targetX: targetX, disable: true,
@@ -1178,8 +1242,15 @@
         
         // Draw the intermediate layer
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
-        let intermediateLayer = drawIntermediateLayer(curLayerIndex, leftX,
-          targetX, rightStart, intermediateGap, d, i);
+        let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
+          curLayerIndex, leftX, targetX, rightStart, intermediateGap, d, i);
+        
+        // After getting the intermediateMinMax, we can finally aggregate it with
+        // the preLayer minmax, curLayer minmax
+        let finalMinMax = {
+          min: Math.min(minMax.min, intermediateMinMax.min),
+          max: Math.max(minMax.max, intermediateMinMax.max)
+        }
         
         // Add annotation to the intermediate layer
         let intermediateLayerAnnotation = svg.append('g')
@@ -1198,11 +1269,11 @@
           legendHeight: 5,
           curLayerIndex: curLayerIndex,
           range: range,
+          minMax: finalMinMax,
           group: intermediateLayer,
           intermediateGap: intermediateGap,
           x: leftX,
           y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
-          gradient: 'url(#convGradient)'
         });
 
         // Show everything
@@ -1221,7 +1292,7 @@
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
         // Make sure two layers have the same range
-        let range = redrawLayerIfNeeded(curLayerIndex);
+        let {range, minMax} = redrawLayerIfNeeded(curLayerIndex, i);
 
         // Move the previous layer
         moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
@@ -1287,8 +1358,17 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        let intermediateLayer = drawIntermediateLayer(curLayerIndex, leftX,
-          nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
+        let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
+          curLayerIndex, leftX, nodeCoordinate[curLayerIndex][0].x, rightStart,
+          intermediateGap, d, i
+        );
+                
+        // After getting the intermediateMinMax, we can finally aggregate it with
+        // the preLayer minmax, curLayer minmax
+        let finalMinMax = {
+          min: Math.min(minMax.min, intermediateMinMax.min),
+          max: Math.max(minMax.max, intermediateMinMax.max)
+        }
 
         // Add annotation to the intermediate layer
         let intermediateLayerAnnotation = svg.append('g')
@@ -1309,9 +1389,9 @@
           range: range,
           group: intermediateLayer,
           intermediateGap: intermediateGap,
+          minMax: finalMinMax,
           x: leftX,
-          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
-          gradient: 'url(#convGradient)'
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10
         });
 
         // Show everything
@@ -1330,7 +1410,7 @@
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
         // Make sure two layers have the same range
-        let range = redrawLayerIfNeeded(curLayerIndex);
+        let {range, minMax} = redrawLayerIfNeeded(curLayerIndex, i);
 
         // Move the previous layer
         moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
@@ -1396,8 +1476,17 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        let intermediateLayer = drawIntermediateLayer(curLayerIndex, leftX,
-          nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
+        let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
+          curLayerIndex, leftX, nodeCoordinate[curLayerIndex][0].x, rightStart,
+          intermediateGap, d, i
+        );
+                
+        // After getting the intermediateMinMax, we can finally aggregate it with
+        // the preLayer minmax, curLayer minmax
+        let finalMinMax = {
+          min: Math.min(minMax.min, intermediateMinMax.min),
+          max: Math.max(minMax.max, intermediateMinMax.max)
+        }
 
         // Add annotation to the intermediate layer
         let intermediateLayerAnnotation = svg.append('g')
@@ -1417,10 +1506,10 @@
           curLayerIndex: curLayerIndex,
           range: range,
           group: intermediateLayer,
+          minMax: finalMinMax,
           intermediateGap: intermediateGap,
           x: leftX,
-          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
-          gradient: 'url(#convGradient)'
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10
         });
 
         // Show everything
@@ -2024,16 +2113,25 @@
     // Iterate through all nodes to find a output ranges for each layer
     let cnnLayerRangesLocal = [1];
     let curRange = undefined;
+
+    // Also track the min/max of each layer (avoid computing during intermediate
+    // layer)
+    cnnLayerMinMax = [];
+
     for (let l = 0; l < cnn.length - 1; l++) {
       let curLayer = cnn[l];
 
+      // Compute the min max
+      let outputExtents = curLayer.map(l => getExtent(l.output));
+      let aggregatedExtent = outputExtents.reduce((acc, cur) => {
+        return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
+      })
+      cnnLayerMinMax.push({min: aggregatedExtent[0], max: aggregatedExtent[1]});
+
       // conv layer refreshes curRange counting
       if (curLayer[0].type === 'conv' || curLayer[0].type === 'fc') {
-        let outputExtents = curLayer.map(l => getExtent(l.output));
-        let aggregatedExtent = outputExtents.reduce((acc, cur) => {
-          return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
-        })
         aggregatedExtent = aggregatedExtent.map(Math.abs);
+        // Plus 0.1 to offset the rounding error (avoid black color)
         curRange = 2 * (0.1 + 
           Math.round(Math.max(...aggregatedExtent) * 1000) / 1000);
       }
@@ -2045,6 +2143,7 @@
 
     // Finally, add the output layer range
     cnnLayerRangesLocal.push(1);
+    cnnLayerMinMax.push({min: 0, max: 1});
 
     // Support different levels of scales (1) lcoal, (2) component, (3) global
     let cnnLayerRangesComponent = [1];
