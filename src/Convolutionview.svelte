@@ -49,7 +49,7 @@
   <div style="margin-top: 2%; margin-bottom: 2%;" class="box">
     <div class="has-text-centered">
       <button style="margin-bottom: 1%" class="button is-success" on:click={handleClickPause}>
-        Toggle Movement
+        {@html isPaused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>'}
       </button>    
     </div>
     <div class="columns is-centered is-vcentered">

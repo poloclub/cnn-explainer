@@ -197,7 +197,7 @@
   </header>
   <Dataview data={testKernel} highlights={outputHighlights} isKernelMath={true} 
     constraint={getVisualizationSizeConstraint(kernel)} dataRange={getDataRange(kernel)}/>
-  <body>
+  <body class="is-size-3">
     &#183;
   </body>  
   <Dataview data={testInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
