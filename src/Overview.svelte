@@ -225,7 +225,6 @@
   }
 
   const drawOutputScore = (d, i, g, scale) => {
-    // console.log(d.output, scale(d.output))
     let group = d3.select(g[i]);
     group.select('rect.output-rect')
       .transition('output')
@@ -988,7 +987,7 @@
       let layerIndex = layerIndexDict[selectedNode.layerName];
       let nodeIndex = selectedNode.index;
       svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
-        .select('rect')
+        .select('rect.bounding')
         .classed('hidden', true);
 
       selectedNode.data.inputLinks.forEach(link => {
@@ -1809,15 +1808,15 @@
         nodeGroups.append('rect')
           .attr('class', 'output-rect')
           .attr('x', left)
-          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength / 4)
-          .attr('height', nodeLength / 2)
+          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength / 2 + 8)
+          .attr('height', nodeLength / 4)
           .attr('width', 0)
           .style('fill', 'gray');
         nodeGroups.append('text')
           .attr('class', 'output-text')
           .attr('x', left)
-          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength * 3 / 4)
-          .style('dominant-baseline', 'hanging')
+          .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength / 2)
+          .style('dominant-baseline', 'middle')
           .style('font-size', '11px')
           .style('color', 'gray')
           .style('opacity', 0.5)
