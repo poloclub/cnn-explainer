@@ -36,6 +36,7 @@
   // hSpaceAroundGap is the short gap
   let hSpaceAroundGap = undefined;
   let vSpaceAroundGap = undefined;
+  let needRedraw = [undefined, undefined];
   let selectedNode = {layerName: '', index: -1, data: null};
   let svgPaddings = {top: 20, bottom: 30, left: 50, right: 50};
   let isInIntermediateView = false;
@@ -165,9 +166,11 @@
     context.fillRect(0, 0, 40, 40);
   }
 
-  const drawOutput = (d, i, g) => {
+  const drawOutput = (d, i, g, range) => {
     let canvas = g[i];
-    let range = cnnLayerRanges[selectedScaleLevel][layerIndexDict[d.layerName]];
+    if (range === undefined) {
+      range = cnnLayerRanges[selectedScaleLevel][layerIndexDict[d.layerName]];
+    }
     let context = canvas.getContext('2d');
     let colorScale = layerColorScales[d.type];
 
@@ -890,6 +893,82 @@
           scale(${scaleX}, ${scaleY})`);
   }
 
+  const redrawLayerIfNeeded = (curLayerIndex) => {
+    // Determine the range for this layerview, and redraw the layer with
+    // smaller range so all layers have the same range
+    let rangePre = cnnLayerRanges[selectedScaleLevel][curLayerIndex - 1];
+    let rangeCur = cnnLayerRanges[selectedScaleLevel][curLayerIndex];
+    let range = Math.max(rangePre, rangeCur);
+
+    if (rangePre > rangeCur) {
+      // Redraw the current layer (selected node)
+      d3.select(g[i])
+        .select('canvas.node-canvas')
+        .each((d, g, i) => drawOutput(d, g, i, range));
+      
+      // Record the change so we will re-redraw the layer when user quits
+      // the intermediate view
+      needRedraw = [curLayerIndex, i];
+      
+    } else if (rangePre < rangeCur) {
+      // Redraw the previous layer (whole layer)
+      svg.select(`g#cnn-layer-group-${curLayerIndex - 1}`)
+        .selectAll('canvas.node-canvas')
+        .each((d, g, i) => drawOutput(d, g, i, range));
+
+      // Record the change so we will re-redraw the layer when user quits
+      // the intermediate view
+      needRedraw = [curLayerIndex - 1, undefined];
+    }
+    return range;
+  }
+
+  // Draw the legend for intermediate layer
+  const drawIntermediateLayerLegend = (arg) => {
+    let legendHeight = arg.legendHeight,
+      curLayerIndex = arg.curLayerIndex,
+      range = arg.range,
+      group = arg.group,
+      intermediateGap = arg.intermediateGap,
+      x = arg.x,
+      y = arg.y,
+      isInput = arg.isInput,
+      gradient = arg.gradient;
+
+    let width = 2 * nodeLength + intermediateGap + 1.5;
+
+    let legendScale = d3.scaleLinear()
+      .range([0, width - 1.5])
+      .domain(isInput ? [0, range] : [-range, range]);
+
+    let legendAxis = d3.axisBottom()
+      .scale(legendScale)
+      .tickFormat(d3.format(isInput ? 'd' : '.2f'))
+      .tickValues(isInput ? [0, range] : [-range, 0, range]);
+    
+    let intermediateLegend = group.append('g')
+      .attr('id', `intermediate-legend-${curLayerIndex - 1}`)
+      .attr('transform', `translate(${x}, ${y})`);
+    
+    let legendGroup = intermediateLegend.append('g')
+      .attr('transform', `translate(0, ${legendHeight - 3})`)
+      .call(legendAxis);
+    
+    legendGroup.selectAll('text')
+      .style('font-size', '9px')
+      .style('fill', intermediateColor);
+    
+    legendGroup.selectAll('path, line')
+      .style('stroke', intermediateColor);
+
+    intermediateLegend.append('rect')
+      .attr('width', width)
+      .attr('height', legendHeight)
+      .attr('transform', `rotate(${isInput ? 180 : 0},
+        ${width / 2}, ${legendHeight / 2})`)
+      .style('fill', gradient);
+  }
+
   const nodeClickHandler = (d, i, g) => {
     // Opens low-level convolution animation when a conv node is clicked.
     if (d.type === 'conv') {
@@ -979,8 +1058,8 @@
         
         // Draw the intermediate layer
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
-        drawIntermediateLayer(curLayerIndex, leftX, targetX, rightStart,
-          intermediateGap, d, i);
+        let intermediateLayer = drawIntermediateLayer(curLayerIndex, leftX,
+          targetX, rightStart, intermediateGap, d, i);
         
         // Add annotation to the intermediate layer
         let intermediateLayerAnnotation = svg.append('g')
@@ -994,6 +1073,31 @@
           intermediateGap: intermediateGap,
           isFirstConv: true,
           i: i
+        });
+
+        let range = cnnLayerRanges.local[curLayerIndex];
+
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: 1,
+          group: intermediateLayer,
+          intermediateGap: intermediateGap,
+          isInput: true,
+          x: leftX,
+          y: nodeCoordinate[curLayerIndex][9].y,
+          gradient: 'url(#inputGradient)'
+        });
+
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: range,
+          group: intermediateLayer,
+          intermediateGap: intermediateGap,
+          x: nodeCoordinate[curLayerIndex - 1][2].x,
+          y: nodeCoordinate[curLayerIndex][9].y + 25,
+          gradient: 'url(#convGradient)'
         });
         
         // Show everything
@@ -1010,6 +1114,9 @@
         let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2;
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
+
+        // Make sure two layers have the same range
+        let range = redrawLayerIfNeeded(curLayerIndex);
 
         // Move the selected layer
         moveLayerX({layerIndex: curLayerIndex, targetX: targetX, disable: true,
@@ -1072,8 +1179,8 @@
         
         // Draw the intermediate layer
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
-        drawIntermediateLayer(curLayerIndex, leftX, targetX, rightStart,
-          intermediateGap, d, i);
+        let intermediateLayer = drawIntermediateLayer(curLayerIndex, leftX,
+          targetX, rightStart, intermediateGap, d, i);
         
         // Add annotation to the intermediate layer
         let intermediateLayerAnnotation = svg.append('g')
@@ -1086,6 +1193,17 @@
           group: intermediateLayerAnnotation,
           intermediateGap: intermediateGap,
           i: i
+        });
+
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: range,
+          group: intermediateLayer,
+          intermediateGap: intermediateGap,
+          x: leftX,
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+          gradient: 'url(#convGradient)'
         });
 
         // Show everything
@@ -1102,6 +1220,9 @@
         let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
+
+        // Make sure two layers have the same range
+        let range = redrawLayerIfNeeded(curLayerIndex);
 
         // Move the previous layer
         moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
@@ -1167,7 +1288,7 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        drawIntermediateLayer(curLayerIndex, leftX,
+        let intermediateLayer = drawIntermediateLayer(curLayerIndex, leftX,
           nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
 
         // Add annotation to the intermediate layer
@@ -1181,6 +1302,17 @@
           group: intermediateLayerAnnotation,
           intermediateGap: intermediateGap,
           i: i
+        });
+
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: range,
+          group: intermediateLayer,
+          intermediateGap: intermediateGap,
+          x: leftX,
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+          gradient: 'url(#convGradient)'
         });
 
         // Show everything
@@ -1197,6 +1329,9 @@
         let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
+
+        // Make sure two layers have the same range
+        let range = redrawLayerIfNeeded(curLayerIndex);
 
         // Move the previous layer
         moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
@@ -1262,7 +1397,7 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        drawIntermediateLayer(curLayerIndex, leftX,
+        let intermediateLayer = drawIntermediateLayer(curLayerIndex, leftX,
           nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
 
         // Add annotation to the intermediate layer
@@ -1276,6 +1411,17 @@
           group: intermediateLayerAnnotation,
           intermediateGap: intermediateGap,
           i: i
+        });
+
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: range,
+          group: intermediateLayer,
+          intermediateGap: intermediateGap,
+          x: leftX,
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+          gradient: 'url(#convGradient)'
         });
 
         // Show everything
@@ -1316,6 +1462,19 @@
           svg.selectAll('g.intermediate-layer-overlay, g.intermediate-layer-annotation').remove();
           svg.selectAll('defs.overlay-gradient').remove();
         });
+      
+      // Recover the layer if we have drdrawn it
+      if (needRedraw[0] !== undefined) {
+        if (needRedraw[1] !== undefined) {
+          svg.select(`g#layer-${needRedraw[0]}-node-${needRedraw[1]}`)
+            .select('canvas.node-canvas')
+            .each(drawOutput);
+        } else {
+          svg.select(`g#cnn-layer-group-${needRedraw[0]}`)
+            .selectAll('canvas.node-canvas')
+            .each(drawOutput);
+        }
+      }
       
       // Move all layers to their original place
       for (let i = 0; i < numLayers; i++) {
