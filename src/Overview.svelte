@@ -639,10 +639,10 @@
     if (i == 0) {
       // Add bias symbol to the plus symbol
       symbolGroup.append('rect')
-        .attr('x', -plusSymbolRadius)
+        .attr('x', -kernelRectLength)
         .attr('y', nodeLength / 2)
-        .attr('width', 2 * plusSymbolRadius)
-        .attr('height', 2 * plusSymbolRadius)
+        .attr('width', 2 * kernelRectLength)
+        .attr('height', 2 * kernelRectLength)
         .style('stroke', intermediateColor)
         .style('fill', d3.rgb(colorScale((d.bias + range / 2) / range)));
       
@@ -657,10 +657,10 @@
     } else {
       // Add bias symbol to the plus symbol
       symbolGroup.append('rect')
-        .attr('x', -plusSymbolRadius)
-        .attr('y', -nodeLength / 2 - 2 * plusSymbolRadius)
-        .attr('width', 2 * plusSymbolRadius)
-        .attr('height', 2 * plusSymbolRadius)
+        .attr('x', -kernelRectLength)
+        .attr('y', -nodeLength / 2 - 2 * kernelRectLength)
+        .attr('width', 2 * kernelRectLength)
+        .attr('height', 2 * kernelRectLength)
         .style('stroke', intermediateColor)
         .style('fill', d3.rgb(colorScale((d.bias + range / 2) / range)));
       
@@ -852,9 +852,9 @@
     // Add annotation for the bias
     let biasTextY = nodeCoordinate[curLayerIndex][i].y;
     if (i === 0) {
-      biasTextY += nodeLength + 2 * plusSymbolRadius;
+      biasTextY += nodeLength + 2 * kernelRectLength;
     } else {
-      biasTextY -= 2 * plusSymbolRadius + 5;
+      biasTextY -= 2 * kernelRectLength + 5;
     }
     plusAnnotation.append('text')
       .attr('class', 'annotation-text')
