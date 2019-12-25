@@ -919,7 +919,7 @@
 
     if (rangePre > rangeCur) {
       // Redraw the current layer (selected node)
-      d3.select(g[i])
+      svg.select(`g#layer-${curLayerIndex}-node-${i}`)
         .select('canvas.node-canvas')
         .each((d, g, i) => drawOutput(d, g, i, range));
       
@@ -962,38 +962,56 @@
       range = arg.range,
       group = arg.group,
       minMax = arg.minMax,
-      intermediateGap = arg.intermediateGap,
+      width = arg.width,
       x = arg.x,
       y = arg.y,
-      isInput = arg.isInput;
+      isInput = arg.isInput,
+      colorScale = arg.colorScale,
+      gradientAppendingName = arg.gradientAppendingName,
+      gradientGap = arg.gradientGap;
+    
+    console.log(minMax);
+    if (colorScale === undefined) { colorScale = layerColorScales.conv; }
+    if (gradientGap === undefined) { gradientGap = 0; }
     
     // Add a legend color gradient
     let gradientName = 'url(#inputGradient)';
+    let normalizedColor = v => colorScale(v * (1 - 2 * gradientGap) + gradientGap);
+
     if (!isInput) {
-      let leftValue = (minMax.min + range / 2) / range;
-      let zeroValue = (0 + range / 2) / range;
-      let rightValue = (minMax.max + range / 2) / range;
-      let totalRange = minMax.max - minMax.min;
-      let zeroLocation = (0 - minMax.min) / totalRange;
+      let leftValue = (minMax.min + range / 2) / range,
+        zeroValue = (0 + range / 2) / range,
+        rightValue = (minMax.max + range / 2) / range,
+        totalRange = minMax.max - minMax.min,
+        zeroLocation = (0 - minMax.min) / totalRange,
+        leftMidValue = leftValue + (zeroValue - leftValue)/2,
+        rightMidValue = zeroValue + (rightValue - zeroValue)/2;
+
       let stops = [
-        {offset: 0, color: layerColorScales.conv(leftValue), opacity: 1},
+        {offset: 0, color: normalizedColor(leftValue), opacity: 1},
         {offset: zeroLocation / 2,
-          color: layerColorScales.conv(leftValue + (zeroValue - leftValue)/2),
+          color: normalizedColor(leftMidValue),
           opacity: 1},
         {offset: zeroLocation,
-          color: layerColorScales.conv(zeroValue),
+          color: normalizedColor(zeroValue),
           opacity: 1},
-        {offset: zeroLocation + (1 - zeroValue) / 2, color: layerColorScales.conv(zeroValue + (rightValue - zeroValue)/2), opacity: 1},
-        {offset: 1, color: layerColorScales.conv(rightValue), opacity: 1}
+        {offset: zeroLocation + (1 - zeroValue) / 2,
+          color: normalizedColor(rightMidValue),
+          opacity: 1},
+        {offset: 1, color: normalizedColor(rightValue), opacity: 1}
       ];
-      addOverlayGradient('intermediate-legend-gradient', stops, group);
-      gradientName = 'url(#intermediate-legend-gradient)';
+
+      if (gradientAppendingName === undefined) {
+        addOverlayGradient('intermediate-legend-gradient', stops, group);
+        gradientName = 'url(#intermediate-legend-gradient)';
+      } else {
+        addOverlayGradient(`${gradientAppendingName}`, stops, group);
+        gradientName = `url(#${gradientAppendingName})`;
+      }
     }
 
-    let width = 2 * nodeLength + intermediateGap + 1.5;
-
     let legendScale = d3.scaleLinear()
-      .range([0, width - 1.5])
+      .range([0, width - 1])
       .domain(isInput ? [0, range] : [minMax.min, minMax.max]);
 
     let legendAxis = d3.axisBottom()
@@ -1153,7 +1171,7 @@
           curLayerIndex: curLayerIndex,
           range: 1,
           group: intermediateLayer,
-          intermediateGap: intermediateGap,
+          width: 2 * nodeLength + intermediateGap,
           isInput: true,
           x: leftX,
           y: nodeCoordinate[curLayerIndex][9].y,
@@ -1165,7 +1183,7 @@
           range: range,
           minMax: finalMinMax,
           group: intermediateLayer,
-          intermediateGap: intermediateGap,
+          width: 2 * nodeLength + intermediateGap,
           x: nodeCoordinate[curLayerIndex - 1][2].x,
           y: nodeCoordinate[curLayerIndex][9].y + 25
         });
@@ -1278,7 +1296,7 @@
           range: range,
           minMax: finalMinMax,
           group: intermediateLayer,
-          intermediateGap: intermediateGap,
+          width: 2 * nodeLength + intermediateGap,
           x: leftX,
           y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
         });
@@ -1395,7 +1413,7 @@
           curLayerIndex: curLayerIndex,
           range: range,
           group: intermediateLayer,
-          intermediateGap: intermediateGap,
+          width: 2 * nodeLength + intermediateGap,
           minMax: finalMinMax,
           x: leftX,
           y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10
@@ -1514,7 +1532,7 @@
           range: range,
           group: intermediateLayer,
           minMax: finalMinMax,
-          intermediateGap: intermediateGap,
+          width: 2 * nodeLength + intermediateGap,
           x: leftX,
           y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10
         });
@@ -1534,8 +1552,8 @@
       let pixelHeight = 1.1;
       let curLayerIndex = layerIndexDict[d.layerName];
       let leftX = nodeCoordinate[curLayerIndex][0].x - (nodeLength +
-        2 * hSpaceAroundGap * gapRatio + pixelWidth);
-      let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 2;
+        4 * hSpaceAroundGap * gapRatio + pixelWidth);
+      let intermediateGap = (hSpaceAroundGap * gapRatio * 4) / 2;
 
       // Move the previous layer
       moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
@@ -1635,7 +1653,7 @@
       let flattenRange = 2 * (Math.round(
         Math.max(...flattenExtent.map(Math.abs)) * 1000) / 1000);
 
-      let flattentColorScale = (value, gap) => {
+      let flattenColorScale = (value, gap) => {
         if (gap === undefined) { gap = 0; }
         let normalizedValue = (value + flattenRange / 2) / flattenRange;
         return layerColorScales.weight(normalizedValue * (1 - 2 * gap) + gap);
@@ -1651,7 +1669,7 @@
         flattenLayer.select(`#edge-flatten-${index}-output`)
           .raise()
           .style('stroke-width', 1)
-          .style('stroke', da => flattentColorScale(da.weight));
+          .style('stroke', da => flattenColorScale(da.weight));
 
         flattenLayer.select(`#bounding-${index}`)
           .raise()
@@ -1666,7 +1684,7 @@
 
         flattenLayer.select(`#edge-flatten-${index}-output`)
           .style('stroke-width', 0.6)
-          .style('stroke', da => flattentColorScale(da.weight, 0.35));
+          .style('stroke', da => flattenColorScale(da.weight, 0.35));
 
         flattenLayer.select(`#bounding-${index}`)
           .raise()
@@ -1695,7 +1713,7 @@
             index: factoredF,
             weight: cnn.flatten[factoredF].outputLinks[i].weight,
             name: `flatten-${factoredF}-output`,
-            color: flattentColorScale(cnn.flatten[factoredF].outputLinks[i].weight, 0.35),
+            color: flattenColorScale(cnn.flatten[factoredF].outputLinks[i].weight, 0.35),
             width: 0.6,
             opacity: 1,
             class: `flatten-output`
@@ -1720,6 +1738,7 @@
           let loc = cnn.flatten[factoredF].inputLinks[0].weight;
           flattenLayer.append('rect')
             .attr('id', `bounding-${factoredF}`)
+            .attr('class', 'flatten-bounding')
             .attr('x', leftX + loc[1] * boundingBoxLength)
             .attr('y', nodeCoordinate[curLayerIndex - 1][l].y + loc[0] * boundingBoxLength)
             .attr('width', boundingBoxLength)
@@ -1746,7 +1765,6 @@
           flattenLength * (n + 1)).map(d => d.outputLinks[i].weight));
         meanValues.push({index: n, output: meanOutput, weight: meanWeight});
       }
-      console.log(meanValues);
 
       // Compute the middle gap
       let middleGap = 5;
@@ -1797,13 +1815,26 @@
             y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
           index: -1,
           name: `flatten-abstract-${v.index}-output`,
-          color: flattentColorScale(v.weight),
+          color: flattenColorScale(v.weight),
           weight: v.weight,
           width: 1,
           opacity: 1,
           class: `flatten-abstract-output`
         });
       })
+
+      // Draw the layer label
+      intermediateLayer.append('g')
+        .attr('class', 'layer-label')
+        .attr('transform', (d, i) => {
+          let x = leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
+            pixelWidth) / 2;
+          let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+          return `translate(${x}, ${y})`;
+        })
+        .append('text')
+        .style('dominant-baseline', 'middle')
+        .text('flatten');
 
       // Add edges between nodes
       let linkGen = d3.linkHorizontal()
@@ -1830,6 +1861,33 @@
       edgeGroup.selectAll('path.flatten,path.flatten-output')
         .on('mouseover', flattenMouseOverHandler)
         .on('mouseleave', flattenMouseLeaveHandler);
+      
+      // Add legend
+      drawIntermediateLayerLegend({
+        legendHeight: 5,
+        curLayerIndex: curLayerIndex,
+        range: range,
+        minMax: cnnLayerMinMax[10],
+        group: intermediateLayer,
+        width: intermediateGap,
+        x: leftX + nodeLength,
+        y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+      });
+
+      console.log( {min: flattenExtent[0], max: flattenExtent[1]});
+      drawIntermediateLayerLegend({
+        legendHeight: 5,
+        curLayerIndex: curLayerIndex,
+        range: flattenRange,
+        minMax: {min: flattenExtent[0], max: flattenExtent[1]},
+        group: intermediateLayer,
+        width: intermediateGap,
+        gradientAppendingName: 'flatten-weight-gradient',
+        gradientGap: 0.35,
+        colorScale: layerColorScales.weight,
+        x: leftX + nodeLength + intermediateGap + pixelWidth,
+        y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+      });
 
       /* Prototype of using arc to represent the flatten layer (future)
       let pie = d3.pie()
@@ -2765,7 +2823,7 @@
     stroke-width: 3px;
   }
 
-  :global(.bounding, .edge-group, foreignObject) {
+  :global(.bounding, .edge-group, foreignObject, .bounding-flatten) {
     transition: opacity 300ms ease-in-out;
   }
 
