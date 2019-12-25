@@ -39,7 +39,7 @@
   let vSpaceAroundGap = undefined;
   let needRedraw = [undefined, undefined];
   let selectedNode = {layerName: '', index: -1, data: null};
-  let svgPaddings = {top: 20, bottom: 30, left: 50, right: 50};
+  let svgPaddings = {top: 25, bottom: 25, left: 50, right: 50};
   let isInIntermediateView = false;
   let kernelRectLength = 8/3;
 
@@ -346,7 +346,7 @@
     });
     
     // Also move the layer labels
-    svg.select(`g#layer-label-${layerIndex}`)
+    svg.selectAll(`g#layer-label-${layerIndex}, g#layer-detailed-label-${layerIndex}`)
       .transition(transitionName)
       .ease(d3.easeCubicInOut)
       .delay(delay)
@@ -711,7 +711,7 @@
 
     // Draw the layer label
     intermediateLayer.append('g')
-      .attr('class', 'layer-label')
+      .attr('class', 'layer-intermediate-label')
       .attr('transform', (d, i) => {
         let x = leftX + nodeLength + (nodeLength + 2 * plusSymbolRadius + 2 *
           hSpaceAroundGap * gapRatio) / 2;
@@ -1006,7 +1006,7 @@
     }
 
     let legendScale = d3.scaleLinear()
-      .range([0, width - 1])
+      .range([0, width - 1.2])
       .domain(isInput ? [0, range] : [minMax.min, minMax.max]);
 
     let legendAxis = d3.axisBottom()
@@ -1035,6 +1035,15 @@
       .attr('transform', `rotate(${isInput ? 180 : 0},
         ${width / 2}, ${legendHeight / 2})`)
       .style('fill', gradientName);
+  }
+
+  const prepareToEnterIntermediateView = () => {
+    isInIntermediateView = true;
+    // Hide all legends
+    svg.selectAll(`.${selectedScaleLevel}-legend`)
+      .classed('hidden', true);
+    svg.selectAll('.input-legend').classed('hidden', true);
+    svg.selectAll('.output-legend').classed('hidden', true);
   }
 
   const nodeClickHandler = (d, i, g) => {
@@ -1073,9 +1082,11 @@
     selectedNode.index = d.index;
     selectedNode.data = d;
 
+    let overlayRectOffset = 6;
+
     // Enter the second view (layer-view) when user clicks a conv node
     if (d.type === 'conv' && !isInIntermediateView) {
-      isInIntermediateView = true;
+      prepareToEnterIntermediateView();
       if (d.layerName === 'conv_1_1') {
         // Compute the target location
         let curLayerIndex = layerIndexDict[d.layerName];
@@ -1113,9 +1124,9 @@
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient)')
           .style('stroke', 'none')
-          .attr('width', width - rightStart)
+          .attr('width', width - rightStart + overlayRectOffset)
           .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', rightStart)
+          .attr('x', rightStart - overlayRectOffset / 2)
           .attr('y', 0)
           .style('opacity', 0);
         
@@ -1238,9 +1249,9 @@
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-right)')
           .style('stroke', 'none')
-          .attr('width', width - rightStart)
+          .attr('width', width - rightStart + overlayRectOffset)
           .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', rightStart)
+          .attr('x', rightStart - overlayRectOffset/2)
           .attr('y', 0)
           .style('opacity', 0);
         
@@ -1248,9 +1259,9 @@
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-left)')
           .style('stroke', 'none')
-          .attr('width', nodeLength * 2 + hSpaceAroundGap * gapRatio)
+          .attr('width', nodeLength * 2 + hSpaceAroundGap * gapRatio + overlayRectOffset)
           .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', nodeCoordinate[0][0].x)
+          .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
           .attr('y', 0)
           .style('opacity', 0);
         
@@ -1355,9 +1366,9 @@
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-left)')
           .style('stroke', 'none')
-          .attr('width', leftEnd - nodeCoordinate[0][0].x)
+          .attr('width', leftEnd - nodeCoordinate[0][0].x + overlayRectOffset)
           .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', nodeCoordinate[0][0].x)
+          .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
           .attr('y', 0)
           .style('opacity', 0);
         
@@ -1365,9 +1376,9 @@
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-right)')
           .style('stroke', 'none')
-          .attr('width', width - rightStart)
+          .attr('width', width - rightStart + overlayRectOffset)
           .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', rightStart)
+          .attr('x', rightStart - overlayRectOffset/2)
           .attr('y', 0)
           .style('opacity', 0);
         
@@ -1473,9 +1484,9 @@
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-left)')
           .style('stroke', 'none')
-          .attr('width', leftEnd - nodeCoordinate[0][0].x)
+          .attr('width', leftEnd - nodeCoordinate[0][0].x + overlayRectOffset)
           .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', nodeCoordinate[0][0].x)
+          .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
           .attr('y', 0)
           .style('opacity', 0);
         
@@ -1483,9 +1494,9 @@
           .attr('class', 'overlay')
           .style('fill', 'url(#overlay-gradient-right)')
           .style('stroke', 'none')
-          .attr('width', width - rightStart)
+          .attr('width', width - rightStart + overlayRectOffset)
           .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', rightStart)
+          .attr('x', rightStart - overlayRectOffset/2)
           .attr('y', 0)
           .style('opacity', 0);
         
@@ -1542,7 +1553,9 @@
       }
     }
     else if (d.layerName === 'output' && !isInIntermediateView) {
-      isInIntermediateView = true;
+      prepareToEnterIntermediateView();
+      svg.selectAll('.output-legend').classed('hidden', false);
+
       let pixelWidth = nodeLength / 2;
       let pixelHeight = 1.1;
       let curLayerIndex = layerIndexDict[d.layerName];
@@ -1591,9 +1604,9 @@
         .attr('class', 'overlay')
         .style('fill', 'url(#overlay-gradient-left)')
         .style('stroke', 'none')
-        .attr('width', leftEnd - nodeCoordinate[0][0].x)
+        .attr('width', leftEnd - nodeCoordinate[0][0].x + overlayRectOffset)
         .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-        .attr('x', nodeCoordinate[0][0].x)
+        .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
         .attr('y', 0)
         .style('opacity', 0);
       
@@ -1601,9 +1614,9 @@
         .attr('class', 'overlay')
         .style('fill', 'url(#overlay-gradient-right)')
         .style('stroke', 'none')
-        .attr('width', width - rightStart)
+        .attr('width', width - rightStart + overlayRectOffset)
         .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-        .attr('x', rightStart)
+        .attr('x', rightStart - overlayRectOffset/2)
         .attr('y', 0)
         .style('opacity', 0);
       
@@ -2135,6 +2148,13 @@
     else if ((d.type === 'conv' || d.layerName === 'output') && isInIntermediateView) {
       isInIntermediateView = false;
 
+      // Hide the legend
+      svg.selectAll(`.${selectedScaleLevel}-legend`)
+        .classed('hidden', !detailedMode);
+      
+      svg.selectAll('.input-legend').classed('hidden', !detailedMode);
+      svg.selectAll('.output-legend').classed('hidden', !detailedMode);
+
       // Also unclick the node
       // Record the current clicked node
       selectedNode.layerName = '';
@@ -2229,7 +2249,7 @@
     if (d.layerName === 'output') {
       d3.select(g[i])
         .select('.output-text')
-        .style('opacity', 0.7)
+        .style('opacity', 0.8)
         .style('text-decoration', 'underline');
     }
 
@@ -2296,7 +2316,6 @@
       });
       */
     }
-
   }
 
   const drawLegends = (legends, legendHeight) => {
@@ -2307,11 +2326,11 @@
       let range2 = cnnLayerRanges.local[start + 2];
 
       let localLegendScale1 = d3.scaleLinear()
-        .range([0, 2 * nodeLength + hSpaceAroundGap])
+        .range([0, 2 * nodeLength + hSpaceAroundGap - 1.2])
         .domain([-range1, range1]);
       
       let localLegendScale2 = d3.scaleLinear()
-        .range([0, 3 * nodeLength + 2 * hSpaceAroundGap])
+        .range([0, 3 * nodeLength + 2 * hSpaceAroundGap - 1.2])
         .domain([-range2, range2]);
 
       let localLegendAxis1 = d3.axisBottom()
@@ -2330,14 +2349,14 @@
         .classed('hidden', !detailedMode || selectedScaleLevel !== 'local')
         .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
+      localLegend1.append('g')
+        .attr('transform', `translate(0, ${legendHeight - 3})`)
+        .call(localLegendAxis1)
+
       localLegend1.append('rect')
         .attr('width', 2 * nodeLength + hSpaceAroundGap)
         .attr('height', legendHeight)
         .style('fill', 'url(#convGradient)');
-      
-      localLegend1.append('g')
-        .attr('transform', `translate(0, ${legendHeight})`)
-        .call(localLegendAxis1)
 
       let localLegend2 = legends.append('g')
         .attr('class', 'legend local-legend')
@@ -2345,14 +2364,14 @@
         .classed('hidden', !detailedMode || selectedScaleLevel !== 'local')
         .attr('transform', `translate(${nodeCoordinate[start + 2][0].x}, ${0})`);
 
+      localLegend2.append('g')
+        .attr('transform', `translate(0, ${legendHeight - 3})`)
+        .call(localLegendAxis2)
+
       localLegend2.append('rect')
         .attr('width', 3 * nodeLength + 2 * hSpaceAroundGap)
         .attr('height', legendHeight)
         .style('fill', 'url(#convGradient)');
-      
-      localLegend2.append('g')
-        .attr('transform', `translate(0, ${legendHeight})`)
-        .call(localLegendAxis2)
     }
 
     // Add module legends
@@ -2362,7 +2381,7 @@
 
       let moduleLegendScale = d3.scaleLinear()
         .range([0, 5 * nodeLength + 3 * hSpaceAroundGap +
-          1 * hSpaceAroundGap * gapRatio])
+          1 * hSpaceAroundGap * gapRatio - 1.2])
         .domain([-range, range]);
 
       let moduleLegendAxis = d3.axisBottom()
@@ -2375,16 +2394,16 @@
         .attr('id', `module-legend-${i}`)
         .classed('hidden', !detailedMode || selectedScaleLevel !== 'module')
         .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
+      
+      moduleLegend.append('g')
+        .attr('transform', `translate(0, ${legendHeight - 3})`)
+        .call(moduleLegendAxis)
 
       moduleLegend.append('rect')
         .attr('width', 5 * nodeLength + 3 * hSpaceAroundGap +
           1 * hSpaceAroundGap * gapRatio)
         .attr('height', legendHeight)
         .style('fill', 'url(#convGradient)');
-      
-      moduleLegend.append('g')
-        .attr('transform', `translate(0, ${legendHeight})`)
-        .call(moduleLegendAxis)
     }
 
     // Add global legends
@@ -2393,7 +2412,7 @@
 
     let globalLegendScale = d3.scaleLinear()
       .range([0, 10 * nodeLength + 6 * hSpaceAroundGap +
-        3 * hSpaceAroundGap * gapRatio])
+        3 * hSpaceAroundGap * gapRatio - 1.2])
       .domain([-range, range]);
 
     let globalLegendAxis = d3.axisBottom()
@@ -2407,20 +2426,21 @@
       .classed('hidden', !detailedMode || selectedScaleLevel !== 'global')
       .attr('transform', `translate(${nodeCoordinate[start][0].x}, ${0})`);
 
+    globalLegend.append('g')
+      .attr('transform', `translate(0, ${legendHeight - 3})`)
+      .call(globalLegendAxis)
+
     globalLegend.append('rect')
       .attr('width', 10 * nodeLength + 6 * hSpaceAroundGap +
         3 * hSpaceAroundGap * gapRatio)
       .attr('height', legendHeight)
       .style('fill', 'url(#convGradient)');
-    
-    globalLegend.append('g')
-      .attr('transform', `translate(0, ${legendHeight})`)
-      .call(globalLegendAxis)
+
 
     // Add output legend
     let outputRectScale = d3.scaleLinear()
           .domain(cnnLayerRanges.output)
-          .range([0, nodeLength]);
+          .range([0, nodeLength - 1.2]);
 
     let outputLegendAxis = d3.axisBottom()
       .scale(outputRectScale)
@@ -2433,18 +2453,18 @@
       .classed('hidden', !detailedMode)
       .attr('transform', `translate(${nodeCoordinate[11][0].x}, ${0})`);
     
+    outputLegend.append('g')
+      .attr('transform', `translate(0, ${legendHeight - 3})`)
+      .call(outputLegendAxis);
+
     outputLegend.append('rect')
       .attr('width', nodeLength)
       .attr('height', legendHeight)
       .style('fill', 'gray');
     
-    outputLegend.append('g')
-      .attr('transform', `translate(0, ${legendHeight})`)
-      .call(outputLegendAxis);
-    
     // Add input image legend
     let inputScale = d3.scaleLinear()
-      .range([0, nodeLength])
+      .range([0, nodeLength - 1.2])
       .domain([0, 1]);
 
     let inputLegendAxis = d3.axisBottom()
@@ -2457,15 +2477,15 @@
       .classed('hidden', !detailedMode)
       .attr('transform', `translate(${nodeCoordinate[0][0].x}, ${0})`);
     
+    inputLegend.append('g')
+      .attr('transform', `translate(0, ${legendHeight - 3})`)
+      .call(inputLegendAxis);
+
     inputLegend.append('rect')
       .attr('width', nodeLength)
       .attr('height', legendHeight)
       .attr('transform', `rotate(180, ${nodeLength/2}, ${legendHeight/2})`)
       .style('fill', 'url(#inputGradient)');
-    
-    inputLegend.append('g')
-      .attr('transform', `translate(0, ${legendHeight})`)
-      .call(inputLegendAxis);
   }
 
   const drawCNN = (width, height, cnnGroup) => {
@@ -2585,22 +2605,44 @@
     );
 
     // Add layer label
-    let layerNames = cnn.map(d => d[0].layerName);
+    let layerNames = cnn.map(d => {
+      if (d[0].layerName === 'output') {
+        return {
+          name: d[0].layerName,
+          dimension: `(${d.length})`
+        }
+      } else {
+        return {
+          name: d[0].layerName,
+          dimension: `(${d[0].output.length}, ${d[0].output.length}, ${d.length})`
+        }
+      }
+    });
     console.log(nodeCoordinate);
-    svg.selectAll('g.layer-detailed-label')
+
+    let detailedLabel = svg.selectAll('g.layer-detailed-label')
       .data(layerNames)
       .enter()
       .append('g')
       .attr('class', 'layer-detailed-label')
+      .attr('id', (d, i) => `layer-detailed-label-${i}`)
       .classed('hidden', !detailedMode)
       .attr('transform', (d, i) => {
         let x = nodeCoordinate[i][0].x + nodeLength / 2;
-        let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+        let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 3;
         return `translate(${x}, ${y})`;
       })
       .append('text')
+      .style('opacity', 0.7)
       .style('dominant-baseline', 'middle')
-      .text(d => d);
+      .append('tspan')
+      .style('font-size', '12px')
+      .text(d => d.name)
+      .append('tspan')
+      .style('font-size', '8px')
+      .attr('x', 0)
+      .attr('dy', '1.5em')
+      .text(d => d.dimension);
     
     svg.selectAll('g.layer-label')
       .data(layerNames)
@@ -2616,11 +2658,12 @@
       })
       .append('text')
       .style('dominant-baseline', 'middle')
+      .style('opacity', 0.8)
       .text(d => {
-        if (d.includes('conv')) { return 'conv' }
-        if (d.includes('relu')) { return 'relu' }
-        if (d.includes('max_pool')) { return 'max_pool'}
-        return d
+        if (d.name.includes('conv')) { return 'conv' }
+        if (d.name.includes('relu')) { return 'relu' }
+        if (d.name.includes('max_pool')) { return 'max_pool'}
+        return d.name
       });
 
     // Add layer color scale legends
@@ -2881,12 +2924,14 @@
   const detailedButtonClicked = () => {
     detailedMode = !detailedMode;
 
-    // Show the legend
-    svg.selectAll(`.${selectedScaleLevel}-legend`)
-      .classed('hidden', !detailedMode);
-    
-    svg.selectAll('.input-legend').classed('hidden', !detailedMode);
-    svg.selectAll('.output-legend').classed('hidden', !detailedMode);
+    if (!isInIntermediateView){
+      // Show the legend
+      svg.selectAll(`.${selectedScaleLevel}-legend`)
+        .classed('hidden', !detailedMode);
+      
+      svg.selectAll('.input-legend').classed('hidden', !detailedMode);
+      svg.selectAll('.output-legend').classed('hidden', !detailedMode);
+    }
     
     // Switch the layer name
     svg.selectAll('.layer-detailed-label')
@@ -3013,10 +3058,10 @@
     image-rendering: crisp-edges;
   }
 
-  :global(.layer-label, .layer-detailed-label) {
+  :global(.layer-label, .layer-detailed-label, .layer-intermediate-label) {
     font-size: 12px;
+    opacity: 0.9;
     text-anchor: middle;
-    opacity: 0.8;
     transition: opacity 300ms ease-in-out;
   }
 
@@ -3029,7 +3074,11 @@
   }
 
   :global(.legend > rect) {
-    opacity: 0.8;
+    opacity: 1;
+  }
+
+  :global(.legend text, .legend line, .legend path) {
+    opacity: 0.7;
   }
 
   :global(.legend#output-legend > rect) {
