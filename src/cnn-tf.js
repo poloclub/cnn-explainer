@@ -169,8 +169,6 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
         let bias = 0;
 
         for (let i = 0; i < outputs.length; i++) {
-          let node = new Node(layer.name, i, curLayerType, bias, outputs[i]);
-
           // Flatten layer has no weights. Links are multiple-to-one.
           // Use dummy weights to store the corresponding entry in the previsou
           // node as (row, column)
@@ -180,7 +178,15 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
             preNodeIndex = i % preNodeNum,
             preNodeRow = Math.floor(Math.floor(i / preNodeNum) / preNodeWidth),
             preNodeCol = Math.floor(i / preNodeNum) % preNodeWidth,
-            link = new Link(cnn[curLayerIndex - 1][preNodeIndex],
+            // Use channel, row, colume to compute the real index with order
+            // row -> column -> channel
+            curNodeRealIndex = preNodeIndex * (preNodeWidth * preNodeWidth) +
+              preNodeRow * preNodeWidth + preNodeCol;
+          
+          let node = new Node(layer.name, curNodeRealIndex, curLayerType,
+              bias, outputs[i]);
+
+          let link = new Link(cnn[curLayerIndex - 1][preNodeIndex],
               node, [preNodeRow, preNodeCol]);
 
           cnn[curLayerIndex - 1][preNodeIndex].outputLinks.push(link);
@@ -188,6 +194,9 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
 
           curLayerNodes.push(node);
         }
+
+        // Sort flatten layer based on the node real index
+        curLayerNodes.sort((a, b) => a.index - b.index);
         break;
       }
       default:
