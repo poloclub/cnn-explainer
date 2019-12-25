@@ -858,7 +858,7 @@
     
     drawArrow({
       group: group,
-      sx: intermediateX2 + 5,
+      sx: intermediateX2 + 35,
       sy: nodeCoordinate[curLayerIndex][i].y + nodeLength + kernelRectLength * 2,
       tx: intermediateX2 + 2 * plusSymbolRadius + 3,
       ty: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius,
@@ -889,25 +889,21 @@
         tx = arg.tx,
         ty = arg.ty,
         dr = arg.dr,
-        vFlip = arg.vFlip,
-        hFlip = arg.hFlip,
-        cx = sx + (tx - sx) / 2,
-        cy = sy + (ty - sy) / 2,
-        scaleX = hFlip ? -1 : 1,
-        scaleY = vFlip ? -1 : 1,
-        translateX = (1 - scaleX) * tx,
-        translateY = (1 - scaleY) * ty;
+        hFlip = arg.hFlip;
+
+      /* Cool graphics trick -> merge translate and scale together
+      translateX = (1 - scaleX) * tx,
+      translateY = (1 - scaleY) * ty;
+      */
       
       let arrow = group.append('g')
         .attr('class', 'arrow-group');
 
       arrow.append('path')
-        .attr("d", `M${sx},${sy}A${dr},${dr} 0 0,1 ${tx},${ty}`)
+        .attr("d", `M${sx},${sy}A${dr},${dr} 0 0,${hFlip ? 0 : 1} ${tx},${ty}`)
         .attr('marker-end', 'url(#marker)')
         .style('stroke', 'gray')
-        .style('fill', 'none')
-        .attr('transform', `translate(${translateX}, ${translateY})
-          scale(${scaleX}, ${scaleY})`);
+        .style('fill', 'none');
   }
 
   const redrawLayerIfNeeded = (curLayerIndex, i) => {
@@ -970,7 +966,6 @@
       gradientAppendingName = arg.gradientAppendingName,
       gradientGap = arg.gradientGap;
     
-    console.log(minMax);
     if (colorScale === undefined) { colorScale = layerColorScales.conv; }
     if (gradientGap === undefined) { gradientGap = 0; }
     
@@ -1551,7 +1546,7 @@
       let pixelWidth = nodeLength / 2;
       let pixelHeight = 1.1;
       let curLayerIndex = layerIndexDict[d.layerName];
-      let leftX = nodeCoordinate[curLayerIndex][0].x - (nodeLength +
+      let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
         4 * hSpaceAroundGap * gapRatio + pixelWidth);
       let intermediateGap = (hSpaceAroundGap * gapRatio * 4) / 2;
 
@@ -1708,7 +1703,7 @@
           linkData.push({
             source: {x: intermediateX1 + pixelWidth + 3,
               y:  l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight},
-            target: {x: nodeCoordinate[curLayerIndex][i].x,
+            target: {x: nodeCoordinate[curLayerIndex][i].x - nodeLength,
               y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
             index: factoredF,
             weight: cnn.flatten[factoredF].outputLinks[i].weight,
@@ -1776,7 +1771,8 @@
         // Add a small rectangle
         flattenLayer.append('rect')
           .attr('x', intermediateX1 + pixelWidth / 4)
-          .attr('y', topY + flattenLength * pixelHeight + middleGap * (vi + 1) + middleRectHeight * vi)
+          .attr('y', topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
+            middleRectHeight * vi)
           .attr('width', pixelWidth / 2)
           .attr('height', middleRectHeight)
           .style('fill', colorScale((v.output + range / 2) / range));
@@ -1796,7 +1792,8 @@
         // Input -> flatten
         linkData.push({
           target: {x: intermediateX1 - 3,
-            y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) + middleRectHeight * (vi + 0.5)},
+            y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
+              middleRectHeight * (vi + 0.5)},
           source: {x: leftX + nodeLength + 6,
             y: nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
           index: -1,
@@ -1810,8 +1807,9 @@
         // Flatten -> output
         linkData.push({
           source: {x: intermediateX1 + pixelWidth + 3,
-            y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) + middleRectHeight * (vi + 0.5)},
-          target: {x: nodeCoordinate[curLayerIndex][i].x,
+            y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
+              middleRectHeight * (vi + 0.5)},
+          target: {x: nodeCoordinate[curLayerIndex][i].x - nodeLength,
             y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
           index: -1,
           name: `flatten-abstract-${v.index}-output`,
@@ -1822,6 +1820,90 @@
           class: `flatten-abstract-output`
         });
       })
+
+      // Draw the plus operation symbol
+      let intermediateX2 = intermediateX1 + intermediateGap + pixelWidth;
+      let symbolY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2;
+      let symbolRectHeight = 1;
+      let symbolGroup = intermediateLayer.append('g')
+        .attr('class', 'plus-symbol')
+        .attr('transform', `translate(${intermediateX2 + plusSymbolRadius}, ${symbolY})`);
+      
+      symbolGroup.append('circle')
+        .attr('cx', 0)
+        .attr('cy', 0)
+        .attr('r', plusSymbolRadius)
+        .style('fill', 'none')
+        .style('stroke', intermediateColor);
+      
+      symbolGroup.append('rect')
+        .attr('x', -(plusSymbolRadius - 3))
+        .attr('y', -symbolRectHeight / 2)
+        .attr('width', 2 * (plusSymbolRadius - 3))
+        .attr('height', symbolRectHeight)
+        .style('fill', intermediateColor);
+
+      symbolGroup.append('rect')
+        .attr('x', -symbolRectHeight / 2)
+        .attr('y', -(plusSymbolRadius - 3))
+        .attr('width', symbolRectHeight)
+        .attr('height', 2 * (plusSymbolRadius - 3))
+        .style('fill', intermediateColor);
+
+      // Place the bias rectangle below the plus sign if user clicks the firrst
+      // conv node
+      if (i == 0) {
+        // Add bias symbol to the plus symbol
+        symbolGroup.append('rect')
+          .attr('x', -kernelRectLength)
+          .attr('y', nodeLength / 2)
+          .attr('width', 2 * kernelRectLength)
+          .attr('height', 2 * kernelRectLength)
+          .style('stroke', intermediateColor)
+          .style('fill', flattenColorScale(d.bias, 0.35));
+        
+        // Link from bias to the plus symbol
+        linkData.push({
+          source: {x: intermediateX2 + plusSymbolRadius,
+            y: nodeCoordinate[curLayerIndex][i].y + nodeLength},
+          target: {x: intermediateX2 + plusSymbolRadius,
+            y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius},
+          name: `bias-plus`,
+          width: 1.2,
+          color: '#E5E5E5'
+        });
+      } else {
+        // Add bias symbol to the plus symbol
+        symbolGroup.append('rect')
+          .attr('x', -kernelRectLength)
+          .attr('y', -nodeLength / 2 - 2 * kernelRectLength)
+          .attr('width', 2 * kernelRectLength)
+          .attr('height', 2 * kernelRectLength)
+          .style('stroke', intermediateColor)
+          .style('fill', flattenColorScale(d.bias, 0.35));
+        
+        // Link from bias to the plus symbol
+        linkData.push({
+          source: {x: intermediateX2 + plusSymbolRadius,
+            y: nodeCoordinate[curLayerIndex][i].y},
+          target: {x: intermediateX2 + plusSymbolRadius,
+            y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 - plusSymbolRadius},
+          name: `bias-plus`,
+          width: 1.2,
+          color: '#E5E5E5'
+        });
+      }
+
+      // Link from the plus symbol to the output
+      linkData.push({
+        source: getOutputKnot({x: intermediateX2 + 2 * plusSymbolRadius - nodeLength,
+          y: nodeCoordinate[curLayerIndex][i].y}),
+        target: getInputKnot({x: nodeCoordinate[curLayerIndex][i].x - 3,
+          y: nodeCoordinate[curLayerIndex][i].y}),
+        name: `symbol-output`,
+        width: 1.2,
+        color: '#E5E5E5'
+      });
 
       // Draw the layer label
       intermediateLayer.append('g')
@@ -1853,7 +1935,7 @@
         .attr('d', d => linkGen({source: d.source, target: d.target}))
         .style('fill', 'none')
         .style('stroke-width', d => d.width)
-        .style('stroke', d => d.color)
+        .style('stroke', d => d.color === undefined ? intermediateColor : d.color)
         .style('opacity', d => d.opacity);
       
       edgeGroup.selectAll('path.flatten-abstract-output').lower();
@@ -1869,25 +1951,148 @@
         range: range,
         minMax: cnnLayerMinMax[10],
         group: intermediateLayer,
-        width: intermediateGap,
-        x: leftX + nodeLength,
+        width: intermediateGap * 0.5,
+        x: leftX,
         y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
       });
 
-      console.log( {min: flattenExtent[0], max: flattenExtent[1]});
       drawIntermediateLayerLegend({
         legendHeight: 5,
         curLayerIndex: curLayerIndex,
         range: flattenRange,
         minMax: {min: flattenExtent[0], max: flattenExtent[1]},
         group: intermediateLayer,
-        width: intermediateGap,
+        width: intermediateGap * 0.5,
         gradientAppendingName: 'flatten-weight-gradient',
         gradientGap: 0.35,
         colorScale: layerColorScales.weight,
-        x: leftX + nodeLength + intermediateGap + pixelWidth,
+        x: leftX + intermediateGap * 0.5 + (nodeLength  +
+          intermediateGap) - (2 * 0.5) * intermediateGap,
         y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
       });
+    
+      // Add annotation to the intermediate layer
+      let intermediateLayerAnnotation = svg.append('g')
+        .attr('class', 'intermediate-layer-annotation')
+        .style('opacity', 0);
+
+      // Add annotation for the sum operation
+      let plusAnnotation = intermediateLayerAnnotation.append('g')
+        .attr('class', 'plus-annotation');
+      
+      let textX = nodeCoordinate[curLayerIndex][i].x - 50;
+      let textY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
+        kernelRectLength * 3;
+      let arrowSY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
+        kernelRectLength * 2;
+      let arrowTY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 +
+        plusSymbolRadius;
+
+      if (i == 0) {
+        textY += 10;
+        arrowSY += 10;
+      } else if (i == 9) {
+        textY -= 120;
+        arrowSY -= 70;
+        arrowTY -= 18;
+      }
+
+      let plusText = plusAnnotation.append('text')
+        .attr('x', textX)
+        .attr('y', textY)
+        .attr('class', 'annotation-text')
+        .style('dominant-baseline', 'hanging')
+        .style('text-anchor', 'middle');
+      
+      plusText.append('tspan')
+        .text('Sum up all');
+      
+      plusText.append('tspan')
+        .attr('x', textX)
+        .attr('dy', '1em')
+        .text('products (weight');
+
+      plusText.append('tspan')
+        .attr('x', textX)
+        .attr('dy', '1em')
+        .text('⨉ element) and');
+
+      plusText.append('tspan')
+        .attr('x', textX)
+        .attr('dy', '1em')
+        .text('then add bias');
+      
+      drawArrow({
+        group: plusAnnotation,
+        sx: intermediateX2 - 2 * plusSymbolRadius - 3,
+        sy: arrowSY,
+        tx: intermediateX2 - 5,
+        ty: arrowTY,
+        dr: 30,
+        hFlip: i === 9
+      });
+
+      // Add annotation for the bias
+      let biasTextY = nodeCoordinate[curLayerIndex][i].y;
+      if (i === 0) {
+        biasTextY += nodeLength + 2 * kernelRectLength;
+      } else {
+        biasTextY -= 2 * kernelRectLength + 5;
+      }
+      plusAnnotation.append('text')
+        .attr('class', 'annotation-text')
+        .attr('x', intermediateX2 + plusSymbolRadius)
+        .attr('y', biasTextY)
+        .style('text-anchor', 'middle')
+        .style('dominant-baseline', i === 0 ? 'hanging' : 'baseline')
+        .text('Bias');
+
+      // Add annotation for the flatten layer
+      let flattenAnnotation = intermediateLayerAnnotation.append('g')
+        .attr('class', 'flatten-annotation');
+      
+      textX = leftX - 60;
+      textY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength + 5;
+
+      let flattenText = flattenAnnotation.append('text')
+        .attr('x', textX)
+        .attr('y', textY)
+        .attr('class', 'annotation-text')
+        .style('dominant-baseline', 'hanging')
+        .style('text-anchor', 'middle');
+
+      flattenText.append('tspan')
+        .text('Try to mouse over');
+      
+      flattenText.append('tspan')
+        .attr('x', textX)
+        .attr('dy', '1em')
+        .text('this node!');
+      
+      flattenText.append('tspan')
+        .attr('x', textX)
+        .attr('dy', '2em')
+        .text('Flatten layer "unrolls"');
+      
+      flattenText.append('tspan')
+        .attr('x', textX)
+        .attr('dy', '1em')
+        .text('a matrix or a tensor');
+
+      flattenText.append('tspan')
+        .attr('x', textX)
+        .attr('dy', '1em')
+        .text('into a 1D array');
+
+      drawArrow({
+        group: flattenAnnotation,
+        sx: textX + 10,
+        sy: textY,
+        tx: leftX - 10,
+        ty: textY - 5 - nodeLength / 2,
+        dr: 50
+      });
+         
 
       /* Prototype of using arc to represent the flatten layer (future)
       let pie = d3.pie()
@@ -2020,6 +2225,14 @@
         .classed('hidden', false);
     }
 
+    // Highlight the output text
+    if (d.layerName === 'output') {
+      d3.select(g[i])
+        .select('.output-text')
+        .style('opacity', 0.7)
+        .style('text-decoration', 'underline');
+    }
+
     /* Use the following commented code if we have non-linear model
     d.inputLinks.forEach(link => {
       let layerIndex = layerIndexDict[link.source.layerName];
@@ -2062,6 +2275,15 @@
           .selectAll('g.node-group')
           .selectAll('rect.bounding')
           .classed('hidden', true);
+      }
+
+      // Dehighlight the output text
+      if (d.layerName === 'output') {
+        d3.select(g[i])
+          .select('.output-text')
+          .style('fill', 'black')
+          .style('opacity', 0.5)
+          .style('text-decoration', 'none');
       }
 
       /* Use the following commented code if we have non-linear model
@@ -2343,7 +2565,7 @@
           .attr('y', (d, i) => nodeCoordinate[l][i].y + nodeLength / 2)
           .style('dominant-baseline', 'middle')
           .style('font-size', '11px')
-          .style('color', 'gray')
+          .style('fill', 'black')
           .style('opacity', 0.5)
           .text((d, i) => classLists[i]);
       }
