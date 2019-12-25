@@ -51,7 +51,8 @@
     conv: d3.interpolateRdBu,
     relu: d3.interpolateRdBu,
     pool: d3.interpolateRdBu,
-    fc: d3.interpolateGreys
+    fc: d3.interpolateGreys,
+    weight: d3.interpolateBrBG
   };
 
   let layerIndexDict = {
@@ -235,7 +236,9 @@
       .attr('width', scale(d.output))
   }
 
-  const getLegendGradient = (g, colorScale, gradientName) => {
+  const getLegendGradient = (g, colorScale, gradientName, min, max) => {
+    if (min === undefined) { min = 0; }
+    if (max === undefined) { max = 1; }
     let gradient = g.append('defs')
       .append('svg:linearGradient')
       .attr('id', `${gradientName}`)
@@ -247,7 +250,7 @@
     let interpolation = 10
     for (let i = 0; i < interpolation; i++) {
       let curProgress = i / (interpolation - 1);
-      let curColor = colorScale(curProgress);
+      let curColor = colorScale(curProgress * (max - min) + min);
       gradient.append('stop')
         .attr('offset', `${curProgress * 100}%`)
         .attr('stop-color', curColor)
@@ -974,8 +977,12 @@
       let zeroLocation = (0 - minMax.min) / totalRange;
       let stops = [
         {offset: 0, color: layerColorScales.conv(leftValue), opacity: 1},
-        {offset: zeroLocation / 2, color: layerColorScales.conv(leftValue + (zeroValue - leftValue)/2), opacity: 1},
-        {offset: zeroLocation, color: layerColorScales.conv(zeroValue), opacity: 1},
+        {offset: zeroLocation / 2,
+          color: layerColorScales.conv(leftValue + (zeroValue - leftValue)/2),
+          opacity: 1},
+        {offset: zeroLocation,
+          color: layerColorScales.conv(zeroValue),
+          opacity: 1},
         {offset: zeroLocation + (1 - zeroValue) / 2, color: layerColorScales.conv(zeroValue + (rightValue - zeroValue)/2), opacity: 1},
         {offset: 1, color: layerColorScales.conv(rightValue), opacity: 1}
       ];
@@ -1521,9 +1528,348 @@
           .style('opacity', 1);
       }
     }
+    else if (d.layerName === 'output' && !isInIntermediateView) {
+      isInIntermediateView = true;
+      let pixelWidth = nodeLength / 2;
+      let pixelHeight = 1.1;
+      let curLayerIndex = layerIndexDict[d.layerName];
+      let leftX = nodeCoordinate[curLayerIndex][0].x - (nodeLength +
+        2 * hSpaceAroundGap * gapRatio + pixelWidth);
+      let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 2;
+
+      // Move the previous layer
+      moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
+        disable: true, delay: 0});
+
+      moveLayerX({layerIndex: curLayerIndex,
+        targetX: nodeCoordinate[curLayerIndex][0].x, disable: true,
+        delay: 0, opacity: 0.15, specialIndex: i});
+
+      // Hide the edges
+      svg.select('g.edge-group').classed('hidden', true);
+
+      // Compute the gap in the left shrink region
+      let leftEnd = leftX - hSpaceAroundGap;
+      let leftGap = (leftEnd - nodeCoordinate[0][0].x - 10 * nodeLength) / 10;
+      let rightStart = nodeCoordinate[curLayerIndex][0].x +
+        nodeLength + hSpaceAroundGap;
+
+      // Move the left layers
+      for (let i = 0; i < curLayerIndex - 1; i++) {
+        let curX = nodeCoordinate[0][0].x + i * (nodeLength + leftGap);
+        moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
+      }
+
+      // Add an overlay
+      let stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 1},
+        {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
+        {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 0.85}];
+      addOverlayGradient('overlay-gradient-left', stops);
+
+      stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 0.85},
+        {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
+        {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
+      addOverlayGradient('overlay-gradient-right', stops);
+
+      let intermediateLayerOverlay = svg.append('g')
+        .attr('class', 'intermediate-layer-overlay');
+
+      intermediateLayerOverlay.append('rect')
+        .attr('class', 'overlay')
+        .style('fill', 'url(#overlay-gradient-left)')
+        .style('stroke', 'none')
+        .attr('width', leftEnd - nodeCoordinate[0][0].x)
+        .attr('height', height + svgPaddings.top + svgPaddings.bottom)
+        .attr('x', nodeCoordinate[0][0].x)
+        .attr('y', 0)
+        .style('opacity', 0);
+      
+      intermediateLayerOverlay.append('rect')
+        .attr('class', 'overlay')
+        .style('fill', 'url(#overlay-gradient-right)')
+        .style('stroke', 'none')
+        .attr('width', width - rightStart)
+        .attr('height', height + svgPaddings.top + svgPaddings.bottom)
+        .attr('x', rightStart)
+        .attr('y', 0)
+        .style('opacity', 0);
+      
+      intermediateLayerOverlay.selectAll('rect.overlay')
+        .transition('move')
+        .duration(800)
+        .ease(d3.easeCubicInOut)
+        .style('opacity', 1);
+
+      // Add the intermediate layer
+      let intermediateLayer = svg.select('.cnn-group')
+        .append('g')
+        .attr('class', 'intermediate-layer')
+        .style('opacity', 0);
+      
+      let intermediateX1 = leftX + nodeLength + intermediateGap;
+      let range = cnnLayerRanges[selectedScaleLevel][curLayerIndex - 1];
+      let colorScale = layerColorScales.conv;
+      let flattenLength = cnn.flatten.length / cnn[1].length;
+      let linkData = [];
+
+      let flattenLayer = intermediateLayer.append('g')
+        .attr('class', 'flatten-layer');
+      
+      let topY = nodeCoordinate[curLayerIndex - 1][0].y;
+      let bottomY = nodeCoordinate[curLayerIndex - 1][9].y + nodeLength -
+            flattenLength * pixelHeight;
+      
+      // Compute the pre-layer gap
+      let preLayerDimension = cnn[curLayerIndex - 1][0].output.length;
+      let preLayerGap = nodeLength / (2 * preLayerDimension);
+
+      // Compute bounding box length
+      let boundingBoxLength = nodeLength / preLayerDimension;
+
+      // Compute the weight color scale
+      let flattenExtent = d3.extent(cnn.flatten.slice(flattenLength)
+        .map(d => d.outputLinks[i].weight)
+        .concat(cnn.flatten.slice(9 * flattenLength, 10 * flattenLength)
+          .map(d => d.outputLinks[i].weight)));
+
+      let flattenRange = 2 * (Math.round(
+        Math.max(...flattenExtent.map(Math.abs)) * 1000) / 1000);
+
+      let flattentColorScale = (value, gap) => {
+        if (gap === undefined) { gap = 0; }
+        let normalizedValue = (value + flattenRange / 2) / flattenRange;
+        return layerColorScales.weight(normalizedValue * (1 - 2 * gap) + gap);
+      }
+
+      let flattenMouseOverHandler = (d) => {
+        let index = d.index;
+        flattenLayer.select(`#edge-flatten-${index}`)
+          .raise()
+          .style('stroke', intermediateColor)
+          .style('stroke-width', 1);
+
+        flattenLayer.select(`#edge-flatten-${index}-output`)
+          .raise()
+          .style('stroke-width', 1)
+          .style('stroke', da => flattentColorScale(da.weight));
+
+        flattenLayer.select(`#bounding-${index}`)
+          .raise()
+          .style('opacity', 1);
+      }
+
+      let flattenMouseLeaveHandler = (d) => {
+        let index = d.index;
+        flattenLayer.select(`#edge-flatten-${index}`)
+          .style('stroke-width', 0.6)
+          .style('stroke', '#E5E5E5')
+
+        flattenLayer.select(`#edge-flatten-${index}-output`)
+          .style('stroke-width', 0.6)
+          .style('stroke', da => flattentColorScale(da.weight, 0.35));
+
+        flattenLayer.select(`#bounding-${index}`)
+          .raise()
+          .style('opacity', 0);
+      }
+
+      for (let f = 0; f < flattenLength; f++) {
+        let loopFactors = [0, 9];
+        loopFactors.forEach(l => {
+          let factoredF = f + l * flattenLength;
+          flattenLayer.append('rect')
+            .attr('x', intermediateX1)
+            .attr('y', l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight)
+            .attr('width', pixelWidth)
+            .attr('height', pixelHeight)
+            .style('fill', colorScale((cnn.flatten[factoredF].output + range / 2) / range))
+            .on('mouseover', (d) => flattenMouseOverHandler({index: factoredF}))
+            .on('mouseleave', (d) => flattenMouseLeaveHandler({index: factoredF}));
+
+          // Flatten -> output
+          linkData.push({
+            source: {x: intermediateX1 + pixelWidth + 3,
+              y:  l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight},
+            target: {x: nodeCoordinate[curLayerIndex][i].x,
+              y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
+            index: factoredF,
+            weight: cnn.flatten[factoredF].outputLinks[i].weight,
+            name: `flatten-${factoredF}-output`,
+            color: flattentColorScale(cnn.flatten[factoredF].outputLinks[i].weight, 0.35),
+            width: 0.6,
+            opacity: 1,
+            class: `flatten-output`
+          });
+
+          // Pre-layer -> flatten
+          let row = Math.floor(f / preLayerDimension);
+          linkData.push({
+            target: {x: intermediateX1 - 3,
+              y:  l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight},
+            source: {x: leftX + nodeLength + 3,
+              y: nodeCoordinate[curLayerIndex - 1][l].y + (2 * row + 1) * preLayerGap},
+            index: factoredF,
+            name: `flatten-${factoredF}`,
+            color: '#E5E5E5',
+            width: 0.6,
+            opacity: 1,
+            class: `flatten`
+          });
+
+          // Add original pixel bounding box
+          let loc = cnn.flatten[factoredF].inputLinks[0].weight;
+          flattenLayer.append('rect')
+            .attr('id', `bounding-${factoredF}`)
+            .attr('x', leftX + loc[1] * boundingBoxLength)
+            .attr('y', nodeCoordinate[curLayerIndex - 1][l].y + loc[0] * boundingBoxLength)
+            .attr('width', boundingBoxLength)
+            .attr('height', boundingBoxLength)
+            .style('fill', 'none')
+            .style('stroke', intermediateColor)
+            .style('stroke-length', '0.5')
+            .style('pointer-events', 'all')
+            .style('opacity', 0)
+            .on('mouseover', (d) => flattenMouseOverHandler({index: factoredF}))
+            .on('mouseleave', (d) => flattenMouseLeaveHandler({index: factoredF}));
+        }) 
+      }
+      
+      // Use abstract symbol to represent the flatten nodes in between (between
+      // the first and the last nodes)
+      
+      // Compute the average value of input node and weights
+      let meanValues = [];
+      for (let n = 1; n < cnn[curLayerIndex - 1].length - 1; n++) {
+        let meanOutput = d3.mean(cnn.flatten.slice(flattenLength * n,
+          flattenLength * (n + 1)).map(d => d.output));
+        let meanWeight= d3.mean(cnn.flatten.slice(flattenLength * n,
+          flattenLength * (n + 1)).map(d => d.outputLinks[i].weight));
+        meanValues.push({index: n, output: meanOutput, weight: meanWeight});
+      }
+      console.log(meanValues);
+
+      // Compute the middle gap
+      let middleGap = 5;
+      let middleRectHeight = (10 * nodeLength + (10 - 1) * vSpaceAroundGap -
+        pixelHeight * flattenLength * 2 - 5 * (8 + 1)) / 8;
+
+      // Add middle nodes
+      meanValues.forEach((v, vi) => {
+        // Add a small rectangle
+        flattenLayer.append('rect')
+          .attr('x', intermediateX1 + pixelWidth / 4)
+          .attr('y', topY + flattenLength * pixelHeight + middleGap * (vi + 1) + middleRectHeight * vi)
+          .attr('width', pixelWidth / 2)
+          .attr('height', middleRectHeight)
+          .style('fill', colorScale((v.output + range / 2) / range));
+        
+        // Add a triangle next to the input node
+        flattenLayer.append('polyline')
+          .attr('points',
+            `${leftX + nodeLength + 3}
+             ${nodeCoordinate[curLayerIndex - 1][v.index].y},
+             ${leftX + nodeLength + 6}
+             ${nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
+             ${leftX + nodeLength + 3}
+             ${nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength}`)
+          .style('fill', '#E5E5E5')
+          .style('opacity', 1);
+        
+        // Input -> flatten
+        linkData.push({
+          target: {x: intermediateX1 - 3,
+            y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) + middleRectHeight * (vi + 0.5)},
+          source: {x: leftX + nodeLength + 6,
+            y: nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
+          index: -1,
+          width: 1,
+          opacity: 1,
+          name: `flatten-abstract-${v.index}`,
+          color: '#E5E5E5',
+          class: `flatten-abstract`
+        });
+
+        // Flatten -> output
+        linkData.push({
+          source: {x: intermediateX1 + pixelWidth + 3,
+            y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) + middleRectHeight * (vi + 0.5)},
+          target: {x: nodeCoordinate[curLayerIndex][i].x,
+            y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
+          index: -1,
+          name: `flatten-abstract-${v.index}-output`,
+          color: flattentColorScale(v.weight),
+          weight: v.weight,
+          width: 1,
+          opacity: 1,
+          class: `flatten-abstract-output`
+        });
+      })
+
+      // Add edges between nodes
+      let linkGen = d3.linkHorizontal()
+        .x(d => d.x)
+        .y(d => d.y);
+
+      let edgeGroup = flattenLayer.append('g')
+        .attr('class', 'edge-group');
+      
+      edgeGroup.selectAll('path')
+        .data(linkData)
+        .enter()
+        .append('path')
+        .attr('class', d => d.class)
+        .attr('id', d => `edge-${d.name}`)
+        .attr('d', d => linkGen({source: d.source, target: d.target}))
+        .style('fill', 'none')
+        .style('stroke-width', d => d.width)
+        .style('stroke', d => d.color)
+        .style('opacity', d => d.opacity);
+      
+      edgeGroup.selectAll('path.flatten-abstract-output').lower();
+
+      edgeGroup.selectAll('path.flatten,path.flatten-output')
+        .on('mouseover', flattenMouseOverHandler)
+        .on('mouseleave', flattenMouseLeaveHandler);
+
+      /* Prototype of using arc to represent the flatten layer (future)
+      let pie = d3.pie()
+        .padAngle(0)
+        .sort(null)
+        .value(d => d.output)
+        .startAngle(0)
+        .endAngle(-Math.PI);
+
+      let radius = 490 / 2;
+      let arc = d3.arc()
+        .innerRadius(radius - 20)
+        .outerRadius(radius);
+
+      let arcs = pie(cnn.flatten);
+      console.log(arcs);
+
+      let test = svg.append('g')
+        .attr('class', 'test')
+        .attr('transform', 'translate(500, 250)');
+
+      test.selectAll("path")
+        .data(arcs)
+        .join("path")
+          .attr('class', 'arc')
+          .attr("fill", d => colorScale((d.value + range/2) / range))
+          .attr("d", arc);
+      */
+
+      // Show everything
+      svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
+        .transition()
+        .delay(500)
+        .duration(500)
+        .ease(d3.easeCubicInOut)
+        .style('opacity', 1);
+    }
 
     // Quit the layerview
-    else if (d.type === 'conv' && isInIntermediateView) {
+    else if ((d.type === 'conv' || d.layerName === 'output') && isInIntermediateView) {
       isInIntermediateView = false;
 
       // Also unclick the node
@@ -1602,13 +1948,29 @@
       .classed('hidden', false);
     
     // Highlight source's border
+    if (d.inputLinks.length === 1) {
+      let link = d.inputLinks[0];
+      let layerIndex = layerIndexDict[link.source.layerName];
+      let nodeIndex = link.source.index;
+      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+        .select('rect.bounding')
+        .classed('hidden', false);
+    } else {
+      svg.select(`g#cnn-layer-group-${layerIndex - 1}`)
+        .selectAll('g.node-group')
+        .selectAll('rect.bounding')
+        .classed('hidden', false);
+    }
+
+    /* Use the following commented code if we have non-linear model
     d.inputLinks.forEach(link => {
       let layerIndex = layerIndexDict[link.source.layerName];
       let nodeIndex = link.source.index;
       svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
         .select('rect.bounding')
         .classed('hidden', false);
-    })
+    });
+    */
   }
 
   const nodeMouseLeaveHandler = (d, i, g) => {
@@ -1630,13 +1992,29 @@
     if (d.layerName !== selectedNode.layerName || d.index !== selectedNode.index){
       d3.select(g[i]).select('rect.bounding').classed('hidden', true);
 
+      if (d.inputLinks.length === 1) {
+        let link = d.inputLinks[0];
+        let layerIndex = layerIndexDict[link.source.layerName];
+        let nodeIndex = link.source.index;
+        svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+          .select('rect.bounding')
+          .classed('hidden', true);
+      } else {
+        svg.select(`g#cnn-layer-group-${layerIndex - 1}`)
+          .selectAll('g.node-group')
+          .selectAll('rect.bounding')
+          .classed('hidden', true);
+      }
+
+      /* Use the following commented code if we have non-linear model
       d.inputLinks.forEach(link => {
         let layerIndex = layerIndexDict[link.source.layerName];
         let nodeIndex = link.source.index;
         svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
           .select('rect.bounding')
           .classed('hidden', true);
-      })
+      });
+      */
     }
 
   }
@@ -2211,6 +2589,7 @@
     // Ignore the flatten layer for now
     let flatten = cnn[cnn.length - 2];
     cnn.splice(cnn.length - 2, 1);
+    cnn.flatten = flatten;
     console.log(cnn);
 
     updateCNNLayerRanges();
@@ -2249,6 +2628,7 @@
       // Ignore the flatten layer for now
       let flatten = cnn[cnn.length - 2];
       cnn.splice(cnn.length - 2, 1);
+      cnn.flatten = flatten;
       cnnStore.set(cnn);
 
       // Update all scales used in the CNN view
