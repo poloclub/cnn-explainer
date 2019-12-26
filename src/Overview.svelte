@@ -41,6 +41,7 @@
   let selectedNode = {layerName: '', index: -1, data: null};
   let svgPaddings = {top: 25, bottom: 25, left: 50, right: 50};
   let isInIntermediateView = false;
+  let detailedViewNum = undefined;
   let kernelRectLength = 8/3;
 
   // Wait to load
@@ -429,29 +430,84 @@
   }
 
   const intermediateNodeMouseOverHandler = (d, i, g) => {
-    d3.select(g[i])
-      .select('rect.bounding')
-      .classed('very-strong', true);
+    if (detailedViewNum !== undefined) { return; }
+    svg.select(`rect#underneath-gateway-${d.index}`)
+      .style('opacity', 1);
   }
 
   const intermediateNodeMouseLeaveHandler = (d, i, g) => {
-
+    if (detailedViewNum !== undefined) { return; }
+    svg.select(`rect#underneath-gateway-${d.index}`)
+      .style('opacity', 0);
   }
 
-  const intermediateNodeClicked = (d, i, g) => {
-    selectedNodeIndex = +g[0].getAttribute('node-index');
-    // debugger;
+  const intermediateNodeClicked = (d, i, g, selectedI, curLayerIndex) => {
+    console.log(detailedViewNum, i);
+    // Todo: use this event to trigger the detailed view
+    if (detailedViewNum === d.index) { 
+      // User clicks this node again -> rewind
+      detailedViewNum = undefined;
+      svg.select(`rect#underneath-gateway-${d.index}`)
+        .style('opacity', 0);
+
+      // TODO: destroy the detailed view with smooth animation
+
+
+
+    } 
+    // We need to show a new detailed view (two cases: if we need to close the
+    // old detailed view or not)
+    else {
+      // Here are some variables you might need
+      let inputMatrix = d.output;
+      let kernelMatrix = d.outputLinks[selectedI].weight;
+      let interMatrix = singleConv(inputMatrix, kernelMatrix);
+      let colorScale = layerColorScales.conv;
+
+      // Compute the color range
+      let rangePre = cnnLayerRanges[selectedScaleLevel][curLayerIndex - 1];
+      let rangeCur = cnnLayerRanges[selectedScaleLevel][curLayerIndex];
+      let range = Math.max(rangePre, rangeCur);
+
+      console.log(inputMatrix, kernelMatrix, interMatrix, range);
+
+      // User triggers a different detailed view
+      if (detailedViewNum !== undefined) {
+        // Change the underneath highlight
+        svg.select(`rect#underneath-gateway-${detailedViewNum}`)
+          .style('opacity', 0);
+        svg.select(`rect#underneath-gateway-${d.index}`)
+          .style('opacity', 1);
+
+        // TODO: redraw the old detailed view with new matrices
+
+
+
+      }
+
+      // User triggers a new detailed view
+      else {
+        // TODO: show the detailed view at the location
+
+
+
+      }
+
+      detailedViewNum = d.index;
+    }
   }
 
-  const createIntermediateNode = (groupLayer, x, y, nodeIndex, interaction=false) => {
+  const createIntermediateNode = (curLayerIndex, selectedI, groupLayer, x, y,
+    nodeIndex, interaction=false) => {
     let newNode = groupLayer.append('g')
+      .datum(cnn[curLayerIndex - 1][nodeIndex])
       .attr('class', 'intermediate-node')
       .attr('cursor', interaction ? 'pointer': 'default')
       .attr('pointer-events', interaction ? 'all': 'none')
       .attr('node-index', nodeIndex)
       .on('mouseover', intermediateNodeMouseOverHandler)
       .on('mouseleave', intermediateNodeMouseLeaveHandler)
-      .on('click', intermediateNodeClicked);
+      .on('click', (d, g, i) => intermediateNodeClicked(d, g, i, selectedI, curLayerIndex));
     
     let canvas = newNode.append('foreignObject')
       .attr('width', nodeLength)
@@ -529,8 +585,8 @@
       itnermediateSumMatrix = matrixAdd(itnermediateSumMatrix, interMatrix);
 
       // Layout the canvas and rect
-      let newNode = createIntermediateNode(intermediateLayer, intermediateX1,
-        n.y, ni, true);
+      let newNode = createIntermediateNode(curLayerIndex, i, intermediateLayer,
+        intermediateX1, n.y, ni, true);
       
       // Draw the canvas
       let context = newNode.select('canvas').node().getContext('2d');
@@ -1075,6 +1131,31 @@
       .style('font-weight', '800');
   }
 
+  const addUnderneathRect = (curLayerIndex, leftX, intermediateGap, padding) => {
+    // Add underneath rects
+    let underGroup = svg.select('g.underneath');
+    for (let n = 0; n < cnn[curLayerIndex - 1].length; n++) {
+      underGroup.append('rect')
+        .attr('class', 'underneath-gateway')
+        .attr('id', `underneath-gateway-${n}`)
+        .attr('x', leftX - padding)
+        .attr('y', nodeCoordinate[curLayerIndex - 1][n].y - padding)
+        .attr('width', (2 * nodeLength + intermediateGap) + 2 * padding)
+        .attr('height', nodeLength + 2 * padding)
+        .attr('rx', 10)
+        .style('fill', 'rgba(175, 135, 255, 0.2)')
+        .style('opacity', 0);
+      
+      // Register new events for input layer nodes
+      svg.select(`g#layer-${curLayerIndex - 1}-node-${n}`)
+        .on('mouseover', intermediateNodeMouseOverHandler)
+        .on('mouseleave', intermediateNodeMouseLeaveHandler)
+        .on('click', (d, g, i) => intermediateNodeClicked(d, g, i,
+          i, curLayerIndex))
+    }
+    underGroup.lower();
+  }
+
   const nodeClickHandler = (d, i, g) => {
     // Opens low-level convolution animation when a conv node is clicked.
     if (d.type === 'conv') {
@@ -1123,6 +1204,7 @@
         let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2;
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
+        let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
 
         // Move the selected layer
         moveLayerX({layerIndex: curLayerIndex, targetX: targetX, disable: true,
@@ -1166,10 +1248,10 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
         let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
           curLayerIndex, leftX, targetX, rightStart, intermediateGap, d, i);
-        
+        addUnderneathRect(curLayerIndex, leftX, intermediateGap, 8);
+
         // Compute the selected node's min max
         // Selected node
         let min = Infinity, max = -Infinity;
@@ -1304,6 +1386,7 @@
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
         let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
           curLayerIndex, leftX, targetX, rightStart, intermediateGap, d, i);
+        addUnderneathRect(curLayerIndex, leftX, intermediateGap, 5);
         
         // After getting the intermediateMinMax, we can finally aggregate it with
         // the preLayer minmax, curLayer minmax
@@ -1421,6 +1504,7 @@
           curLayerIndex, leftX, nodeCoordinate[curLayerIndex][0].x, rightStart,
           intermediateGap, d, i
         );
+        addUnderneathRect(curLayerIndex, leftX, intermediateGap, 5);
                 
         // After getting the intermediateMinMax, we can finally aggregate it with
         // the preLayer minmax, curLayer minmax
@@ -1538,6 +1622,7 @@
           curLayerIndex, leftX, nodeCoordinate[curLayerIndex][0].x, rightStart,
           intermediateGap, d, i
         );
+        addUnderneathRect(curLayerIndex, leftX, intermediateGap, 5);
                 
         // After getting the intermediateMinMax, we can finally aggregate it with
         // the preLayer minmax, curLayer minmax
@@ -2181,6 +2266,19 @@
         .classed('hidden', !detailedMode);
       svg.selectAll('.input-legend').classed('hidden', !detailedMode);
       svg.selectAll('.output-legend').classed('hidden', !detailedMode);
+
+      // Recover the input layer node's event
+      for (let n = 0; n < cnn[curLayerIndex - 1].length; n++) {
+        svg.select(`g#layer-${curLayerIndex - 1}-node-${n}`)
+          .on('mouseover', nodeMouseOverHandler)
+          .on('mouseleave', nodeMouseLeaveHandler)
+          .on('click', nodeClickHandler);
+      }
+
+      // Clean up the underneath rects
+      svg.select('g.underneath')
+        .selectAll('rect')
+        .remove();
 
       // Highlight the previous layer and this node
       svg.select(`g#cnn-layer-group-${curLayerIndex - 1}`)
@@ -2933,6 +3031,9 @@
     let cnnGroup = svg.append('g')
       .attr('class', 'cnn-group');
     
+    let underGroup = svg.append('g')
+      .attr('class', 'underneath');
+    
     // Define global arrow marker end
     svg.append("defs")
       .append("marker")
@@ -3138,12 +3239,12 @@
     stroke-width: 3px;
   }
 
-  :global(.bounding, .edge-group, foreignObject, .bounding-flatten) {
+  :global(.bounding, .edge-group, foreignObject, .bounding-flatten, .underneath-gateway) {
     transition: opacity 300ms ease-in-out;
   }
 
   :global(rect.bounding) {
-    transition: stroke-with 800ms ease-in-out;
+    transition: stroke-width 800ms ease-in-out, opacity 300ms ease-in-out;
   }
 
   :global(.annotation-text) {
