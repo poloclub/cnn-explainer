@@ -5,6 +5,7 @@
   import { cnnStore } from './stores.js';
   import ConvolutionView from './Convolutionview.svelte';
   import ActivationView from './Activationview.svelte';
+  import PoolView from './Poolview.svelte';
 
   // View bindings
   let overviewComponent;
@@ -1172,22 +1173,13 @@
   }
 
   const nodeClickHandler = (d, i, g) => {
-    // Opens low-level convolution animation when a conv node is clicked.
-    if (d.type === 'conv') {
+    // Opens low-level detailed animation when a node is clicked.  Components are defined for each node type.
+    if (d.type === 'conv' || d.type === 'relu' || d.type === 'pool') {
       let data = [];
       for (let j = 0; j < d.inputLinks.length; j++) {
         data.push({
           input: d.inputLinks[j].source.output,
           kernel: d.inputLinks[j].weight,
-          output: d.inputLinks[j].dest.output,
-        })
-      }
-      nodeData = data;
-    } else if (d.type === 'relu') {
-      let data = [];
-      for (let j = 0; j < d.inputLinks.length; j++) {
-        data.push({
-          input: d.inputLinks[j].source.output,
           output: d.inputLinks[j].dest.output,
         })
       }
@@ -3330,8 +3322,11 @@
   </div>
 </div>
 
-<ConvolutionView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[selectedNodeIndex].input} 
+<!-- <ConvolutionView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[selectedNodeIndex].input} 
                   kernel={nodeData == undefined ? [[1,2], [3,4]] : nodeData[selectedNodeIndex].kernel} 
-                  output={nodeData == undefined ? [[1,2,3], [4,5,6], [7,8,9]] : nodeData[selectedNodeIndex].output} />
+                  output={nodeData == undefined ? [[1,2,3], [4,5,6], [7,8,9]] : nodeData[selectedNodeIndex].output} /> -->
 <!-- <ActivationView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].input} 
                   output={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].output} /> -->
+<PoolView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].input} 
+              kernelLength={2} 
+              output={nodeData == undefined ? [[1,2], [4,5]] : nodeData[0].output} />
