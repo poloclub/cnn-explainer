@@ -449,7 +449,7 @@
   }
 
   const intermediateNodeClicked = (d, i, g, selectedI, curLayerIndex) => {
-    console.log(detailedViewNum, i);
+    console.log(detailedViewNum, i, d, selectedI);
     // Todo: use this event to trigger the detailed view
     if (detailedViewNum === d.index) { 
       // User clicks this node again -> rewind
@@ -1145,7 +1145,7 @@
       .style('font-weight', '800');
   }
 
-  const addUnderneathRect = (curLayerIndex, leftX, intermediateGap, padding) => {
+  const addUnderneathRect = (curLayerIndex, i, leftX, intermediateGap, padding) => {
     // Add underneath rects
     let underGroup = svg.select('g.underneath');
     for (let n = 0; n < cnn[curLayerIndex - 1].length; n++) {
@@ -1164,7 +1164,7 @@
       svg.select(`g#layer-${curLayerIndex - 1}-node-${n}`)
         .on('mouseover', intermediateNodeMouseOverHandler)
         .on('mouseleave', intermediateNodeMouseLeaveHandler)
-        .on('click', (d, g, i) => intermediateNodeClicked(d, g, i,
+        .on('click', (d, g, ni) => intermediateNodeClicked(d, g, ni,
           i, curLayerIndex))
     }
     underGroup.lower();
@@ -1264,7 +1264,7 @@
         // Draw the intermediate layer
         let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
           curLayerIndex, leftX, targetX, rightStart, intermediateGap, d, i);
-        addUnderneathRect(curLayerIndex, leftX, intermediateGap, 8);
+        addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 8);
 
         // Compute the selected node's min max
         // Selected node
@@ -1400,7 +1400,7 @@
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
         let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
           curLayerIndex, leftX, targetX, rightStart, intermediateGap, d, i);
-        addUnderneathRect(curLayerIndex, leftX, intermediateGap, 5);
+        addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 5);
         
         // After getting the intermediateMinMax, we can finally aggregate it with
         // the preLayer minmax, curLayer minmax
@@ -1518,7 +1518,7 @@
           curLayerIndex, leftX, nodeCoordinate[curLayerIndex][0].x, rightStart,
           intermediateGap, d, i
         );
-        addUnderneathRect(curLayerIndex, leftX, intermediateGap, 5);
+        addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 5);
                 
         // After getting the intermediateMinMax, we can finally aggregate it with
         // the preLayer minmax, curLayer minmax
@@ -1636,7 +1636,7 @@
           curLayerIndex, leftX, nodeCoordinate[curLayerIndex][0].x, rightStart,
           intermediateGap, d, i
         );
-        addUnderneathRect(curLayerIndex, leftX, intermediateGap, 5);
+        addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 5);
                 
         // After getting the intermediateMinMax, we can finally aggregate it with
         // the preLayer minmax, curLayer minmax
