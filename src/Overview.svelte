@@ -56,6 +56,13 @@
     weight: d3.interpolateBrBG
   };
 
+  let detailedViewAbsCoords = {
+    1 : [600, 185, 490, 290],
+    3 : [700, 185, 490, 290],
+    6 : [775, 185, 490, 290],
+    8 : [50, 185, 490, 290]
+  }
+
   let layerIndexDict = {
     'input': 0,
     'conv_1_1': 1,
@@ -488,8 +495,15 @@
       // User triggers a new detailed view
       else {
         // TODO: show the detailed view at the location
-
-
+        d3.select(overviewComponent)
+          .append('div')
+          .attr('class', 'test-div')
+          .style('background', 'skyblue')
+          .style('position', 'absolute')
+          .style('left', `${detailedViewAbsCoords[curLayerIndex][0]}px`)
+          .style('top', `${detailedViewAbsCoords[curLayerIndex][1]}px`)
+          .style('width', `${detailedViewAbsCoords[curLayerIndex][2]}px`)
+          .style('height', `${detailedViewAbsCoords[curLayerIndex][3]}px`);
 
       }
 
@@ -3114,6 +3128,7 @@
     height: 100%;
     width: 100%;
     display: flex;
+    position: relative;
     flex-direction: column;
     justify-content: space-between;
     align-items: flex-start;
