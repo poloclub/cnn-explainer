@@ -346,7 +346,7 @@
     });
     
     // Also move the layer labels
-    svg.selectAll(`g#layer-label-${layerIndex}, g#layer-detailed-label-${layerIndex}`)
+    svg.selectAll(`g#layer-label-${layerIndex}`)
       .transition(transitionName)
       .ease(d3.easeCubicInOut)
       .delay(delay)
@@ -354,6 +354,18 @@
       .attr('transform', d => {
         let x = targetX + nodeLength / 2;
         let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+        return `translate(${x}, ${y})`;
+      })
+      .on('end', onEndFunc);
+
+    svg.selectAll(`g#layer-detailed-label-${layerIndex}`)
+      .transition(transitionName)
+      .ease(d3.easeCubicInOut)
+      .delay(delay)
+      .duration(500)
+      .attr('transform', d => {
+        let x = targetX + nodeLength / 2;
+        let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 6;
         return `translate(${x}, ${y})`;
       })
       .on('end', onEndFunc);
@@ -720,6 +732,7 @@
       })
       .append('text')
       .style('dominant-baseline', 'middle')
+      .style('opacity', '0.8')
       .text('intermediate')
 
     // Draw the edges
@@ -1037,13 +1050,29 @@
       .style('fill', gradientName);
   }
 
-  const prepareToEnterIntermediateView = () => {
+  const prepareToEnterIntermediateView = (d, g, i, curLayerIndex) => {
     isInIntermediateView = true;
     // Hide all legends
     svg.selectAll(`.${selectedScaleLevel}-legend`)
       .classed('hidden', true);
     svg.selectAll('.input-legend').classed('hidden', true);
     svg.selectAll('.output-legend').classed('hidden', true);
+
+    // Highlight the previous layer and this node
+    svg.select(`g#cnn-layer-group-${curLayerIndex - 1}`)
+      .selectAll('rect.bounding')
+      .style('stroke-width', 2);
+    
+    d3.select(g[i])
+      .select('rect.bounding')
+      .style('stroke-width', 2);
+
+    // Highlight the labels
+    svg.selectAll(`g#layer-label-${curLayerIndex - 1},
+      g#layer-detailed-label-${curLayerIndex - 1},
+      g#layer-label-${curLayerIndex},
+      g#layer-detailed-label-${curLayerIndex}`)
+      .style('font-weight', '800');
   }
 
   const nodeClickHandler = (d, i, g) => {
@@ -1083,13 +1112,14 @@
     selectedNode.data = d;
 
     let overlayRectOffset = 6;
+    let curLayerIndex = layerIndexDict[d.layerName];
 
     // Enter the second view (layer-view) when user clicks a conv node
-    if (d.type === 'conv' && !isInIntermediateView) {
-      prepareToEnterIntermediateView();
+    if ((d.type === 'conv' || d.layerName === 'output') && !isInIntermediateView) {
+      prepareToEnterIntermediateView(d, g, i, curLayerIndex);
+
       if (d.layerName === 'conv_1_1') {
         // Compute the target location
-        let curLayerIndex = layerIndexDict[d.layerName];
         let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2;
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
@@ -1204,7 +1234,6 @@
       }
 
       else if (d.layerName === 'conv_1_2') {
-        let curLayerIndex = layerIndexDict[d.layerName];
         let targetX = nodeCoordinate[curLayerIndex - 1][0].x + 2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2;
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
@@ -1317,7 +1346,6 @@
       }
 
       else if (d.layerName === 'conv_2_1') {
-        let curLayerIndex = layerIndexDict[d.layerName];
         let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
@@ -1435,7 +1463,6 @@
       }
       
       else if (d.layerName === 'conv_2_2') {
-        let curLayerIndex = layerIndexDict[d.layerName];
         let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
@@ -1551,597 +1578,598 @@
           .ease(d3.easeCubicInOut)
           .style('opacity', 1);
       }
-    }
-    else if (d.layerName === 'output' && !isInIntermediateView) {
-      prepareToEnterIntermediateView();
-      svg.selectAll('.output-legend').classed('hidden', false);
+    
+      else if (d.layerName === 'output') {
+        // Show the output legend
+        svg.selectAll('.output-legend').classed('hidden', false);
 
-      let pixelWidth = nodeLength / 2;
-      let pixelHeight = 1.1;
-      let curLayerIndex = layerIndexDict[d.layerName];
-      let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
-        4 * hSpaceAroundGap * gapRatio + pixelWidth);
-      let intermediateGap = (hSpaceAroundGap * gapRatio * 4) / 2;
+        let pixelWidth = nodeLength / 2;
+        let pixelHeight = 1.1;
+        let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
+          4 * hSpaceAroundGap * gapRatio + pixelWidth);
+        let intermediateGap = (hSpaceAroundGap * gapRatio * 4) / 2;
 
-      // Move the previous layer
-      moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
-        disable: true, delay: 0});
+        // Move the previous layer
+        moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
+          disable: true, delay: 0});
 
-      moveLayerX({layerIndex: curLayerIndex,
-        targetX: nodeCoordinate[curLayerIndex][0].x, disable: true,
-        delay: 0, opacity: 0.15, specialIndex: i});
+        moveLayerX({layerIndex: curLayerIndex,
+          targetX: nodeCoordinate[curLayerIndex][0].x, disable: true,
+          delay: 0, opacity: 0.15, specialIndex: i});
 
-      // Hide the edges
-      svg.select('g.edge-group').classed('hidden', true);
+        // Hide the edges
+        svg.select('g.edge-group').classed('hidden', true);
 
-      // Compute the gap in the left shrink region
-      let leftEnd = leftX - hSpaceAroundGap;
-      let leftGap = (leftEnd - nodeCoordinate[0][0].x - 10 * nodeLength) / 10;
-      let rightStart = nodeCoordinate[curLayerIndex][0].x +
-        nodeLength + hSpaceAroundGap;
+        // Compute the gap in the left shrink region
+        let leftEnd = leftX - hSpaceAroundGap;
+        let leftGap = (leftEnd - nodeCoordinate[0][0].x - 10 * nodeLength) / 10;
+        let rightStart = nodeCoordinate[curLayerIndex][0].x +
+          nodeLength + hSpaceAroundGap;
 
-      // Move the left layers
-      for (let i = 0; i < curLayerIndex - 1; i++) {
-        let curX = nodeCoordinate[0][0].x + i * (nodeLength + leftGap);
-        moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
-      }
+        // Move the left layers
+        for (let i = 0; i < curLayerIndex - 1; i++) {
+          let curX = nodeCoordinate[0][0].x + i * (nodeLength + leftGap);
+          moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
+        }
 
-      // Add an overlay
-      let stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 1},
-        {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
-        {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 0.85}];
-      addOverlayGradient('overlay-gradient-left', stops);
+        // Add an overlay
+        let stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 1},
+          {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
+          {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 0.85}];
+        addOverlayGradient('overlay-gradient-left', stops);
 
-      stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 0.85},
-        {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
-        {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
-      addOverlayGradient('overlay-gradient-right', stops);
+        stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 0.85},
+          {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
+          {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
+        addOverlayGradient('overlay-gradient-right', stops);
 
-      let intermediateLayerOverlay = svg.append('g')
-        .attr('class', 'intermediate-layer-overlay');
+        let intermediateLayerOverlay = svg.append('g')
+          .attr('class', 'intermediate-layer-overlay');
 
-      intermediateLayerOverlay.append('rect')
-        .attr('class', 'overlay')
-        .style('fill', 'url(#overlay-gradient-left)')
-        .style('stroke', 'none')
-        .attr('width', leftEnd - nodeCoordinate[0][0].x + overlayRectOffset)
-        .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-        .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
-        .attr('y', 0)
-        .style('opacity', 0);
-      
-      intermediateLayerOverlay.append('rect')
-        .attr('class', 'overlay')
-        .style('fill', 'url(#overlay-gradient-right)')
-        .style('stroke', 'none')
-        .attr('width', width - rightStart + overlayRectOffset)
-        .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-        .attr('x', rightStart - overlayRectOffset/2)
-        .attr('y', 0)
-        .style('opacity', 0);
-      
-      intermediateLayerOverlay.selectAll('rect.overlay')
-        .transition('move')
-        .duration(800)
-        .ease(d3.easeCubicInOut)
-        .style('opacity', 1);
-
-      // Add the intermediate layer
-      let intermediateLayer = svg.select('.cnn-group')
-        .append('g')
-        .attr('class', 'intermediate-layer')
-        .style('opacity', 0);
-      
-      let intermediateX1 = leftX + nodeLength + intermediateGap;
-      let range = cnnLayerRanges[selectedScaleLevel][curLayerIndex - 1];
-      let colorScale = layerColorScales.conv;
-      let flattenLength = cnn.flatten.length / cnn[1].length;
-      let linkData = [];
-
-      let flattenLayer = intermediateLayer.append('g')
-        .attr('class', 'flatten-layer');
-      
-      let topY = nodeCoordinate[curLayerIndex - 1][0].y;
-      let bottomY = nodeCoordinate[curLayerIndex - 1][9].y + nodeLength -
-            flattenLength * pixelHeight;
-      
-      // Compute the pre-layer gap
-      let preLayerDimension = cnn[curLayerIndex - 1][0].output.length;
-      let preLayerGap = nodeLength / (2 * preLayerDimension);
-
-      // Compute bounding box length
-      let boundingBoxLength = nodeLength / preLayerDimension;
-
-      // Compute the weight color scale
-      let flattenExtent = d3.extent(cnn.flatten.slice(flattenLength)
-        .map(d => d.outputLinks[i].weight)
-        .concat(cnn.flatten.slice(9 * flattenLength, 10 * flattenLength)
-          .map(d => d.outputLinks[i].weight)));
-
-      let flattenRange = 2 * (Math.round(
-        Math.max(...flattenExtent.map(Math.abs)) * 1000) / 1000);
-
-      let flattenColorScale = (value, gap) => {
-        if (gap === undefined) { gap = 0; }
-        let normalizedValue = (value + flattenRange / 2) / flattenRange;
-        return layerColorScales.weight(normalizedValue * (1 - 2 * gap) + gap);
-      }
-
-      let flattenMouseOverHandler = (d) => {
-        let index = d.index;
-        flattenLayer.select(`#edge-flatten-${index}`)
-          .raise()
-          .style('stroke', intermediateColor)
-          .style('stroke-width', 1);
-
-        flattenLayer.select(`#edge-flatten-${index}-output`)
-          .raise()
-          .style('stroke-width', 1)
-          .style('stroke', da => flattenColorScale(da.weight));
-
-        flattenLayer.select(`#bounding-${index}`)
-          .raise()
-          .style('opacity', 1);
-      }
-
-      let flattenMouseLeaveHandler = (d) => {
-        let index = d.index;
-        flattenLayer.select(`#edge-flatten-${index}`)
-          .style('stroke-width', 0.6)
-          .style('stroke', '#E5E5E5')
-
-        flattenLayer.select(`#edge-flatten-${index}-output`)
-          .style('stroke-width', 0.6)
-          .style('stroke', da => flattenColorScale(da.weight, 0.35));
-
-        flattenLayer.select(`#bounding-${index}`)
-          .raise()
+        intermediateLayerOverlay.append('rect')
+          .attr('class', 'overlay')
+          .style('fill', 'url(#overlay-gradient-left)')
+          .style('stroke', 'none')
+          .attr('width', leftEnd - nodeCoordinate[0][0].x + overlayRectOffset)
+          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
+          .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
+          .attr('y', 0)
           .style('opacity', 0);
-      }
+        
+        intermediateLayerOverlay.append('rect')
+          .attr('class', 'overlay')
+          .style('fill', 'url(#overlay-gradient-right)')
+          .style('stroke', 'none')
+          .attr('width', width - rightStart + overlayRectOffset)
+          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
+          .attr('x', rightStart - overlayRectOffset/2)
+          .attr('y', 0)
+          .style('opacity', 0);
+        
+        intermediateLayerOverlay.selectAll('rect.overlay')
+          .transition('move')
+          .duration(800)
+          .ease(d3.easeCubicInOut)
+          .style('opacity', 1);
 
-      for (let f = 0; f < flattenLength; f++) {
-        let loopFactors = [0, 9];
-        loopFactors.forEach(l => {
-          let factoredF = f + l * flattenLength;
+        // Add the intermediate layer
+        let intermediateLayer = svg.select('.cnn-group')
+          .append('g')
+          .attr('class', 'intermediate-layer')
+          .style('opacity', 0);
+        
+        let intermediateX1 = leftX + nodeLength + intermediateGap;
+        let range = cnnLayerRanges[selectedScaleLevel][curLayerIndex - 1];
+        let colorScale = layerColorScales.conv;
+        let flattenLength = cnn.flatten.length / cnn[1].length;
+        let linkData = [];
+
+        let flattenLayer = intermediateLayer.append('g')
+          .attr('class', 'flatten-layer');
+        
+        let topY = nodeCoordinate[curLayerIndex - 1][0].y;
+        let bottomY = nodeCoordinate[curLayerIndex - 1][9].y + nodeLength -
+              flattenLength * pixelHeight;
+        
+        // Compute the pre-layer gap
+        let preLayerDimension = cnn[curLayerIndex - 1][0].output.length;
+        let preLayerGap = nodeLength / (2 * preLayerDimension);
+
+        // Compute bounding box length
+        let boundingBoxLength = nodeLength / preLayerDimension;
+
+        // Compute the weight color scale
+        let flattenExtent = d3.extent(cnn.flatten.slice(flattenLength)
+          .map(d => d.outputLinks[i].weight)
+          .concat(cnn.flatten.slice(9 * flattenLength, 10 * flattenLength)
+            .map(d => d.outputLinks[i].weight)));
+
+        let flattenRange = 2 * (Math.round(
+          Math.max(...flattenExtent.map(Math.abs)) * 1000) / 1000);
+
+        let flattenColorScale = (value, gap) => {
+          if (gap === undefined) { gap = 0; }
+          let normalizedValue = (value + flattenRange / 2) / flattenRange;
+          return layerColorScales.weight(normalizedValue * (1 - 2 * gap) + gap);
+        }
+
+        let flattenMouseOverHandler = (d) => {
+          let index = d.index;
+          flattenLayer.select(`#edge-flatten-${index}`)
+            .raise()
+            .style('stroke', intermediateColor)
+            .style('stroke-width', 1);
+
+          flattenLayer.select(`#edge-flatten-${index}-output`)
+            .raise()
+            .style('stroke-width', 1)
+            .style('stroke', da => flattenColorScale(da.weight));
+
+          flattenLayer.select(`#bounding-${index}`)
+            .raise()
+            .style('opacity', 1);
+        }
+
+        let flattenMouseLeaveHandler = (d) => {
+          let index = d.index;
+          flattenLayer.select(`#edge-flatten-${index}`)
+            .style('stroke-width', 0.6)
+            .style('stroke', '#E5E5E5')
+
+          flattenLayer.select(`#edge-flatten-${index}-output`)
+            .style('stroke-width', 0.6)
+            .style('stroke', da => flattenColorScale(da.weight, 0.35));
+
+          flattenLayer.select(`#bounding-${index}`)
+            .raise()
+            .style('opacity', 0);
+        }
+
+        for (let f = 0; f < flattenLength; f++) {
+          let loopFactors = [0, 9];
+          loopFactors.forEach(l => {
+            let factoredF = f + l * flattenLength;
+            flattenLayer.append('rect')
+              .attr('x', intermediateX1)
+              .attr('y', l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight)
+              .attr('width', pixelWidth)
+              .attr('height', pixelHeight)
+              .style('fill', colorScale((cnn.flatten[factoredF].output + range / 2) / range))
+              .on('mouseover', (d) => flattenMouseOverHandler({index: factoredF}))
+              .on('mouseleave', (d) => flattenMouseLeaveHandler({index: factoredF}));
+
+            // Flatten -> output
+            linkData.push({
+              source: {x: intermediateX1 + pixelWidth + 3,
+                y:  l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight},
+              target: {x: nodeCoordinate[curLayerIndex][i].x - nodeLength,
+                y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
+              index: factoredF,
+              weight: cnn.flatten[factoredF].outputLinks[i].weight,
+              name: `flatten-${factoredF}-output`,
+              color: flattenColorScale(cnn.flatten[factoredF].outputLinks[i].weight, 0.35),
+              width: 0.6,
+              opacity: 1,
+              class: `flatten-output`
+            });
+
+            // Pre-layer -> flatten
+            let row = Math.floor(f / preLayerDimension);
+            linkData.push({
+              target: {x: intermediateX1 - 3,
+                y:  l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight},
+              source: {x: leftX + nodeLength + 3,
+                y: nodeCoordinate[curLayerIndex - 1][l].y + (2 * row + 1) * preLayerGap},
+              index: factoredF,
+              name: `flatten-${factoredF}`,
+              color: '#E5E5E5',
+              width: 0.6,
+              opacity: 1,
+              class: `flatten`
+            });
+
+            // Add original pixel bounding box
+            let loc = cnn.flatten[factoredF].inputLinks[0].weight;
+            flattenLayer.append('rect')
+              .attr('id', `bounding-${factoredF}`)
+              .attr('class', 'flatten-bounding')
+              .attr('x', leftX + loc[1] * boundingBoxLength)
+              .attr('y', nodeCoordinate[curLayerIndex - 1][l].y + loc[0] * boundingBoxLength)
+              .attr('width', boundingBoxLength)
+              .attr('height', boundingBoxLength)
+              .style('fill', 'none')
+              .style('stroke', intermediateColor)
+              .style('stroke-length', '0.5')
+              .style('pointer-events', 'all')
+              .style('opacity', 0)
+              .on('mouseover', (d) => flattenMouseOverHandler({index: factoredF}))
+              .on('mouseleave', (d) => flattenMouseLeaveHandler({index: factoredF}));
+          }) 
+        }
+        
+        // Use abstract symbol to represent the flatten nodes in between (between
+        // the first and the last nodes)
+        
+        // Compute the average value of input node and weights
+        let meanValues = [];
+        for (let n = 1; n < cnn[curLayerIndex - 1].length - 1; n++) {
+          let meanOutput = d3.mean(cnn.flatten.slice(flattenLength * n,
+            flattenLength * (n + 1)).map(d => d.output));
+          let meanWeight= d3.mean(cnn.flatten.slice(flattenLength * n,
+            flattenLength * (n + 1)).map(d => d.outputLinks[i].weight));
+          meanValues.push({index: n, output: meanOutput, weight: meanWeight});
+        }
+
+        // Compute the middle gap
+        let middleGap = 5;
+        let middleRectHeight = (10 * nodeLength + (10 - 1) * vSpaceAroundGap -
+          pixelHeight * flattenLength * 2 - 5 * (8 + 1)) / 8;
+
+        // Add middle nodes
+        meanValues.forEach((v, vi) => {
+          // Add a small rectangle
           flattenLayer.append('rect')
-            .attr('x', intermediateX1)
-            .attr('y', l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight)
-            .attr('width', pixelWidth)
-            .attr('height', pixelHeight)
-            .style('fill', colorScale((cnn.flatten[factoredF].output + range / 2) / range))
-            .on('mouseover', (d) => flattenMouseOverHandler({index: factoredF}))
-            .on('mouseleave', (d) => flattenMouseLeaveHandler({index: factoredF}));
+            .attr('x', intermediateX1 + pixelWidth / 4)
+            .attr('y', topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
+              middleRectHeight * vi)
+            .attr('width', pixelWidth / 2)
+            .attr('height', middleRectHeight)
+            .style('fill', colorScale((v.output + range / 2) / range));
+          
+          // Add a triangle next to the input node
+          flattenLayer.append('polyline')
+            .attr('points',
+              `${leftX + nodeLength + 3}
+              ${nodeCoordinate[curLayerIndex - 1][v.index].y},
+              ${leftX + nodeLength + 6}
+              ${nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
+              ${leftX + nodeLength + 3}
+              ${nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength}`)
+            .style('fill', '#E5E5E5')
+            .style('opacity', 1);
+          
+          // Input -> flatten
+          linkData.push({
+            target: {x: intermediateX1 - 3,
+              y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
+                middleRectHeight * (vi + 0.5)},
+            source: {x: leftX + nodeLength + 6,
+              y: nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
+            index: -1,
+            width: 1,
+            opacity: 1,
+            name: `flatten-abstract-${v.index}`,
+            color: '#E5E5E5',
+            class: `flatten-abstract`
+          });
 
           // Flatten -> output
           linkData.push({
             source: {x: intermediateX1 + pixelWidth + 3,
-              y:  l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight},
+              y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
+                middleRectHeight * (vi + 0.5)},
             target: {x: nodeCoordinate[curLayerIndex][i].x - nodeLength,
               y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
-            index: factoredF,
-            weight: cnn.flatten[factoredF].outputLinks[i].weight,
-            name: `flatten-${factoredF}-output`,
-            color: flattenColorScale(cnn.flatten[factoredF].outputLinks[i].weight, 0.35),
-            width: 0.6,
+            index: -1,
+            name: `flatten-abstract-${v.index}-output`,
+            color: flattenColorScale(v.weight),
+            weight: v.weight,
+            width: 1,
             opacity: 1,
-            class: `flatten-output`
+            class: `flatten-abstract-output`
           });
-
-          // Pre-layer -> flatten
-          let row = Math.floor(f / preLayerDimension);
-          linkData.push({
-            target: {x: intermediateX1 - 3,
-              y:  l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight},
-            source: {x: leftX + nodeLength + 3,
-              y: nodeCoordinate[curLayerIndex - 1][l].y + (2 * row + 1) * preLayerGap},
-            index: factoredF,
-            name: `flatten-${factoredF}`,
-            color: '#E5E5E5',
-            width: 0.6,
-            opacity: 1,
-            class: `flatten`
-          });
-
-          // Add original pixel bounding box
-          let loc = cnn.flatten[factoredF].inputLinks[0].weight;
-          flattenLayer.append('rect')
-            .attr('id', `bounding-${factoredF}`)
-            .attr('class', 'flatten-bounding')
-            .attr('x', leftX + loc[1] * boundingBoxLength)
-            .attr('y', nodeCoordinate[curLayerIndex - 1][l].y + loc[0] * boundingBoxLength)
-            .attr('width', boundingBoxLength)
-            .attr('height', boundingBoxLength)
-            .style('fill', 'none')
-            .style('stroke', intermediateColor)
-            .style('stroke-length', '0.5')
-            .style('pointer-events', 'all')
-            .style('opacity', 0)
-            .on('mouseover', (d) => flattenMouseOverHandler({index: factoredF}))
-            .on('mouseleave', (d) => flattenMouseLeaveHandler({index: factoredF}));
-        }) 
-      }
-      
-      // Use abstract symbol to represent the flatten nodes in between (between
-      // the first and the last nodes)
-      
-      // Compute the average value of input node and weights
-      let meanValues = [];
-      for (let n = 1; n < cnn[curLayerIndex - 1].length - 1; n++) {
-        let meanOutput = d3.mean(cnn.flatten.slice(flattenLength * n,
-          flattenLength * (n + 1)).map(d => d.output));
-        let meanWeight= d3.mean(cnn.flatten.slice(flattenLength * n,
-          flattenLength * (n + 1)).map(d => d.outputLinks[i].weight));
-        meanValues.push({index: n, output: meanOutput, weight: meanWeight});
-      }
-
-      // Compute the middle gap
-      let middleGap = 5;
-      let middleRectHeight = (10 * nodeLength + (10 - 1) * vSpaceAroundGap -
-        pixelHeight * flattenLength * 2 - 5 * (8 + 1)) / 8;
-
-      // Add middle nodes
-      meanValues.forEach((v, vi) => {
-        // Add a small rectangle
-        flattenLayer.append('rect')
-          .attr('x', intermediateX1 + pixelWidth / 4)
-          .attr('y', topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
-            middleRectHeight * vi)
-          .attr('width', pixelWidth / 2)
-          .attr('height', middleRectHeight)
-          .style('fill', colorScale((v.output + range / 2) / range));
-        
-        // Add a triangle next to the input node
-        flattenLayer.append('polyline')
-          .attr('points',
-            `${leftX + nodeLength + 3}
-             ${nodeCoordinate[curLayerIndex - 1][v.index].y},
-             ${leftX + nodeLength + 6}
-             ${nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
-             ${leftX + nodeLength + 3}
-             ${nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength}`)
-          .style('fill', '#E5E5E5')
-          .style('opacity', 1);
-        
-        // Input -> flatten
-        linkData.push({
-          target: {x: intermediateX1 - 3,
-            y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
-              middleRectHeight * (vi + 0.5)},
-          source: {x: leftX + nodeLength + 6,
-            y: nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
-          index: -1,
-          width: 1,
-          opacity: 1,
-          name: `flatten-abstract-${v.index}`,
-          color: '#E5E5E5',
-          class: `flatten-abstract`
-        });
-
-        // Flatten -> output
-        linkData.push({
-          source: {x: intermediateX1 + pixelWidth + 3,
-            y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
-              middleRectHeight * (vi + 0.5)},
-          target: {x: nodeCoordinate[curLayerIndex][i].x - nodeLength,
-            y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
-          index: -1,
-          name: `flatten-abstract-${v.index}-output`,
-          color: flattenColorScale(v.weight),
-          weight: v.weight,
-          width: 1,
-          opacity: 1,
-          class: `flatten-abstract-output`
-        });
-      })
-
-      // Draw the plus operation symbol
-      let intermediateX2 = intermediateX1 + intermediateGap + pixelWidth;
-      let symbolY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2;
-      let symbolRectHeight = 1;
-      let symbolGroup = intermediateLayer.append('g')
-        .attr('class', 'plus-symbol')
-        .attr('transform', `translate(${intermediateX2 + plusSymbolRadius}, ${symbolY})`);
-      
-      symbolGroup.append('circle')
-        .attr('cx', 0)
-        .attr('cy', 0)
-        .attr('r', plusSymbolRadius)
-        .style('fill', 'none')
-        .style('stroke', intermediateColor);
-      
-      symbolGroup.append('rect')
-        .attr('x', -(plusSymbolRadius - 3))
-        .attr('y', -symbolRectHeight / 2)
-        .attr('width', 2 * (plusSymbolRadius - 3))
-        .attr('height', symbolRectHeight)
-        .style('fill', intermediateColor);
-
-      symbolGroup.append('rect')
-        .attr('x', -symbolRectHeight / 2)
-        .attr('y', -(plusSymbolRadius - 3))
-        .attr('width', symbolRectHeight)
-        .attr('height', 2 * (plusSymbolRadius - 3))
-        .style('fill', intermediateColor);
-
-      // Place the bias rectangle below the plus sign if user clicks the firrst
-      // conv node
-      if (i == 0) {
-        // Add bias symbol to the plus symbol
-        symbolGroup.append('rect')
-          .attr('x', -kernelRectLength)
-          .attr('y', nodeLength / 2)
-          .attr('width', 2 * kernelRectLength)
-          .attr('height', 2 * kernelRectLength)
-          .style('stroke', intermediateColor)
-          .style('fill', flattenColorScale(d.bias, 0.35));
-        
-        // Link from bias to the plus symbol
-        linkData.push({
-          source: {x: intermediateX2 + plusSymbolRadius,
-            y: nodeCoordinate[curLayerIndex][i].y + nodeLength},
-          target: {x: intermediateX2 + plusSymbolRadius,
-            y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius},
-          name: `bias-plus`,
-          width: 1.2,
-          color: '#E5E5E5'
-        });
-      } else {
-        // Add bias symbol to the plus symbol
-        symbolGroup.append('rect')
-          .attr('x', -kernelRectLength)
-          .attr('y', -nodeLength / 2 - 2 * kernelRectLength)
-          .attr('width', 2 * kernelRectLength)
-          .attr('height', 2 * kernelRectLength)
-          .style('stroke', intermediateColor)
-          .style('fill', flattenColorScale(d.bias, 0.35));
-        
-        // Link from bias to the plus symbol
-        linkData.push({
-          source: {x: intermediateX2 + plusSymbolRadius,
-            y: nodeCoordinate[curLayerIndex][i].y},
-          target: {x: intermediateX2 + plusSymbolRadius,
-            y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 - plusSymbolRadius},
-          name: `bias-plus`,
-          width: 1.2,
-          color: '#E5E5E5'
-        });
-      }
-
-      // Link from the plus symbol to the output
-      linkData.push({
-        source: getOutputKnot({x: intermediateX2 + 2 * plusSymbolRadius - nodeLength,
-          y: nodeCoordinate[curLayerIndex][i].y}),
-        target: getInputKnot({x: nodeCoordinate[curLayerIndex][i].x - 3,
-          y: nodeCoordinate[curLayerIndex][i].y}),
-        name: `symbol-output`,
-        width: 1.2,
-        color: '#E5E5E5'
-      });
-
-      // Draw the layer label
-      intermediateLayer.append('g')
-        .attr('class', 'layer-label')
-        .attr('transform', (d, i) => {
-          let x = leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
-            pixelWidth) / 2;
-          let y = (svgPaddings.top + vSpaceAroundGap) / 2;
-          return `translate(${x}, ${y})`;
         })
-        .append('text')
-        .style('dominant-baseline', 'middle')
-        .text('flatten');
 
-      // Add edges between nodes
-      let linkGen = d3.linkHorizontal()
-        .x(d => d.x)
-        .y(d => d.y);
+        // Draw the plus operation symbol
+        let intermediateX2 = intermediateX1 + intermediateGap + pixelWidth;
+        let symbolY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2;
+        let symbolRectHeight = 1;
+        let symbolGroup = intermediateLayer.append('g')
+          .attr('class', 'plus-symbol')
+          .attr('transform', `translate(${intermediateX2 + plusSymbolRadius}, ${symbolY})`);
+        
+        symbolGroup.append('circle')
+          .attr('cx', 0)
+          .attr('cy', 0)
+          .attr('r', plusSymbolRadius)
+          .style('fill', 'none')
+          .style('stroke', intermediateColor);
+        
+        symbolGroup.append('rect')
+          .attr('x', -(plusSymbolRadius - 3))
+          .attr('y', -symbolRectHeight / 2)
+          .attr('width', 2 * (plusSymbolRadius - 3))
+          .attr('height', symbolRectHeight)
+          .style('fill', intermediateColor);
 
-      let edgeGroup = flattenLayer.append('g')
-        .attr('class', 'edge-group');
+        symbolGroup.append('rect')
+          .attr('x', -symbolRectHeight / 2)
+          .attr('y', -(plusSymbolRadius - 3))
+          .attr('width', symbolRectHeight)
+          .attr('height', 2 * (plusSymbolRadius - 3))
+          .style('fill', intermediateColor);
+
+        // Place the bias rectangle below the plus sign if user clicks the firrst
+        // conv node
+        if (i == 0) {
+          // Add bias symbol to the plus symbol
+          symbolGroup.append('rect')
+            .attr('x', -kernelRectLength)
+            .attr('y', nodeLength / 2)
+            .attr('width', 2 * kernelRectLength)
+            .attr('height', 2 * kernelRectLength)
+            .style('stroke', intermediateColor)
+            .style('fill', flattenColorScale(d.bias, 0.35));
+          
+          // Link from bias to the plus symbol
+          linkData.push({
+            source: {x: intermediateX2 + plusSymbolRadius,
+              y: nodeCoordinate[curLayerIndex][i].y + nodeLength},
+            target: {x: intermediateX2 + plusSymbolRadius,
+              y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius},
+            name: `bias-plus`,
+            width: 1.2,
+            color: '#E5E5E5'
+          });
+        } else {
+          // Add bias symbol to the plus symbol
+          symbolGroup.append('rect')
+            .attr('x', -kernelRectLength)
+            .attr('y', -nodeLength / 2 - 2 * kernelRectLength)
+            .attr('width', 2 * kernelRectLength)
+            .attr('height', 2 * kernelRectLength)
+            .style('stroke', intermediateColor)
+            .style('fill', flattenColorScale(d.bias, 0.35));
+          
+          // Link from bias to the plus symbol
+          linkData.push({
+            source: {x: intermediateX2 + plusSymbolRadius,
+              y: nodeCoordinate[curLayerIndex][i].y},
+            target: {x: intermediateX2 + plusSymbolRadius,
+              y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 - plusSymbolRadius},
+            name: `bias-plus`,
+            width: 1.2,
+            color: '#E5E5E5'
+          });
+        }
+
+        // Link from the plus symbol to the output
+        linkData.push({
+          source: getOutputKnot({x: intermediateX2 + 2 * plusSymbolRadius - nodeLength,
+            y: nodeCoordinate[curLayerIndex][i].y}),
+          target: getInputKnot({x: nodeCoordinate[curLayerIndex][i].x - 3,
+            y: nodeCoordinate[curLayerIndex][i].y}),
+          name: `symbol-output`,
+          width: 1.2,
+          color: '#E5E5E5'
+        });
+
+        // Draw the layer label
+        intermediateLayer.append('g')
+          .attr('class', 'layer-label')
+          .attr('transform', (d, i) => {
+            let x = leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
+              pixelWidth) / 2;
+            let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+            return `translate(${x}, ${y})`;
+          })
+          .append('text')
+          .style('dominant-baseline', 'middle')
+          .style('opacity', 0.8)
+          .text('flatten');
+
+        // Add edges between nodes
+        let linkGen = d3.linkHorizontal()
+          .x(d => d.x)
+          .y(d => d.y);
+
+        let edgeGroup = flattenLayer.append('g')
+          .attr('class', 'edge-group');
+        
+        edgeGroup.selectAll('path')
+          .data(linkData)
+          .enter()
+          .append('path')
+          .attr('class', d => d.class)
+          .attr('id', d => `edge-${d.name}`)
+          .attr('d', d => linkGen({source: d.source, target: d.target}))
+          .style('fill', 'none')
+          .style('stroke-width', d => d.width)
+          .style('stroke', d => d.color === undefined ? intermediateColor : d.color)
+          .style('opacity', d => d.opacity);
+        
+        edgeGroup.selectAll('path.flatten-abstract-output').lower();
+
+        edgeGroup.selectAll('path.flatten,path.flatten-output')
+          .on('mouseover', flattenMouseOverHandler)
+          .on('mouseleave', flattenMouseLeaveHandler);
+        
+        // Add legend
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: range,
+          minMax: cnnLayerMinMax[10],
+          group: intermediateLayer,
+          width: intermediateGap * 0.5,
+          x: leftX,
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+        });
+
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: flattenRange,
+          minMax: {min: flattenExtent[0], max: flattenExtent[1]},
+          group: intermediateLayer,
+          width: intermediateGap * 0.5,
+          gradientAppendingName: 'flatten-weight-gradient',
+          gradientGap: 0.35,
+          colorScale: layerColorScales.weight,
+          x: leftX + intermediateGap * 0.5 + (nodeLength  +
+            intermediateGap) - (2 * 0.5) * intermediateGap,
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+        });
       
-      edgeGroup.selectAll('path')
-        .data(linkData)
-        .enter()
-        .append('path')
-        .attr('class', d => d.class)
-        .attr('id', d => `edge-${d.name}`)
-        .attr('d', d => linkGen({source: d.source, target: d.target}))
-        .style('fill', 'none')
-        .style('stroke-width', d => d.width)
-        .style('stroke', d => d.color === undefined ? intermediateColor : d.color)
-        .style('opacity', d => d.opacity);
-      
-      edgeGroup.selectAll('path.flatten-abstract-output').lower();
+        // Add annotation to the intermediate layer
+        let intermediateLayerAnnotation = svg.append('g')
+          .attr('class', 'intermediate-layer-annotation')
+          .style('opacity', 0);
 
-      edgeGroup.selectAll('path.flatten,path.flatten-output')
-        .on('mouseover', flattenMouseOverHandler)
-        .on('mouseleave', flattenMouseLeaveHandler);
-      
-      // Add legend
-      drawIntermediateLayerLegend({
-        legendHeight: 5,
-        curLayerIndex: curLayerIndex,
-        range: range,
-        minMax: cnnLayerMinMax[10],
-        group: intermediateLayer,
-        width: intermediateGap * 0.5,
-        x: leftX,
-        y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
-      });
+        // Add annotation for the sum operation
+        let plusAnnotation = intermediateLayerAnnotation.append('g')
+          .attr('class', 'plus-annotation');
+        
+        let textX = nodeCoordinate[curLayerIndex][i].x - 50;
+        let textY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
+          kernelRectLength * 3;
+        let arrowSY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
+          kernelRectLength * 2;
+        let arrowTY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 +
+          plusSymbolRadius;
 
-      drawIntermediateLayerLegend({
-        legendHeight: 5,
-        curLayerIndex: curLayerIndex,
-        range: flattenRange,
-        minMax: {min: flattenExtent[0], max: flattenExtent[1]},
-        group: intermediateLayer,
-        width: intermediateGap * 0.5,
-        gradientAppendingName: 'flatten-weight-gradient',
-        gradientGap: 0.35,
-        colorScale: layerColorScales.weight,
-        x: leftX + intermediateGap * 0.5 + (nodeLength  +
-          intermediateGap) - (2 * 0.5) * intermediateGap,
-        y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
-      });
-    
-      // Add annotation to the intermediate layer
-      let intermediateLayerAnnotation = svg.append('g')
-        .attr('class', 'intermediate-layer-annotation')
-        .style('opacity', 0);
+        if (i == 0) {
+          textY += 10;
+          arrowSY += 10;
+        } else if (i == 9) {
+          textY -= 120;
+          arrowSY -= 70;
+          arrowTY -= 18;
+        }
 
-      // Add annotation for the sum operation
-      let plusAnnotation = intermediateLayerAnnotation.append('g')
-        .attr('class', 'plus-annotation');
-      
-      let textX = nodeCoordinate[curLayerIndex][i].x - 50;
-      let textY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
-        kernelRectLength * 3;
-      let arrowSY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
-        kernelRectLength * 2;
-      let arrowTY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 +
-        plusSymbolRadius;
+        let plusText = plusAnnotation.append('text')
+          .attr('x', textX)
+          .attr('y', textY)
+          .attr('class', 'annotation-text')
+          .style('dominant-baseline', 'hanging')
+          .style('text-anchor', 'middle');
+        
+        plusText.append('tspan')
+          .text('Sum up all');
+        
+        plusText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '1em')
+          .text('products (weight');
 
-      if (i == 0) {
-        textY += 10;
-        arrowSY += 10;
-      } else if (i == 9) {
-        textY -= 120;
-        arrowSY -= 70;
-        arrowTY -= 18;
+        plusText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '1em')
+          .text('⨉ element) and');
+
+        plusText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '1em')
+          .text('then add bias');
+        
+        drawArrow({
+          group: plusAnnotation,
+          sx: intermediateX2 - 2 * plusSymbolRadius - 3,
+          sy: arrowSY,
+          tx: intermediateX2 - 5,
+          ty: arrowTY,
+          dr: 30,
+          hFlip: i === 9
+        });
+
+        // Add annotation for the bias
+        let biasTextY = nodeCoordinate[curLayerIndex][i].y;
+        if (i === 0) {
+          biasTextY += nodeLength + 2 * kernelRectLength;
+        } else {
+          biasTextY -= 2 * kernelRectLength + 5;
+        }
+        plusAnnotation.append('text')
+          .attr('class', 'annotation-text')
+          .attr('x', intermediateX2 + plusSymbolRadius)
+          .attr('y', biasTextY)
+          .style('text-anchor', 'middle')
+          .style('dominant-baseline', i === 0 ? 'hanging' : 'baseline')
+          .text('Bias');
+
+        // Add annotation for the flatten layer
+        let flattenAnnotation = intermediateLayerAnnotation.append('g')
+          .attr('class', 'flatten-annotation');
+        
+        textX = leftX - 100;
+        textY = nodeCoordinate[curLayerIndex - 1][0].y;
+
+        let flattenText = flattenAnnotation.append('text')
+          .attr('x', textX)
+          .attr('y', textY)
+          .attr('class', 'annotation-text')
+          .style('dominant-baseline', 'hanging')
+          .style('text-anchor', 'middle');
+
+        flattenText.append('tspan')
+          .text('Try to hover over');
+        
+        flattenText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '1em')
+          .text('this node!');
+        
+        flattenText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '2em')
+          .text('Flatten layer "unrolls"');
+        
+        flattenText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '1em')
+          .text('a matrix or a tensor');
+
+        flattenText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '1em')
+          .text('into a 1D array');
+
+        drawArrow({
+          group: flattenAnnotation,
+          sx: textX + 40,
+          sy: textY + nodeLength * 0.4,
+          tx: leftX - 10,
+          ty: textY + nodeLength / 2,
+          dr: 80,
+          hFlip: true
+        });
+
+        /* Prototype of using arc to represent the flatten layer (future)
+        let pie = d3.pie()
+          .padAngle(0)
+          .sort(null)
+          .value(d => d.output)
+          .startAngle(0)
+          .endAngle(-Math.PI);
+
+        let radius = 490 / 2;
+        let arc = d3.arc()
+          .innerRadius(radius - 20)
+          .outerRadius(radius);
+
+        let arcs = pie(cnn.flatten);
+        console.log(arcs);
+
+        let test = svg.append('g')
+          .attr('class', 'test')
+          .attr('transform', 'translate(500, 250)');
+
+        test.selectAll("path")
+          .data(arcs)
+          .join("path")
+            .attr('class', 'arc')
+            .attr("fill", d => colorScale((d.value + range/2) / range))
+            .attr("d", arc);
+        */
+
+        // Show everything
+        svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
+          .transition()
+          .delay(500)
+          .duration(500)
+          .ease(d3.easeCubicInOut)
+          .style('opacity', 1);
       }
-
-      let plusText = plusAnnotation.append('text')
-        .attr('x', textX)
-        .attr('y', textY)
-        .attr('class', 'annotation-text')
-        .style('dominant-baseline', 'hanging')
-        .style('text-anchor', 'middle');
-      
-      plusText.append('tspan')
-        .text('Sum up all');
-      
-      plusText.append('tspan')
-        .attr('x', textX)
-        .attr('dy', '1em')
-        .text('products (weight');
-
-      plusText.append('tspan')
-        .attr('x', textX)
-        .attr('dy', '1em')
-        .text('⨉ element) and');
-
-      plusText.append('tspan')
-        .attr('x', textX)
-        .attr('dy', '1em')
-        .text('then add bias');
-      
-      drawArrow({
-        group: plusAnnotation,
-        sx: intermediateX2 - 2 * plusSymbolRadius - 3,
-        sy: arrowSY,
-        tx: intermediateX2 - 5,
-        ty: arrowTY,
-        dr: 30,
-        hFlip: i === 9
-      });
-
-      // Add annotation for the bias
-      let biasTextY = nodeCoordinate[curLayerIndex][i].y;
-      if (i === 0) {
-        biasTextY += nodeLength + 2 * kernelRectLength;
-      } else {
-        biasTextY -= 2 * kernelRectLength + 5;
-      }
-      plusAnnotation.append('text')
-        .attr('class', 'annotation-text')
-        .attr('x', intermediateX2 + plusSymbolRadius)
-        .attr('y', biasTextY)
-        .style('text-anchor', 'middle')
-        .style('dominant-baseline', i === 0 ? 'hanging' : 'baseline')
-        .text('Bias');
-
-      // Add annotation for the flatten layer
-      let flattenAnnotation = intermediateLayerAnnotation.append('g')
-        .attr('class', 'flatten-annotation');
-      
-      textX = leftX - 60;
-      textY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength + 5;
-
-      let flattenText = flattenAnnotation.append('text')
-        .attr('x', textX)
-        .attr('y', textY)
-        .attr('class', 'annotation-text')
-        .style('dominant-baseline', 'hanging')
-        .style('text-anchor', 'middle');
-
-      flattenText.append('tspan')
-        .text('Try to mouse over');
-      
-      flattenText.append('tspan')
-        .attr('x', textX)
-        .attr('dy', '1em')
-        .text('this node!');
-      
-      flattenText.append('tspan')
-        .attr('x', textX)
-        .attr('dy', '2em')
-        .text('Flatten layer "unrolls"');
-      
-      flattenText.append('tspan')
-        .attr('x', textX)
-        .attr('dy', '1em')
-        .text('a matrix or a tensor');
-
-      flattenText.append('tspan')
-        .attr('x', textX)
-        .attr('dy', '1em')
-        .text('into a 1D array');
-
-      drawArrow({
-        group: flattenAnnotation,
-        sx: textX + 10,
-        sy: textY,
-        tx: leftX - 10,
-        ty: textY - 5 - nodeLength / 2,
-        dr: 50
-      });
-         
-
-      /* Prototype of using arc to represent the flatten layer (future)
-      let pie = d3.pie()
-        .padAngle(0)
-        .sort(null)
-        .value(d => d.output)
-        .startAngle(0)
-        .endAngle(-Math.PI);
-
-      let radius = 490 / 2;
-      let arc = d3.arc()
-        .innerRadius(radius - 20)
-        .outerRadius(radius);
-
-      let arcs = pie(cnn.flatten);
-      console.log(arcs);
-
-      let test = svg.append('g')
-        .attr('class', 'test')
-        .attr('transform', 'translate(500, 250)');
-
-      test.selectAll("path")
-        .data(arcs)
-        .join("path")
-          .attr('class', 'arc')
-          .attr("fill", d => colorScale((d.value + range/2) / range))
-          .attr("d", arc);
-      */
-
-      // Show everything
-      svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
-        .transition()
-        .delay(500)
-        .duration(500)
-        .ease(d3.easeCubicInOut)
-        .style('opacity', 1);
     }
 
     // Quit the layerview
@@ -2151,9 +2179,24 @@
       // Hide the legend
       svg.selectAll(`.${selectedScaleLevel}-legend`)
         .classed('hidden', !detailedMode);
-      
       svg.selectAll('.input-legend').classed('hidden', !detailedMode);
       svg.selectAll('.output-legend').classed('hidden', !detailedMode);
+
+      // Highlight the previous layer and this node
+      svg.select(`g#cnn-layer-group-${curLayerIndex - 1}`)
+        .selectAll('rect.bounding')
+        .style('stroke-width', 1);
+      
+      d3.select(g[i])
+        .select('rect.bounding')
+        .style('stroke-width', 1);
+
+      // Highlight the labels
+      svg.selectAll(`g#layer-label-${curLayerIndex - 1},
+        g#layer-detailed-label-${curLayerIndex - 1},
+        g#layer-label-${curLayerIndex},
+        g#layer-detailed-label-${curLayerIndex}`)
+        .style('font-weight', 'normal');
 
       // Also unclick the node
       // Record the current clicked node
@@ -2629,7 +2672,7 @@
       .classed('hidden', !detailedMode)
       .attr('transform', (d, i) => {
         let x = nodeCoordinate[i][0].x + nodeLength / 2;
-        let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 3;
+        let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 6;
         return `translate(${x}, ${y})`;
       })
       .append('text')
@@ -2640,6 +2683,7 @@
       .text(d => d.name)
       .append('tspan')
       .style('font-size', '8px')
+      .style('font-weight', 'normal')
       .attr('x', 0)
       .attr('dy', '1.5em')
       .text(d => d.dimension);
@@ -3060,7 +3104,7 @@
 
   :global(.layer-label, .layer-detailed-label, .layer-intermediate-label) {
     font-size: 12px;
-    opacity: 0.9;
+    opacity: 0.8;
     text-anchor: middle;
     transition: opacity 300ms ease-in-out;
   }
@@ -3096,6 +3140,10 @@
 
   :global(.bounding, .edge-group, foreignObject, .bounding-flatten) {
     transition: opacity 300ms ease-in-out;
+  }
+
+  :global(rect.bounding) {
+    transition: stroke-with 800ms ease-in-out;
   }
 
   :global(.annotation-text) {
