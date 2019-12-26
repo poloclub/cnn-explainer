@@ -4,6 +4,7 @@
   import { singleConv, init2DArray, matrixAdd } from './cnn.js';
   import { cnnStore } from './stores.js';
   import ConvolutionView from './Convolutionview.svelte';
+  import ActivationView from './Activationview.svelte';
 
   // View bindings
   let overviewComponent;
@@ -1173,11 +1174,20 @@
   const nodeClickHandler = (d, i, g) => {
     // Opens low-level convolution animation when a conv node is clicked.
     if (d.type === 'conv') {
-      var data = [];
+      let data = [];
       for (let j = 0; j < d.inputLinks.length; j++) {
         data.push({
           input: d.inputLinks[j].source.output,
           kernel: d.inputLinks[j].weight,
+          output: d.inputLinks[j].dest.output,
+        })
+      }
+      nodeData = data;
+    } else if (d.type === 'relu') {
+      let data = [];
+      for (let j = 0; j < d.inputLinks.length; j++) {
+        data.push({
+          input: d.inputLinks[j].source.output,
           output: d.inputLinks[j].dest.output,
         })
       }
@@ -3323,3 +3333,5 @@
 <ConvolutionView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[selectedNodeIndex].input} 
                   kernel={nodeData == undefined ? [[1,2], [3,4]] : nodeData[selectedNodeIndex].kernel} 
                   output={nodeData == undefined ? [[1,2,3], [4,5,6], [7,8,9]] : nodeData[selectedNodeIndex].output} />
+<!-- <ActivationView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].input} 
+                  output={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].output} /> -->
