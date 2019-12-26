@@ -8,12 +8,12 @@ function array2d(height, width, f) {
   return Array.from({length: height}, (v, i) => Array.from({length: width}, f ? ((w, j) => f(i, j)) : undefined));
 }
 
-export function generateOutputMappings(stride, output, kernel, padded_input_size, dilation) {
-  const outputMapping = array2d(output.length, output.length, (i, j) => array2d(kernel.length, kernel.length));
+export function generateOutputMappings(stride, output, kernelLength, padded_input_size, dilation) {
+  const outputMapping = array2d(output.length, output.length, (i, j) => array2d(kernelLength, kernelLength));
   for (let h_out = 0; h_out < output.length; h_out++) {
     for (let w_out = 0; w_out < output.length; w_out++) {
-      for (let h_kern = 0; h_kern < kernel.length; h_kern++) {
-        for (let w_kern = 0; w_kern < kernel.length; w_kern++) {
+      for (let h_kern = 0; h_kern < kernelLength; h_kern++) {
+        for (let w_kern = 0; w_kern < kernelLength; w_kern++) {
           const h_im = h_out * stride + h_kern * dilation;
           const w_im = w_out * stride + w_kern * dilation;
           outputMapping[h_out][w_out][h_kern][w_kern] = h_im * padded_input_size + w_im;
@@ -25,12 +25,12 @@ export function generateOutputMappings(stride, output, kernel, padded_input_size
 }
 
 export function compute_input_multiplies_with_weight(hoverH, hoverW, 
-                                              padded_input_size, weight_dims, outputMappings, kernel) {
+                                              padded_input_size, weight_dims, outputMappings, kernelLength) {
   
   const [h_weight, w_weight] = weight_dims;
   const input_multiplies_with_weight = array1d(padded_input_size * padded_input_size);
-  for (let h_weight = 0; h_weight < kernel.length; h_weight++) {
-    for (let w_weight = 0; w_weight < kernel.length; w_weight++) {
+  for (let h_weight = 0; h_weight < kernelLength; h_weight++) {
+    for (let w_weight = 0; w_weight < kernelLength; w_weight++) {
       const flat_input = outputMappings[hoverH][hoverW][h_weight][w_weight];
       if (typeof flat_input === "undefined") continue;
       input_multiplies_with_weight[flat_input] = [h_weight, w_weight];
@@ -39,15 +39,15 @@ export function compute_input_multiplies_with_weight(hoverH, hoverW,
   return input_multiplies_with_weight;
 }
 
-export function getMatrixSliceFromInputHighlights(matrix, highlights, kernel) {
+export function getMatrixSliceFromInputHighlights(matrix, highlights, kernelLength) {
   var indices = highlights.reduce((total, value, index) => {
   if (value != undefined) total.push(index);
     return total;
   }, []);
-  return matrixSlice(matrix, Math.floor(indices[0] / matrix.length), Math.floor(indices[0] / matrix.length) + kernel.length, indices[0] % matrix.length, indices[0] % matrix.length + kernel.length);
+  return matrixSlice(matrix, Math.floor(indices[0] / matrix.length), Math.floor(indices[0] / matrix.length) + kernelLength, indices[0] % matrix.length, indices[0] % matrix.length + kernelLength);
 }
 
-export function getMatrixSliceFromOutputHighlights(matrix, highlights, kernel) {
+export function getMatrixSliceFromOutputHighlights(matrix, highlights) {
   var indices = highlights.reduce((total, value, index) => {
   if (value != false) total.push(index);
     return total;
@@ -56,10 +56,10 @@ export function getMatrixSliceFromOutputHighlights(matrix, highlights, kernel) {
 }
 
 // Edit these values to change size of low-level conv visualization.
-export function getVisualizationSizeConstraint(image) {
+export function getVisualizationSizeConstraint(imageLength) {
   let sizeOfGrid = 150;
   let maxSizeOfGridCell = 20;
-  return sizeOfGrid / image.length > maxSizeOfGridCell ? maxSizeOfGridCell : sizeOfGrid / image.length
+  return sizeOfGrid / imageLength > maxSizeOfGridCell ? maxSizeOfGridCell : sizeOfGrid / imageLength;
 }
 
 export function getDataRange(image) {
@@ -72,7 +72,7 @@ export function getDataRange(image) {
 
 export function gridData(image) {
   // Constrain grids based on input image size.
-  let constraint = getVisualizationSizeConstraint(image);
+  let constraint = getVisualizationSizeConstraint(image.length);
   var data = new Array();
   var xpos = 1;
   var ypos = 1;

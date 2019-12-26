@@ -1,6 +1,5 @@
 <script>
 	import ActivationAnimator from './ActivationAnimator.svelte';
-  import { singleRelu } from './cnn.js';
 
   export let input;
   export let output;

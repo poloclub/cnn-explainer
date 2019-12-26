@@ -5,6 +5,7 @@
   export let constraint;
   export let dataRange;
   export let outputLength;
+  export let stride;
 
   import { onMount } from 'svelte';
   import { onDestroy } from 'svelte';
@@ -50,11 +51,17 @@
       .style("opacity", 0.5)
       .style("fill", function(d) { return d3.interpolateRdBu(((d.text + dataRange) / 2) / dataRange); })
       .on('mouseover', function(d) {
-        dispatch('message', {
-          // div by stride
-          hoverH: Math.min(Math.floor(d.row / 1), outputLength - 1),
-          hoverW: Math.min(Math.floor(d.col / 1), outputLength - 1)
-        });
+        if (data.length != outputLength) {
+          dispatch('message', {
+            hoverH: Math.min(Math.floor(d.row / stride), outputLength - 1),
+            hoverW: Math.min(Math.floor(d.col / stride), outputLength - 1)
+          });
+        } else {
+          dispatch('message', {
+            hoverH: Math.min(Math.floor(d.row / 1), outputLength - 1),
+            hoverW: Math.min(Math.floor(d.col / 1), outputLength - 1)
+          });
+        }
       });
     if (isKernelMath) {
       var text = row.selectAll(".text")

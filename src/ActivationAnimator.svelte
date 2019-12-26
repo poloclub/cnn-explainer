@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { array1d } from './DetailviewUtils.js';
   import { getMatrixSliceFromOutputHighlights } from './DetailviewUtils.js';
+  import { getMatrixSliceFromInputHighlights } from './DetailviewUtils.js';
   import { getVisualizationSizeConstraint } from './DetailviewUtils.js';
   import { getDataRange } from './DetailviewUtils.js';
   import { gridData } from './DetailviewUtils.js';
@@ -42,7 +43,7 @@
       const animatedW = flat_animated % output.length;
       outputHighlights[animatedH * output.length + animatedW] = true;
       inputHighlights[animatedH * output.length + animatedW] = true;
-      const inputMatrixSlice = getMatrixSliceFromOutputHighlights(image, inputHighlights);
+      const inputMatrixSlice = getMatrixSliceFromInputHighlights(image, inputHighlights, 1);
       gridInputMatrixSlice = gridData(inputMatrixSlice);
       const outputMatrixSlice = getMatrixSliceFromOutputHighlights(output, outputHighlights);
       gridOutputMatrixSlice = gridData(outputMatrixSlice);
@@ -57,7 +58,7 @@
     outputHighlights[animatedH * output.length + animatedW] = true;
     inputHighlights = array1d(image.length * image.length, (i) => false);
     inputHighlights[animatedH * output.length + animatedW] = true;
-    const inputMatrixSlice = getMatrixSliceFromOutputHighlights(image, inputHighlights);
+    const inputMatrixSlice = getMatrixSliceFromInputHighlights(image, inputHighlights, 1);
     gridInputMatrixSlice = gridData(inputMatrixSlice);
     const outputMatrixSlice = getMatrixSliceFromOutputHighlights(output, outputHighlights);
     gridOutputMatrixSlice = gridData(outputMatrixSlice);
@@ -84,7 +85,7 @@
     Input
   </header>
   <Dataview on:message={handleMouseover} data={gridImage} highlights={inputHighlights} outputLength={output.length}
-      isKernelMath={false} constraint={getVisualizationSizeConstraint(image)} dataRange={getDataRange(image)}/>  
+      isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={getDataRange(image)} stride={1}/>  
 </div>
 <div class="column has-text-centered">
   <body>
@@ -105,5 +106,5 @@
     Output
   </header>
   <Dataview on:message={handleMouseover} data={gridOutput} highlights={outputHighlights} isKernelMath={false} 
-      outputLength={output.length} constraint={getVisualizationSizeConstraint(output)} dataRange={getDataRange(output)}/>
+      outputLength={output.length} constraint={getVisualizationSizeConstraint(output.length)} dataRange={getDataRange(output)} stride={1}/>
 </div>

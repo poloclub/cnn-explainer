@@ -402,7 +402,7 @@ const relu = (curLayer) => {
  * @param {string} padding Pading method when encountering odd number mat,
  * currently this function only supports 'VALID'
  */
-const singleMaxPooling = (mat, kernelWidth=2, stride=2, padding='VALID') => {
+export const singleMaxPooling = (mat, kernelWidth=2, stride=2, padding='VALID') => {
   console.assert(kernelWidth === 2, 'Only supports kernen = [2,2]');
   console.assert(stride === 2, 'Only supports stride = 2');
   console.assert(padding === 'VALID', 'Only support valid padding');
