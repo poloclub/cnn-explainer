@@ -463,7 +463,6 @@
 
       // TODO: destroy the detailed view with smooth animation
 
-
     } 
     // We need to show a new detailed view (two cases: if we need to close the
     // old detailed view or not)
@@ -492,7 +491,7 @@
           .style('opacity', 1);
 
         // TODO: redraw the old detailed view with new matrices
-
+        // automatically done, thank
 
 
       }
@@ -500,18 +499,28 @@
       // User triggers a new detailed view
       else {
         // TODO: show the detailed view at the location
-        d3.select(overviewComponent)
-          .append('div')
-          .attr('class', 'test-div')
-          .style('background', 'skyblue')
-          .style('position', 'absolute')
-          .style('left', `${detailedViewAbsCoords[curLayerIndex][0]}px`)
-          .style('top', `${detailedViewAbsCoords[curLayerIndex][1]}px`)
-          .style('width', `${detailedViewAbsCoords[curLayerIndex][2]}px`)
-          .style('height', `${detailedViewAbsCoords[curLayerIndex][3]}px`);
+        // d3.select(overviewComponent)
+        //   .append('div')
+        //   .attr('class', 'test-div')
+        //   .style('background', 'skyblue')
+        //   .style('position', 'absolute')
+        //   .style('left', `${detailedViewAbsCoords[curLayerIndex][0]}px`)
+        //   .style('top', `${detailedViewAbsCoords[curLayerIndex][1]}px`)
+        //   .style('width', `${detailedViewAbsCoords[curLayerIndex][2]}px`)
+        //   .style('height', `${detailedViewAbsCoords[curLayerIndex][3]}px`);
+
+        // to keep using svelte, we'll just grab the detailview div and move it!
+
+        // d.style.visible = true;
+        // d.style.opacity = 1;
 
       }
-
+      
+      const detailview = document.getElementById('detailview');
+      detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
+      detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
+      detailview.style.position = 'absolute';
+      
       detailedViewNum = d.index;
     }
   }
