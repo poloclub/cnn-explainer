@@ -49,7 +49,10 @@
       .attr("width", function(d) { return d.width; })
       .attr("height", function(d) { return d.height; })
       .style("opacity", 0.5)
-      .style("fill", function(d) { return d3.interpolateRdBu(((d.text + dataRange) / 2) / dataRange); })
+      .style("fill", function(d) { 
+        let normalizedValue = (d.text + dataRange / 2) / dataRange
+        return d3.interpolateRdBu(normalizedValue); 
+      })
       .on('mouseover', function(d) {
         if (data.length != outputLength) {
           dispatch('message', {
@@ -69,8 +72,10 @@
         .enter().append("text")
         .attr("class","text")
         .style("font-size", Math.floor(constraint / textConstraintDivisor) + "px")
-        .attr("x", function(d) { return d.x; })
-        .attr("y", function(d) { return d.y + d.width; })
+        .attr("x", function(d) { return d.x + d.width / 2; })
+        .attr("y", function(d) { return d.y + d.height / 2; })
+        .style("text-anchor", "middle")
+        .style("dominant-baseline", "middle")
         .text(function(d) { return d.text; })
     }
   }

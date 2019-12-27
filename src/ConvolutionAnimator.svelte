@@ -9,6 +9,7 @@
   import { getDataRange } from './DetailviewUtils.js';
   import { gridData } from './DetailviewUtils.js';
   import Dataview from './Dataview.svelte';
+  import KernelMathView from './KernelMathView.svelte';
   // image: nxn array -- prepadded.
   // kernel: mxm array.
   // stride: int
@@ -99,18 +100,10 @@
 </div>
 <div class="column has-text-centered">
   <header>
-    Kernel
+    Element-wise Dot Product
   </header>
-  <Dataview data={testKernel} highlights={outputHighlights} isKernelMath={true} 
-    constraint={getVisualizationSizeConstraint(kernel.length)} dataRange={getDataRange(kernel)}/>
-  <body class="is-size-3">
-    &#183;
-  </body>  
-  <Dataview data={testInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
-      constraint={getVisualizationSizeConstraint(kernel.length)} dataRange={getDataRange(image)}/>
-  <body>
-    =
-  </body> 
+  <KernelMathView data={testInputMatrixSlice} kernel={testKernel} constraint={getVisualizationSizeConstraint(kernel.length)}
+                  dataRange={getDataRange(image)} kernelRange={getDataRange(kernel)}/>
   <Dataview data={testOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
       constraint={getVisualizationSizeConstraint(kernel.length)} dataRange={getDataRange(output)}/>
 </div>
@@ -118,6 +111,6 @@
   <header>
     Output
   </header>
-  <Dataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights} isKernelMath={false} 
+  <Dataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights} isKernelMath={false}
       outputLength={output.length} constraint={getVisualizationSizeConstraint(output.length)} dataRange={getDataRange(output)} stride={stride}/>
 </div>
