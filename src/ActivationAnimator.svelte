@@ -88,18 +88,18 @@
       isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={getDataRange(image)} stride={1}/>  
 </div>
 <div class="column has-text-centered">
-  <body>
-    max
-    (<Dataview data={gridData([[0]])} highlights={outputHighlights} isKernelMath={true} 
-      constraint={20} dataRange={getDataRange(image)}/>,
-  </body>
-  <Dataview data={gridInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
-      constraint={20} dataRange={getDataRange(image)}/>)
-  <body>
+  <span>
+    max(
+    <Dataview data={gridData([[0]])} highlights={outputHighlights} isKernelMath={true} 
+    constraint={20} dataRange={getDataRange(image)}/>
+    ,
+    <Dataview data={gridInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
+    constraint={20} dataRange={getDataRange(image)}/>
+    )
     =
-  </body> 
-  <Dataview data={gridOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
+    <Dataview data={gridOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
       constraint={20} dataRange={getDataRange(output)}/>
+  </span> 
 </div>
 <div class="column has-text-centered">
   <header>
