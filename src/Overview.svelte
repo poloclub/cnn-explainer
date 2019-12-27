@@ -88,7 +88,7 @@
   let selectedImage = imageOptions[0];
 
   let nodeData;
-  let selectedNodeIndex = 0;
+  let selectedNodeIndex = -1;
 
   // Helper functions
   const selectedScaleLevelChanged = () => {
@@ -453,7 +453,9 @@
   const intermediateNodeClicked = (d, i, g, selectedI, curLayerIndex) => {
     console.log(detailedViewNum, i, d, selectedI);
     // Todo: use this event to trigger the detailed view
-    if (detailedViewNum === d.index) { 
+    if (detailedViewNum === d.index) {
+      // Setting this for testing purposes currently.
+      selectedNodeIndex = -1; 
       // User clicks this node again -> rewind
       detailedViewNum = undefined;
       svg.select(`rect#underneath-gateway-${d.index}`)
@@ -462,11 +464,12 @@
       // TODO: destroy the detailed view with smooth animation
 
 
-
     } 
     // We need to show a new detailed view (two cases: if we need to close the
     // old detailed view or not)
     else {
+      // Setting this for testing purposes currently.
+      selectedNodeIndex = d.index;
       // Here are some variables you might need
       let inputMatrix = d.output;
       let kernelMatrix = d.outputLinks[selectedI].weight;
@@ -1173,18 +1176,6 @@
   }
 
   const nodeClickHandler = (d, i, g) => {
-    // Opens low-level detailed animation when a node is clicked.  Components are defined for each node type.
-    if (d.type === 'conv' || d.type === 'relu' || d.type === 'pool') {
-      let data = [];
-      for (let j = 0; j < d.inputLinks.length; j++) {
-        data.push({
-          input: d.inputLinks[j].source.output,
-          kernel: d.inputLinks[j].weight,
-          output: d.inputLinks[j].dest.output,
-        })
-      }
-      nodeData = data;
-    }
     // If clicked a new node, deselect the old clicked node
     if ((selectedNode.layerName !== d.layerName ||
       selectedNode.index !== d.index) && selectedNode.index !== -1) {
@@ -1207,6 +1198,20 @@
     selectedNode.layerName = d.layerName;
     selectedNode.index = d.index;
     selectedNode.data = d;
+
+    // Record data for detailed view.
+    if (d.type === 'conv' || d.type === 'relu' || d.type === 'pool') {
+      let data = [];
+      for (let j = 0; j < d.inputLinks.length; j++) {
+        data.push({
+          input: d.inputLinks[j].source.output,
+          kernel: d.inputLinks[j].weight,
+          output: d.inputLinks[j].dest.output,
+        })
+      }
+      nodeData = data;
+      console.log(nodeData)
+    }
 
     let overlayRectOffset = 6;
     let curLayerIndex = layerIndexDict[d.layerName];
@@ -3322,11 +3327,17 @@
   </div>
 </div>
 
-<!-- <ConvolutionView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[selectedNodeIndex].input} 
-                  kernel={nodeData == undefined ? [[1,2], [3,4]] : nodeData[selectedNodeIndex].kernel} 
-                  output={nodeData == undefined ? [[1,2,3], [4,5,6], [7,8,9]] : nodeData[selectedNodeIndex].output} /> -->
-<!-- <ActivationView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].input} 
-                  output={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].output} /> -->
-<PoolView input={nodeData == undefined ? [[1,2,3,4], [4,5,6,7], [7,8,9,10], [7,8,9,10]] : nodeData[0].input} 
+<div id='detailview'>
+  {#if selectedNode.data && selectedNode.data.type === 'conv' && selectedNodeIndex != -1}
+    <ConvolutionView input={nodeData[selectedNodeIndex].input} 
+                      kernel={nodeData[selectedNodeIndex].kernel} 
+                      output={nodeData[selectedNodeIndex].output} />
+  {:else if selectedNode.data && selectedNode.data.type === 'relu'}
+    <ActivationView input={nodeData[0].input} 
+                    output={nodeData[0].output} />
+  {:else if selectedNode.data && selectedNode.data.type === 'pool'}
+    <PoolView input={nodeData[0].input} 
               kernelLength={2} 
-              output={nodeData == undefined ? [[1,2], [4,5]] : nodeData[0].output} />
+              output={nodeData[0].output} />
+  {/if}
+</div>
