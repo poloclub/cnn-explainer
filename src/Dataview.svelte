@@ -101,13 +101,7 @@
 
 </script>
 
-<style>
-  .grid {
-    display: inline-block;
-  }
-</style>
-
-<div class="grid"
+<div style="display: inline-block" class="grid"
   bind:this={grid_final}>
   <svg id="grid" width=100% height=100%></svg>
 </div>

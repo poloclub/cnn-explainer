@@ -17,8 +17,8 @@
 
 <div class="container">
   <div style="margin-top: 2%; margin-bottom: 2%;" class="box">
-    <div class="has-text-centered">
-      <button style="margin-bottom: 1%" class="button is-success" on:click={handleClickPause}>
+    <div class="has-text-left">
+      <button style="margin-bottom: 1%" class="button is-success is-small is-outlined" on:click={handleClickPause}>
         {@html isPaused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>'}
       </button>    
     </div>
