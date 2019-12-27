@@ -60,9 +60,15 @@
 
   let detailedViewAbsCoords = {
     1 : [600, 185, 490, 290],
+    2: [500, 185, 490, 290], // added
     3 : [700, 185, 490, 290],
+    4: [800, 185, 490, 290], // added
+    5: [350, 185, 490, 290], // added 
     6 : [775, 185, 490, 290],
-    8 : [50, 185, 490, 290]
+    7 : [50, 185, 490, 290], // added
+    8 : [50, 185, 490, 290],
+    9 : [50, 185, 490, 290], // added
+    10 : [50, 185, 490, 290], // added
   }
 
   let layerIndexDict = {
@@ -498,21 +504,7 @@
 
       // User triggers a new detailed view
       else {
-        // TODO: show the detailed view at the location
-        // d3.select(overviewComponent)
-        //   .append('div')
-        //   .attr('class', 'test-div')
-        //   .style('background', 'skyblue')
-        //   .style('position', 'absolute')
-        //   .style('left', `${detailedViewAbsCoords[curLayerIndex][0]}px`)
-        //   .style('top', `${detailedViewAbsCoords[curLayerIndex][1]}px`)
-        //   .style('width', `${detailedViewAbsCoords[curLayerIndex][2]}px`)
-        //   .style('height', `${detailedViewAbsCoords[curLayerIndex][3]}px`);
 
-        // to keep using svelte, we'll just grab the detailview div and move it!
-
-        // d.style.visible = true;
-        // d.style.opacity = 1;
 
       }
       
@@ -520,7 +512,7 @@
       detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
       detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
       detailview.style.position = 'absolute';
-      
+
       detailedViewNum = d.index;
     }
   }
@@ -1221,9 +1213,21 @@
       nodeData = data;
       console.log(nodeData)
     }
+    
 
     let overlayRectOffset = 6;
     let curLayerIndex = layerIndexDict[d.layerName];
+
+
+    // handle moving views for relu or pool nodes
+    if (d.type == 'relu' || d.type == 'pool') {
+      console.log(curLayerIndex)
+      const detailview = document.getElementById('detailview');
+      detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
+      detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
+      detailview.style.position = 'absolute';
+    }
+
 
     // Enter the second view (layer-view) when user clicks a conv node
     if ((d.type === 'conv' || d.layerName === 'output') && !isInIntermediateView) {
