@@ -38,7 +38,7 @@
       if (isPaused) return;
       const flat_animated = counter % (output.length * output.length);
       outputHighlights = array1d(output.length * output.length, (i) => false);
-      inputHighlights = array1d(image.length * image.length, (i) => false);
+      inputHighlights = array1d(image.length * image.length, (i) => undefined);
       const animatedH = Math.floor(flat_animated / output.length);
       const animatedW = flat_animated % output.length;
       outputHighlights[animatedH * output.length + animatedW] = true;
@@ -56,7 +56,7 @@
     const animatedH = event.detail.hoverH;
     const animatedW = event.detail.hoverW;
     outputHighlights[animatedH * output.length + animatedW] = true;
-    inputHighlights = array1d(image.length * image.length, (i) => false);
+    inputHighlights = array1d(image.length * image.length, (i) => undefined);
     inputHighlights[animatedH * output.length + animatedW] = true;
     const inputMatrixSlice = getMatrixSliceFromInputHighlights(image, inputHighlights, 1);
     gridInputMatrixSlice = gridData(inputMatrixSlice);
