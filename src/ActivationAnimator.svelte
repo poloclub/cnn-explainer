@@ -18,8 +18,8 @@
   let padded_input_size = image.length + padding * 2;
   $: padded_input_size = image.length + padding * 2;
 
-  let gridInputMatrixSlice = [];
-  let gridOutputMatrixSlice = [];
+  let gridInputMatrixSlice = gridData([0]);
+  let gridOutputMatrixSlice = gridData([0]);
   let inputHighlights = array1d(image.length * image.length, (i) => true);
   let outputHighlights = array1d(output.length * output.length, (i) => true);
   let interval;
