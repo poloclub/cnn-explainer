@@ -11,6 +11,7 @@
   export let image;
   export let output;
   export let isPaused;
+  export let dataRange;
 
   const dispatch = createEventDispatcher();
   const padding = 0;
@@ -85,20 +86,20 @@
     Input
   </header>
   <Dataview on:message={handleMouseover} data={gridImage} highlights={inputHighlights} outputLength={output.length}
-      isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={getDataRange(image)} stride={1}/>  
+      isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={dataRange} stride={1}/>  
 </div>
 <div class="column has-text-centered">
   <span>
     max(
     <Dataview data={gridData([[0]])} highlights={outputHighlights} isKernelMath={true} 
-    constraint={20} dataRange={getDataRange(image)}/>
+    constraint={20} dataRange={dataRange}/>
     ,
     <Dataview data={gridInputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
-    constraint={20} dataRange={getDataRange(image)}/>
+    constraint={20} dataRange={dataRange}/>
     )
     =
     <Dataview data={gridOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
-      constraint={20} dataRange={getDataRange(output)}/>
+      constraint={20} dataRange={dataRange}/>
   </span> 
 </div>
 <div class="column has-text-centered">
@@ -106,5 +107,5 @@
     Output
   </header>
   <Dataview on:message={handleMouseover} data={gridOutput} highlights={outputHighlights} isKernelMath={false} 
-      outputLength={output.length} constraint={getVisualizationSizeConstraint(output.length)} dataRange={getDataRange(output)} stride={1}/>
+      outputLength={output.length} constraint={getVisualizationSizeConstraint(output.length)} dataRange={dataRange} stride={1}/>
 </div>
