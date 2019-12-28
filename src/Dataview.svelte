@@ -12,6 +12,8 @@
   import { beforeUpdate, afterUpdate } from 'svelte';
   import { createEventDispatcher } from 'svelte';
 
+  console.log(dataRange);
+
   let grid_final;
   const textConstraintDivisor = 2.6;
   const standardCellColor = "ddd";

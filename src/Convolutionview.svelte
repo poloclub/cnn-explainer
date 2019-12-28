@@ -4,6 +4,7 @@
 
   export let input;
   export let kernel;
+  export let dataRange;
   // export let output;
   
 	let stride = 1;
@@ -55,7 +56,8 @@
     <div class="columns is-centered is-vcentered">
       <ConvolutionAnimator on:message={handlePauseFromInteraction} 
         kernel={kernel} image={input} output={outputFinal} 
-        stride={stride} dilation={dilation} isPaused={isPaused}/>
+        stride={stride} dilation={dilation} isPaused={isPaused}
+        dataRange={dataRange}/>
     </div>
   </div>
 
