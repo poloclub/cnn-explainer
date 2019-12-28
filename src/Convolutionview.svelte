@@ -5,8 +5,10 @@
   export let input;
   export let kernel;
   export let dataRange;
+  export let colorScale = d3.interpolateRdBu;
+  export let isInputInputLayer = false;
   // export let output;
-  
+
 	let stride = 1;
   const dilation = 1;
   var isPaused = false;
@@ -57,7 +59,8 @@
       <ConvolutionAnimator on:message={handlePauseFromInteraction} 
         kernel={kernel} image={input} output={outputFinal} 
         stride={stride} dilation={dilation} isPaused={isPaused}
-        dataRange={dataRange}/>
+        dataRange={dataRange} colorScale={colorScale}
+        isInputInputLayer={isInputInputLayer} />
     </div>
   </div>
 
