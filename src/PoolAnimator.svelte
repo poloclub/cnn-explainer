@@ -23,8 +23,17 @@
   let padded_input_size = image.length + padding * 2;
   $: padded_input_size = image.length + padding * 2;
 
+  // Dummy data for original state of component.
   let testInputMatrixSlice = [];
-  let testOutputMatrixSlice = [];
+  for (let i = 0; i < kernelLength; i++) {
+    testInputMatrixSlice.push([]);
+    for (let j = 0; j < kernelLength; j++) {
+      testInputMatrixSlice[i].push(0)
+    }
+  }
+  testInputMatrixSlice = gridData(testInputMatrixSlice)
+  let testOutputMatrixSlice = gridData([0]);
+
   let inputHighlights = [];
   let outputHighlights = array1d(output.length * output.length, (i) => true);
   let interval;
