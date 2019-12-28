@@ -19,6 +19,7 @@
   export let image;
   export let output;
   export let isPaused;
+  export let dataRange;
 
   const dispatch = createEventDispatcher();
   const padding = 0;
@@ -96,21 +97,21 @@
     Input
   </header>
   <Dataview on:message={handleMouseover} data={testImage} highlights={inputHighlights} outputLength={output.length}
-      isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={getDataRange(image)} stride={stride}/>  
+      isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={dataRange} stride={stride}/>  
 </div>
 <div class="column has-text-centered">
   <header>
     Element-wise Dot Product
   </header>
   <KernelMathView data={testInputMatrixSlice} kernel={testKernel} constraint={getVisualizationSizeConstraint(kernel.length)}
-                  dataRange={getDataRange(image)} kernelRange={getDataRange(kernel)}/>
+                  dataRange={dataRange} kernelRange={getDataRange(kernel)}/>
   <Dataview data={testOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
-      constraint={getVisualizationSizeConstraint(kernel.length)} dataRange={getDataRange(output)}/>
+      constraint={getVisualizationSizeConstraint(kernel.length)} dataRange={dataRange}/>
 </div>
 <div class="column has-text-centered">
   <header>
     Output
   </header>
   <Dataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights} isKernelMath={false}
-      outputLength={output.length} constraint={getVisualizationSizeConstraint(output.length)} dataRange={getDataRange(output)} stride={stride}/>
+      outputLength={output.length} constraint={getVisualizationSizeConstraint(output.length)} dataRange={dataRange} stride={stride}/>
 </div>

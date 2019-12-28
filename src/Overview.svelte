@@ -514,6 +514,10 @@
       detailview.style.position = 'absolute';
 
       detailedViewNum = d.index;
+
+      // Send the currently used color range to detailed view
+      console.log(range);
+      nodeData.colorRange = range;
     }
   }
 
@@ -1210,6 +1214,8 @@
           output: d.inputLinks[j].dest.output,
         })
       }
+      let curLayerIndex = layerIndexDict[d.layerName];
+      data.colorRange = cnnLayerRanges[selectedScaleLevel][curLayerIndex];
       nodeData = data;
       console.log(nodeData)
     }
@@ -3344,7 +3350,8 @@
   {#if selectedNode.data && selectedNode.data.type === 'conv' && selectedNodeIndex != -1}
     <ConvolutionView input={nodeData[selectedNodeIndex].input} 
                       kernel={nodeData[selectedNodeIndex].kernel} 
-                      output={nodeData[selectedNodeIndex].output} />
+                      output={nodeData[selectedNodeIndex].output}
+                      dataRange={nodeData.colorRange}/>
   {:else if selectedNode.data && selectedNode.data.type === 'relu'}
     <ActivationView input={nodeData[0].input} 
                     output={nodeData[0].output} />
