@@ -115,9 +115,6 @@
       isInputLayer={isInputInputLayer}/>
 </div>
 <div class="column has-text-centered">
-  <header>
-    Element-wise Dot Product
-  </header>
   <KernelMathView data={testInputMatrixSlice} kernel={testKernel} constraint={getVisualizationSizeConstraint(kernel.length)}
                   dataRange={dataRange} kernelRange={getDataRange(kernel)}/>
   <Dataview data={testOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 

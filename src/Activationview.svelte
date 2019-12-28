@@ -19,9 +19,15 @@
 <div class="container">
   <div style="margin-top: 2%; margin-bottom: 2%;" class="box">
     <div class="has-text-left">
-      <button style="margin-bottom: 1%" class="button is-success is-small is-outlined" on:click={handleClickPause}>
-        {@html isPaused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>'}
-      </button>    
+      <button style="margin-bottom: 1%" 
+        class="button is-small"
+        id="pause-button"
+        class:is-activated={isPaused}
+        on:click={handleClickPause}>
+        <span class="icon">
+          {@html isPaused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>'}
+        </span>
+      </button>  
     </div>
     <div class="columns is-centered is-vcentered">
       <ActivationAnimator on:message={handlePauseFromInteraction} 
