@@ -20,6 +20,8 @@
   export let output;
   export let isPaused;
   export let dataRange;
+  export let colorScale;
+  export let isInputInputLayer = false;
 
   const dispatch = createEventDispatcher();
   const padding = 0;
@@ -97,7 +99,9 @@
     Input
   </header>
   <Dataview on:message={handleMouseover} data={testImage} highlights={inputHighlights} outputLength={output.length}
-      isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={dataRange} stride={stride}/>  
+      isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)}
+      dataRange={dataRange} stride={stride} colorScale={colorScale}
+      isInputLayer={isInputInputLayer}/>
 </div>
 <div class="column has-text-centered">
   <header>

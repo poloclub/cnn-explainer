@@ -4,15 +4,15 @@
   export let isKernelMath;
   export let constraint;
   export let dataRange;
-  export let outputLength;
-  export let stride;
+  export let outputLength = undefined;
+  export let stride = undefined;
+  export let colorScale = d3.interpolateRdBu;
+  export let isInputLayer = false;
 
   import { onMount } from 'svelte';
   import { onDestroy } from 'svelte';
   import { beforeUpdate, afterUpdate } from 'svelte';
   import { createEventDispatcher } from 'svelte';
-
-  console.log(dataRange);
 
   let grid_final;
   const textConstraintDivisor = 2.6;
@@ -52,8 +52,13 @@
       .attr("height", function(d) { return d.height; })
       .style("opacity", 0.5)
       .style("fill", function(d) { 
-        let normalizedValue = (d.text + dataRange / 2) / dataRange
-        return d3.interpolateRdBu(normalizedValue); 
+        let normalizedValue = d.text;
+        if (isInputLayer){
+          normalizedValue = 1 - d.text;
+        } else {
+          normalizedValue = (d.text + dataRange / 2) / dataRange;
+        }
+        return colorScale(normalizedValue); 
       })
       .on('mouseover', function(d) {
         if (data.length != outputLength) {

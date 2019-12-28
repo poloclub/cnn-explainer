@@ -457,7 +457,6 @@
   }
 
   const intermediateNodeClicked = (d, i, g, selectedI, curLayerIndex) => {
-    console.log(detailedViewNum, i, d, selectedI);
     // Todo: use this event to trigger the detailed view
     if (detailedViewNum === d.index) {
       // Setting this for testing purposes currently.
@@ -478,7 +477,7 @@
       // Here are some variables you might need
       let inputMatrix = d.output;
       let kernelMatrix = d.outputLinks[selectedI].weight;
-      let interMatrix = singleConv(inputMatrix, kernelMatrix);
+      // let interMatrix = singleConv(inputMatrix, kernelMatrix);
       let colorScale = layerColorScales.conv;
 
       // Compute the color range
@@ -486,7 +485,7 @@
       let rangeCur = cnnLayerRanges[selectedScaleLevel][curLayerIndex];
       let range = Math.max(rangePre, rangeCur);
 
-      console.log(inputMatrix, kernelMatrix, interMatrix, range);
+      // console.log(inputMatrix, kernelMatrix, interMatrix, range);
 
       // User triggers a different detailed view
       if (detailedViewNum !== undefined) {
@@ -516,8 +515,8 @@
       detailedViewNum = d.index;
 
       // Send the currently used color range to detailed view
-      console.log(range);
       nodeData.colorRange = range;
+      nodeData.inputIsInputLayer = curLayerIndex <= 1;
     }
   }
 
@@ -1216,14 +1215,12 @@
       }
       let curLayerIndex = layerIndexDict[d.layerName];
       data.colorRange = cnnLayerRanges[selectedScaleLevel][curLayerIndex];
+      data.isInputInputLayer = curLayerIndex <= 1;
       nodeData = data;
-      console.log(nodeData)
     }
     
-
     let overlayRectOffset = 6;
     let curLayerIndex = layerIndexDict[d.layerName];
-
 
     // handle moving views for relu or pool nodes
     if (d.type == 'relu' || d.type == 'pool') {
@@ -3349,9 +3346,11 @@
 <div id='detailview'>
   {#if selectedNode.data && selectedNode.data.type === 'conv' && selectedNodeIndex != -1}
     <ConvolutionView input={nodeData[selectedNodeIndex].input} 
-                      kernel={nodeData[selectedNodeIndex].kernel} 
-                      output={nodeData[selectedNodeIndex].output}
-                      dataRange={nodeData.colorRange}/>
+                      kernel={nodeData[selectedNodeIndex].kernel}
+                      dataRange={nodeData.colorRange}
+                      colorScale={nodeData.inputIsInputLayer ?
+                        layerColorScales.input[0] : layerColorScales.conv}
+                      isInputInputLayer={nodeData.inputIsInputLayer} />
   {:else if selectedNode.data && selectedNode.data.type === 'relu'}
     <ActivationView input={nodeData[0].input} 
                     output={nodeData[0].output}
