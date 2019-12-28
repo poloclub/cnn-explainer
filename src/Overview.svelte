@@ -3354,10 +3354,12 @@
                       dataRange={nodeData.colorRange}/>
   {:else if selectedNode.data && selectedNode.data.type === 'relu'}
     <ActivationView input={nodeData[0].input} 
-                    output={nodeData[0].output} />
+                    output={nodeData[0].output}
+                    dataRange={nodeData.colorRange}/>
   {:else if selectedNode.data && selectedNode.data.type === 'pool'}
     <PoolView input={nodeData[0].input} 
               kernelLength={2} 
-              output={nodeData[0].output} />
+              output={nodeData[0].output}
+              dataRange={nodeData.colorRange}/>
   {/if}
 </div>

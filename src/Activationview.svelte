@@ -3,6 +3,7 @@
 
   export let input;
   export let output;
+  export let dataRange;
   
   let isPaused = false;
   
@@ -24,7 +25,8 @@
     </div>
     <div class="columns is-centered is-vcentered">
       <ActivationAnimator on:message={handlePauseFromInteraction} 
-        image={input} output={output} isPaused={isPaused}/>
+        image={input} output={output} isPaused={isPaused}
+        dataRange={dataRange}/>
     </div>
   </div>
 

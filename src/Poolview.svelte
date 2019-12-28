@@ -4,6 +4,7 @@
 
   export let input;
   export let kernelLength;
+  export let dataRange;
   // export let output;
   
 	let stride = 2;
@@ -55,7 +56,8 @@
     <div class="columns is-centered is-vcentered">
       <PoolAnimator on:message={handlePauseFromInteraction} 
         kernelLength={kernelLength} image={input} output={outputFinal} 
-        stride={stride} dilation={dilation} isPaused={isPaused}/>
+        stride={stride} dilation={dilation} isPaused={isPaused}
+        dataRange={dataRange} />
     </div>
   </div>
 
