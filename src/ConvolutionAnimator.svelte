@@ -116,7 +116,8 @@
 </div>
 <div class="column has-text-centered">
   <KernelMathView data={testInputMatrixSlice} kernel={testKernel} constraint={getVisualizationSizeConstraint(kernel.length)}
-                  dataRange={dataRange} kernelRange={getDataRange(kernel)}/>
+                  dataRange={dataRange} kernelRange={getDataRange(kernel)} colorScale={colorScale}
+                  isInputLayer={isInputInputLayer}/>
   <Dataview data={testOutputMatrixSlice} highlights={outputHighlights} isKernelMath={true} 
       constraint={getVisualizationSizeConstraint(kernel.length)} dataRange={dataRange}/>
 </div>

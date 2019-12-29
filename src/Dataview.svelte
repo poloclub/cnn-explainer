@@ -81,6 +81,19 @@
         .style("font-size", Math.floor(constraint / textConstraintDivisor) + "px")
         .attr("x", function(d) { return d.x + d.width / 2; })
         .attr("y", function(d) { return d.y + d.height / 2; })
+        .style("fill", function(d) { 
+        let normalizedValue = d.text;
+          if (isInputLayer){
+            normalizedValue = 1 - d.text;
+          } else {
+            normalizedValue = (d.text + dataRange / 2) / dataRange;
+          }
+          if (normalizedValue < 0.2 || normalizedValue > 0.8) {
+            return 'white';
+          } else {
+            return 'black';
+          }
+        })
         .style("text-anchor", "middle")
         .style("dominant-baseline", "middle")
         .text(function(d) { return d.text; })

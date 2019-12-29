@@ -4,6 +4,8 @@
   export let constraint;
   export let dataRange;
   export let kernelRange;
+  export let colorScale = d3.interpolateRdBu;
+  export let isInputLayer = false;
 
   import { onMount } from 'svelte';
   import { afterUpdate } from 'svelte';
@@ -47,8 +49,13 @@
       .attr("height", function(d) { return d.height; })
       .style("opacity", 0.5)
       .style("fill", function(d) { 
-        let normalizedValue = (d.text + dataRange / 2) / dataRange;
-        return d3.interpolateRdBu(normalizedValue); 
+        let normalizedValue = d.text;
+        if (isInputLayer){
+          normalizedValue = 1 - d.text;
+        } else {
+          normalizedValue = (d.text + dataRange / 2) / dataRange;
+        }
+        return colorScale(normalizedValue); 
       })
       .style("stroke", "black");
     // Draw cells for the kernel.
@@ -77,8 +84,13 @@
       .attr("x", function(d) { return d.x === 1 ? d.x + d.width / 2 : d.x * 2 + d.width / 2 })
       .attr("y", function(d) { return d.y === 1 ? d.y + d.height / 2 : d.y * 2 + d.height / 2 })
       .style("fill", function(d) { 
-        let normalizedValue = (d.text + dataRange / 2) / dataRange;
-        if (normalizedValue < 0.3 || normalizedValue > 0.8) {
+        let normalizedValue = d.text;
+        if (isInputLayer){
+          normalizedValue = 1 - d.text;
+        } else {
+          normalizedValue = (d.text + dataRange / 2) / dataRange;
+        }
+        if (normalizedValue < 0.2 || normalizedValue > 0.8) {
           return 'white';
         } else {
           return 'black';
@@ -97,7 +109,7 @@
       .style("text-anchor", "middle")
       .style("dominant-baseline", "middle")
       .text(function(d) { return 'x ' + kernel[d.row][d.col].text; })
-    // Draw '+' to signify the summing of products.
+    // Draw '+' to signify the summing of products except for the last kernel cell where '=' is drawn.
     texts.append("text")
       .attr("class","text")
       .style("font-size", Math.floor(constraint / (textConstraintDivisor - 1)) + "px")
