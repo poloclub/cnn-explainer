@@ -32,7 +32,7 @@
     }
   }
   testInputMatrixSlice = gridData(testInputMatrixSlice)
-  let testOutputMatrixSlice = gridData([0]);
+  let testOutputMatrixSlice = gridData([[0]]);
 
   let inputHighlights = [];
   let outputHighlights = array1d(output.length * output.length, (i) => true);
