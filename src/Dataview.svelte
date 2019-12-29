@@ -108,7 +108,7 @@
 
 </script>
 
-<div style="display: inline-block" class="grid"
+<div style="display: inline-block; vertical-align: middle;" class="grid"
   bind:this={grid_final}>
   <svg id="grid" width=100% height=100%></svg>
 </div>
