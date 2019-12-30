@@ -67,7 +67,12 @@ export function getDataRange(image) {
   let max = Math.max.apply(null, maxRow);
   let minRow = image.map(function(row){ return Math.min.apply(Math, row); });
   let min = Math.min.apply(null, minRow);
-  return Math.max(Math.abs(min), Math.abs(max));
+  let range = {
+    range: 2 * Math.max(Math.abs(min), Math.abs(max)),
+    min: min,
+    max: max
+  };
+  return range;
 }
 
 export function gridData(image) {
