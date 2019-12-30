@@ -2505,21 +2505,21 @@
 
       let localLegendScale1 = d3.scaleLinear()
         .range([0, 2 * nodeLength + hSpaceAroundGap - 1.2])
-        .domain([-range1, range1]);
+        .domain([-range1 / 2, range1 / 2]);
       
       let localLegendScale2 = d3.scaleLinear()
         .range([0, 3 * nodeLength + 2 * hSpaceAroundGap - 1.2])
-        .domain([-range2, range2]);
+        .domain([-range2 / 2, range2 / 2]);
 
       let localLegendAxis1 = d3.axisBottom()
         .scale(localLegendScale1)
         .tickFormat(d3.format('.2f'))
-        .tickValues([-range1, 0, range1]);
+        .tickValues([-range1 / 2, 0, range1 / 2]);
       
       let localLegendAxis2 = d3.axisBottom()
         .scale(localLegendScale2)
         .tickFormat(d3.format('.2f'))
-        .tickValues([-range2, 0, range2]);
+        .tickValues([-range2 / 2, 0, range2 / 2]);
 
       let localLegend1 = legends.append('g')
         .attr('class', 'legend local-legend')
@@ -2560,12 +2560,12 @@
       let moduleLegendScale = d3.scaleLinear()
         .range([0, 5 * nodeLength + 3 * hSpaceAroundGap +
           1 * hSpaceAroundGap * gapRatio - 1.2])
-        .domain([-range, range]);
+        .domain([-range / 2, range / 2]);
 
       let moduleLegendAxis = d3.axisBottom()
         .scale(moduleLegendScale)
         .tickFormat(d3.format('.2f'))
-        .tickValues([-range, -(range / 2), 0, range/2, range]);
+        .tickValues([-range / 2, -(range / 4), 0, range / 4, range / 2]);
 
       let moduleLegend = legends.append('g')
         .attr('class', 'legend module-legend')
@@ -2596,7 +2596,7 @@
     let globalLegendAxis = d3.axisBottom()
       .scale(globalLegendScale)
       .tickFormat(d3.format('.2f'))
-      .tickValues([-range, -(range / 2), 0, range/2, range]);
+      .tickValues([-range / 2, -(range / 4), 0, range / 4, range / 2]);
 
     let globalLegend = legends.append('g')
       .attr('class', 'legend global-legend')
