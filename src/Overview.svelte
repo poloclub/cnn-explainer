@@ -3409,7 +3409,6 @@
                     output={nodeData[0].output}
                     dataRange={nodeData.colorRange}
                     isExited={isExitedFromDetailedView}/>
-    }
   {:else if selectedNode.data && selectedNode.data.type === 'pool'}
     <PoolView on:message={handleExitFromDetiledPoolView} input={nodeData[0].input} 
               kernelLength={2} 
