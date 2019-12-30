@@ -57,6 +57,7 @@
         </div>
       </div>
     </div> -->
+    <button class="delete" aria-label="close"></button>
     <div style="margin-top: 2%; margin-bottom: 2%;" class="box">
       <div class="columns is-centered">
         <div class="column has-text-left">
@@ -72,12 +73,10 @@
         </div>
         <div class="column has-text-right"> 
           <button style="margin-bottom: 1%" 
-            class="button is-small is-centered"
+            class="delete is-small"
+            arial-label="close"
             id="x-button"
             on:click={handleClickX}>
-            <span class="icon">
-              <i class="fas fa-times"></i>
-            </span>
           </button>
         </div>  
       </div>
