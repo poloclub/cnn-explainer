@@ -57,7 +57,6 @@
         </div>
       </div>
     </div> -->
-    <button class="delete" aria-label="close"></button>
     <div style="margin-top: 2%; margin-bottom: 2%;" class="box">
       <div class="columns is-centered">
         <div class="column has-text-left">
