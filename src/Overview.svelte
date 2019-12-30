@@ -3143,6 +3143,51 @@
       updateCNN();
     }
   }
+
+  function handleExitFromDetiledConvView(event) {
+    if (event.detail.text) {
+      detailedViewNum = undefined;
+      svg.select(`rect#underneath-gateway-${selectedNodeIndex}`)
+        .style('opacity', 0);
+      selectedNodeIndex = -1; 
+    }
+  }
+
+  function handleExitFromDetiledPoolView(event) {
+    if (event.detail.text) {
+      let layerIndex = layerIndexDict[selectedNode.layerName];
+      let nodeIndex = selectedNode.index;
+      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+        .select('rect.bounding')
+        .classed('hidden', true);
+
+      selectedNode.data.inputLinks.forEach(link => {
+        let layerIndex = layerIndexDict[link.source.layerName];
+        let nodeIndex = link.source.index;
+        svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+          .select('rect.bounding')
+          .classed('hidden', true);
+      })
+    }
+  }
+
+  function handleExitFromDetiledActivationView(event) {
+    if (event.detail.text) {
+      let layerIndex = layerIndexDict[selectedNode.layerName];
+      let nodeIndex = selectedNode.index;
+      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+        .select('rect.bounding')
+        .classed('hidden', true);
+
+      selectedNode.data.inputLinks.forEach(link => {
+        let layerIndex = layerIndexDict[link.source.layerName];
+        let nodeIndex = link.source.index;
+        svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+          .select('rect.bounding')
+          .classed('hidden', true);
+      })
+    }
+  }
 </script>
 
 <style>
@@ -3345,18 +3390,18 @@
 
 <div id='detailview'>
   {#if selectedNode.data && selectedNode.data.type === 'conv' && selectedNodeIndex != -1}
-    <ConvolutionView input={nodeData[selectedNodeIndex].input} 
+    <ConvolutionView on:message={handleExitFromDetiledConvView} input={nodeData[selectedNodeIndex].input} 
                       kernel={nodeData[selectedNodeIndex].kernel}
                       dataRange={nodeData.colorRange}
                       colorScale={nodeData.inputIsInputLayer ?
                         layerColorScales.input[0] : layerColorScales.conv}
                       isInputInputLayer={nodeData.inputIsInputLayer} />
   {:else if selectedNode.data && selectedNode.data.type === 'relu'}
-    <ActivationView input={nodeData[0].input} 
+    <ActivationView on:message={handleExitFromDetiledActivationView} input={nodeData[0].input} 
                     output={nodeData[0].output}
                     dataRange={nodeData.colorRange}/>
   {:else if selectedNode.data && selectedNode.data.type === 'pool'}
-    <PoolView input={nodeData[0].input} 
+    <PoolView on:message={handleExitFromDetiledPoolView} input={nodeData[0].input} 
               kernelLength={2} 
               output={nodeData[0].output}
               dataRange={nodeData.colorRange}/>
