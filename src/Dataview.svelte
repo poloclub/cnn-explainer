@@ -81,7 +81,7 @@
           } else {
             normalizedValue = (d.text + dataRange / 2) / dataRange;
           }
-          if (normalizedValue < 0.2 || normalizedValue > 0.8) {
+          if (normalizedValue > 0.8) {
             return 'white';
           } else {
             return 'black';
