@@ -7,9 +7,10 @@
   export let kernelLength;
   export let dataRange;
   // export let output;
+  export let isExited;
   
   const dispatch = createEventDispatcher();
-  let isExited = false;
+  // let isExited = false;
 	let stride = 2;
   const dilation = 1;
   var isPaused = false;
@@ -32,9 +33,8 @@
   }
 
   function handleClickX() {
-    isExited = true;
     dispatch('message', {
-      text: isExited
+      text: true
     });
   }
 </script>
@@ -57,7 +57,6 @@
         </div>
       </div>
     </div> -->
-
     <div style="margin-top: 2%; margin-bottom: 2%;" class="box">
       <div class="columns is-centered">
         <div class="column has-text-left">

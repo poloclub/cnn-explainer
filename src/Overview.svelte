@@ -95,6 +95,7 @@
 
   let nodeData;
   let selectedNodeIndex = -1;
+  let isExitedFromDetailedView = true;
 
   // Helper functions
   const selectedScaleLevelChanged = () => {
@@ -1217,6 +1218,11 @@
       data.colorRange = cnnLayerRanges[selectedScaleLevel][curLayerIndex];
       data.isInputInputLayer = curLayerIndex <= 1;
       nodeData = data;
+    }
+
+    // Open detailed view for non-conv nodes.
+    if (d.type !== 'conv') {
+      isExitedFromDetailedView = false;
     }
     
     let overlayRectOffset = 6;
@@ -3168,6 +3174,7 @@
           .select('rect.bounding')
           .classed('hidden', true);
       })
+      isExitedFromDetailedView = true;
     }
   }
 
@@ -3186,6 +3193,7 @@
           .select('rect.bounding')
           .classed('hidden', true);
       })
+      isExitedFromDetailedView = true;
     }
   }
 </script>
@@ -3399,11 +3407,14 @@
   {:else if selectedNode.data && selectedNode.data.type === 'relu'}
     <ActivationView on:message={handleExitFromDetiledActivationView} input={nodeData[0].input} 
                     output={nodeData[0].output}
-                    dataRange={nodeData.colorRange}/>
+                    dataRange={nodeData.colorRange}
+                    isExited={isExitedFromDetailedView}/>
+    }
   {:else if selectedNode.data && selectedNode.data.type === 'pool'}
     <PoolView on:message={handleExitFromDetiledPoolView} input={nodeData[0].input} 
               kernelLength={2} 
               output={nodeData[0].output}
-              dataRange={nodeData.colorRange}/>
+              dataRange={nodeData.colorRange}
+              isExited={isExitedFromDetailedView}/>
   {/if}
 </div>

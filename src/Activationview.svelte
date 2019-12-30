@@ -5,9 +5,9 @@
   export let input;
   export let output;
   export let dataRange;
+  export let isExited;
 
   const dispatch = createEventDispatcher();
-  let isExited = false;
   let isPaused = false;
   
   function handleClickPause() {
@@ -19,9 +19,8 @@
   }
 
   function handleClickX() {
-    isExited = true;
     dispatch('message', {
-      text: isExited
+      text: true
     });
   }
 </script>
