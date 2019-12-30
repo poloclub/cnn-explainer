@@ -191,7 +191,10 @@
         } else {
           normalizedValue = (d.text + dataRange / 2) / dataRange;
         }
-        if (normalizedValue > 0.8) {
+        if (normalizedValue < 0.2 || normalizedValue > 0.8) {
+          if (isInputLayer && normalizedValue < 0.2) {
+            return 'black';
+          } 
           return 'white';
         } else {
           return 'black';
