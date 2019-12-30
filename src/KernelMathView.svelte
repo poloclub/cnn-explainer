@@ -119,8 +119,6 @@
     detailedLegend.append('rect')
       .attr('width', width)
       .attr('height', legendHeight)
-      .attr('transform', `rotate(0},
-        ${width / 2}, ${legendHeight / 2})`)
       .style('fill', gradientName);
   }
 
