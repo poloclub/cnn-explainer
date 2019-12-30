@@ -22,13 +22,6 @@
   let oldHighlight = highlights;
   let oldData = data;
 
-  function getHighlightWindowSize() {
-    let count = highlights.reduce(function(n, val) {
-      return n + (val != undefined);
-    }, 0);
-    return Math.sqrt(count);
-  }
-
   const redraw = () => {
     d3.select(grid_final).selectAll("#grid > *").remove();
     const constrainedSvgSize = data.length * constraint + 2;

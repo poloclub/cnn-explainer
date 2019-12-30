@@ -39,8 +39,6 @@
   testInputMatrixSlice = gridData(testInputMatrixSlice)
   let testOutputMatrixSlice = gridData([0]);
 
-  // let testInputMatrixSlice = [];
-  // let testOutputMatrixSlice = [];
   let inputHighlights = [];
   let outputHighlights = array1d(output.length * output.length, (i) => true);
   let interval;
@@ -49,9 +47,8 @@
     let outputHighlights = array1d(output.length * output.length, (i) => true);
     let interval;
   }
-  
-  let counter;
 
+  let counter;
   // lots of replication between mouseover and start-conv. TODO: fix this.
   function startConvolution(stride) {
     counter = 0;
