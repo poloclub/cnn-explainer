@@ -8,10 +8,11 @@
   export let dataRange;
   export let colorScale = d3.interpolateRdBu;
   export let isInputInputLayer = false;
+  export let isExited = false;
   // export let output;
+  console.log(isExited);
   
   const dispatch = createEventDispatcher();
-  let isExited = false;
 	let stride = 1;
   const dilation = 1;
   var isPaused = false;
