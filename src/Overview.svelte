@@ -591,8 +591,17 @@
     let linkData = [];
 
     // Accumulate the intermediate sum
-    let itnermediateSumMatrix = init2DArray(d.output.length,
-      d.output.length, 0);
+    // let itnermediateSumMatrix = init2DArray(d.output.length,
+    //  d.output.length, 0);
+
+    // Compute the min max of all kernel weights in the intermediate layer
+    let kernelExtents = d.inputLinks.map(link => getExtent(link.weight));
+    let kernelExtent = kernelExtents.reduce((acc, cur) => {
+      return [Math.min(acc[0], cur[0]), Math.max(acc[1], cur[1])];
+    })
+    let kernelRange = 2 * (Math.round(
+      Math.max(...kernelExtent.map(Math.abs)) * 1000) / 1000);
+    let kernelColorGap = 0.2;
 
     // First intermediate layer
     nodeCoordinate[curLayerIndex - 1].forEach((n, ni) => {
@@ -606,7 +615,7 @@
       intermediateMinMax.push(getExtent(interMatrix));
 
       // Update the intermediate sum
-      itnermediateSumMatrix = matrixAdd(itnermediateSumMatrix, interMatrix);
+      // itnermediateSumMatrix = matrixAdd(itnermediateSumMatrix, interMatrix);
 
       // Layout the canvas and rect
       let newNode = createIntermediateNode(curLayerIndex, i, intermediateLayer,
@@ -648,7 +657,8 @@
             .attr('y', kernelRectLength * r)
             .attr('width', kernelRectLength)
             .attr('height', kernelRectLength)
-            .attr('fill', d3.rgb(colorScale((kernelMatrix[r][c] + range / 2) / range)));
+            .attr('fill', gappedColorScale(layerColorScales.weight, kernelRange,
+              kernelMatrix[r][c], kernelColorGap));
         }
       }
 
@@ -753,7 +763,8 @@
         .attr('width', 2 * kernelRectLength)
         .attr('height', 2 * kernelRectLength)
         .style('stroke', intermediateColor)
-        .style('fill', d3.rgb(colorScale((d.bias + range / 2) / range)));
+        .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
+          d.bias, kernelColorGap));
       
       // Link from bias to the plus symbol
       linkData.push({
@@ -771,7 +782,8 @@
         .attr('width', 2 * kernelRectLength)
         .attr('height', 2 * kernelRectLength)
         .style('stroke', intermediateColor)
-        .style('fill', d3.rgb(colorScale((d.bias + range / 2) / range)));
+        .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
+          d.bias, kernelColorGap));
       
       // Link from bias to the plus symbol
       linkData.push({
@@ -852,7 +864,9 @@
       .attr('stroke-dashoffset', 0)
       .each((d, i, g) => animateEdge(d, i, g, dashoffset - 160));
     
-    return {intermediateLayer: intermediateLayer, intermediateMinMax: aggregatedMinMax};
+    return {intermediateLayer: intermediateLayer,
+      intermediateMinMax: aggregatedMinMax,
+      kernelRange: kernelRange};
   }
 
   // Add an annotation for the kernel and the sliding
@@ -1180,6 +1194,12 @@
     underGroup.lower();
   }
 
+  const gappedColorScale = (colorScale, range, value, gap) => {
+    if (gap === undefined) { gap = 0; }
+    let normalizedValue = (value + range / 2) / range;
+    return colorScale(normalizedValue * (1 - 2 * gap) + gap);
+  }
+
   const nodeClickHandler = (d, i, g) => {
     // If clicked a new node, deselect the old clicked node
     if ((selectedNode.layerName !== d.layerName ||
@@ -1291,8 +1311,9 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
-          curLayerIndex, leftX, targetX, rightStart, intermediateGap, d, i);
+        let {intermediateLayer, intermediateMinMax, kernelRange} =
+          drawIntermediateLayer(curLayerIndex, leftX, targetX, rightStart,
+            intermediateGap, d, i);
         addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 8);
 
         // Compute the selected node's min max
@@ -1427,8 +1448,9 @@
         
         // Draw the intermediate layer
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
-        let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
-          curLayerIndex, leftX, targetX, rightStart, intermediateGap, d, i);
+        let {intermediateLayer, intermediateMinMax, kernelRange} =
+          drawIntermediateLayer(curLayerIndex, leftX, targetX, rightStart,
+            intermediateGap, d, i);
         addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 5);
         
         // After getting the intermediateMinMax, we can finally aggregate it with
@@ -1543,10 +1565,9 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
-          curLayerIndex, leftX, nodeCoordinate[curLayerIndex][0].x, rightStart,
-          intermediateGap, d, i
-        );
+        let {intermediateLayer, intermediateMinMax, kernelRange} =
+          drawIntermediateLayer(curLayerIndex, leftX,
+            nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
         addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 5);
                 
         // After getting the intermediateMinMax, we can finally aggregate it with
@@ -1661,10 +1682,9 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        let {intermediateLayer, intermediateMinMax} = drawIntermediateLayer(
-          curLayerIndex, leftX, nodeCoordinate[curLayerIndex][0].x, rightStart,
-          intermediateGap, d, i
-        );
+        let {intermediateLayer, intermediateMinMax, kernelRange} =
+          drawIntermediateLayer(curLayerIndex, leftX,
+            nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
         addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 5);
                 
         // After getting the intermediateMinMax, we can finally aggregate it with
@@ -1815,12 +1835,6 @@
         let flattenRange = 2 * (Math.round(
           Math.max(...flattenExtent.map(Math.abs)) * 1000) / 1000);
 
-        let flattenColorScale = (value, gap) => {
-          if (gap === undefined) { gap = 0; }
-          let normalizedValue = (value + flattenRange / 2) / flattenRange;
-          return layerColorScales.weight(normalizedValue * (1 - 2 * gap) + gap);
-        }
-
         let flattenMouseOverHandler = (d) => {
           let index = d.index;
           flattenLayer.select(`#edge-flatten-${index}`)
@@ -1831,7 +1845,8 @@
           flattenLayer.select(`#edge-flatten-${index}-output`)
             .raise()
             .style('stroke-width', 1)
-            .style('stroke', da => flattenColorScale(da.weight));
+            .style('stroke', da => gappedColorScale(layerColorScales.weight,
+              flattenRange, da.weight));
 
           flattenLayer.select(`#bounding-${index}`)
             .raise()
@@ -1846,7 +1861,8 @@
 
           flattenLayer.select(`#edge-flatten-${index}-output`)
             .style('stroke-width', 0.6)
-            .style('stroke', da => flattenColorScale(da.weight, 0.35));
+            .style('stroke', da => gappedColorScale(layerColorScales.weight,
+              flattenRange, da.weight, 0.35));
 
           flattenLayer.select(`#bounding-${index}`)
             .raise()
@@ -1875,7 +1891,8 @@
               index: factoredF,
               weight: cnn.flatten[factoredF].outputLinks[i].weight,
               name: `flatten-${factoredF}-output`,
-              color: flattenColorScale(cnn.flatten[factoredF].outputLinks[i].weight, 0.35),
+              color: gappedColorScale(layerColorScales.weight,
+                flattenRange, cnn.flatten[factoredF].outputLinks[i].weight, 0.35),
               width: 0.6,
               opacity: 1,
               class: `flatten-output`
@@ -1980,7 +1997,8 @@
               y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
             index: -1,
             name: `flatten-abstract-${v.index}-output`,
-            color: flattenColorScale(v.weight),
+            color: gappedColorScale(layerColorScales.weight, flattenRange,
+              v.weight, 0.35),
             weight: v.weight,
             width: 1,
             opacity: 1,
@@ -2027,7 +2045,8 @@
             .attr('width', 2 * kernelRectLength)
             .attr('height', 2 * kernelRectLength)
             .style('stroke', intermediateColor)
-            .style('fill', flattenColorScale(d.bias, 0.35));
+            .style('fill', gappedColorScale(layerColorScales.weight,
+                flattenRange, d.bias, 0.35));
           
           // Link from bias to the plus symbol
           linkData.push({
@@ -2047,7 +2066,8 @@
             .attr('width', 2 * kernelRectLength)
             .attr('height', 2 * kernelRectLength)
             .style('stroke', intermediateColor)
-            .style('fill', flattenColorScale(d.bias, 0.35));
+            .style('fill', gappedColorScale(layerColorScales.weight,
+                flattenRange, d.bias, 0.35));
           
           // Link from bias to the plus symbol
           linkData.push({
@@ -2561,7 +2581,7 @@
     // Add module legends
     for (let i = 0; i < 2; i++){
       let start = 1 + i * 5;
-      let range = cnnLayerRanges.local[start];
+      let range = cnnLayerRanges.module[start];
 
       let moduleLegendScale = d3.scaleLinear()
         .range([0, 5 * nodeLength + 3 * hSpaceAroundGap +
@@ -2597,7 +2617,7 @@
     let globalLegendScale = d3.scaleLinear()
       .range([0, 10 * nodeLength + 6 * hSpaceAroundGap +
         3 * hSpaceAroundGap * gapRatio - 1.2])
-      .domain([-range, range]);
+      .domain([-range / 2, range / 2]);
 
     let globalLegendAxis = d3.axisBottom()
       .scale(globalLegendScale)
