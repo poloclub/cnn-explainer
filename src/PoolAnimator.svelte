@@ -94,7 +94,11 @@
   }
 </script>
 
-
+<style>
+  .column {
+    padding: 5px 10px 10px 10px;
+  }
+</style>
 
 <div class="column has-text-centered">
   <header>
