@@ -1,7 +1,5 @@
 <script>
   import Overview from './Overview.svelte';
-  import Layerview from './Layerview.svelte';
-  import Detailview from './Detailview.svelte';
   import { cnnStore } from './stores.js';
 
   // Enum to control the displaying view
@@ -31,11 +29,5 @@
 </style>
 
 <div id='explainer'>
-  {#if mainView === View.OVERVIEW}
     <Overview />
-  {:else if mainView === View.LAYERVIEW}
-    <Layerview />
-  {:else if mainView === View.DETAILVIEW}
-    <Detailview />
-  {/if}
 </div>

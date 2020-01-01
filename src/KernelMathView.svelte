@@ -230,6 +230,7 @@
       oldData = data;
     }
     if (kernel != oldKernel) {
+      /*
       redrawDetailedConvViewLegend({
           legendHeight: 5,
           range: kernelRange.range,
@@ -238,12 +239,14 @@
           colorScale: kernelColorScale,
           gradientGap: 0.35,
       });
+      */
       oldKernel = kernel;
     }
   });
 
   onMount(() => {
     redraw();
+    /*
     redrawDetailedConvViewLegend({
           legendHeight: 5,
           range: kernelRange.range,
@@ -252,13 +255,14 @@
           colorScale: kernelColorScale,
           gradientGap: 0.35,
     });
+    */
   });
 
 </script>
 
 <div class="legend"
   bind:this={legendFinal}>
-  <svg id="legend" width=100% height=100%></svg>
+  <!-- <svg id="legend" width=100% height=100%></svg> -->
 </div>
 
 <div class="grid"
