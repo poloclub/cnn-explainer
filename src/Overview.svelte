@@ -866,7 +866,8 @@
     
     return {intermediateLayer: intermediateLayer,
       intermediateMinMax: aggregatedMinMax,
-      kernelRange: kernelRange};
+      kernelRange: kernelRange,
+      kernelMinMax: {min: kernelExtent[0], max: kernelExtent[1]}};
   }
 
   // Add an annotation for the kernel and the sliding
@@ -942,36 +943,54 @@
     
     let intermediateX2 = leftX + 2 * nodeLength + 2.5 * intermediateGap;
     let textX = intermediateX2;
+    let textY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
+        kernelRectLength * 3;
 
-    if (i == 0) {
-      textX += 30;
+    // Special case 1: first node
+    if (i === 0) { textX += 30; }
+
+    // Special case 2: last node
+    if (i === 9) {
+      textX = intermediateX2 + plusSymbolRadius - 10;
+      textY -= 2.5 * nodeLength;
     }
 
     let plusText = plusAnnotation.append('text')
       .attr('x', textX)
-      .attr('y', nodeCoordinate[curLayerIndex][i].y + nodeLength +
-        kernelRectLength * 3)
+      .attr('y', textY)
       .attr('class', 'annotation-text')
       .style('dominant-baseline', 'hanging')
       .style('text-anchor', 'start');
     
     plusText.append('tspan')
-      .text('Sum up all intermediate');
+      .text('Add up all intermediate');
     
     plusText.append('tspan')
       .attr('x', textX)
       .attr('dy', '1em')
       .text('results and then add bias');
     
-    drawArrow({
-      group: group,
-      sx: intermediateX2 + 35,
-      sy: nodeCoordinate[curLayerIndex][i].y + nodeLength + kernelRectLength * 2,
-      tx: intermediateX2 + 2 * plusSymbolRadius + 3,
-      ty: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius,
-      dr: 30,
-      hFlip: true
-    });
+    if (i === 9) {
+      drawArrow({
+        group: group,
+        sx: intermediateX2 + 50,
+        sy: nodeCoordinate[curLayerIndex][i].y - (nodeLength / 2 + kernelRectLength * 2),
+        tx: intermediateX2 + 2 * plusSymbolRadius + 3,
+        ty: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 - plusSymbolRadius,
+        dr: 50,
+        hFlip: false
+      });
+    } else {
+      drawArrow({
+        group: group,
+        sx: intermediateX2 + 35,
+        sy: nodeCoordinate[curLayerIndex][i].y + nodeLength + kernelRectLength * 2,
+        tx: intermediateX2 + 2 * plusSymbolRadius + 3,
+        ty: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius,
+        dr: 30,
+        hFlip: true
+      });
+    }
 
     // Add annotation for the bias
     let biasTextY = nodeCoordinate[curLayerIndex][i].y;
@@ -1311,7 +1330,7 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        let {intermediateLayer, intermediateMinMax, kernelRange} =
+        let {intermediateLayer, intermediateMinMax, kernelRange, kernelMinMax} =
           drawIntermediateLayer(curLayerIndex, leftX, targetX, rightStart,
             intermediateGap, d, i);
         addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 8);
@@ -1368,6 +1387,20 @@
           width: 2 * nodeLength + intermediateGap,
           x: nodeCoordinate[curLayerIndex - 1][2].x,
           y: nodeCoordinate[curLayerIndex][9].y + 25
+        });
+
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: kernelRange,
+          minMax: kernelMinMax,
+          group: intermediateLayer,
+          width: 2 * nodeLength + intermediateGap,
+          x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
+          y: nodeCoordinate[curLayerIndex][9].y + 25,
+          gradientAppendingName: 'kernelColorGradient',
+          colorScale: layerColorScales.weight,
+          gradientGap: 0.2
         });
         
         // Show everything
@@ -1448,7 +1481,7 @@
         
         // Draw the intermediate layer
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
-        let {intermediateLayer, intermediateMinMax, kernelRange} =
+        let {intermediateLayer, intermediateMinMax, kernelRange, kernelMinMax} =
           drawIntermediateLayer(curLayerIndex, leftX, targetX, rightStart,
             intermediateGap, d, i);
         addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 5);
@@ -1484,6 +1517,20 @@
           y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
         });
 
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: kernelRange,
+          minMax: kernelMinMax,
+          group: intermediateLayer,
+          width: 2 * nodeLength + intermediateGap,
+          x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+          gradientAppendingName: 'kernelColorGradient',
+          colorScale: layerColorScales.weight,
+          gradientGap: 0.2
+        });
+
         // Show everything
         svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
           .transition()
@@ -1494,7 +1541,8 @@
       }
 
       else if (d.layerName === 'conv_2_1') {
-        let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
+        let targetX = nodeCoordinate[curLayerIndex][0].x;
+        let leftX = targetX - (2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
@@ -1506,7 +1554,7 @@
           disable: true, delay: 0});
 
         moveLayerX({layerIndex: curLayerIndex,
-          targetX: nodeCoordinate[curLayerIndex][0].x, disable: true,
+          targetX: targetX, disable: true,
           delay: 0, opacity: 0.15, specialIndex: i});
 
         // Hide the edges
@@ -1565,7 +1613,7 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        let {intermediateLayer, intermediateMinMax, kernelRange} =
+        let {intermediateLayer, intermediateMinMax, kernelRange, kernelMinMax} =
           drawIntermediateLayer(curLayerIndex, leftX,
             nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
         addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 5);
@@ -1601,6 +1649,20 @@
           y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10
         });
 
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: kernelRange,
+          minMax: kernelMinMax,
+          group: intermediateLayer,
+          width: 2 * nodeLength + intermediateGap,
+          x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+          gradientAppendingName: 'kernelColorGradient',
+          colorScale: layerColorScales.weight,
+          gradientGap: 0.2
+        });
+
         // Show everything
         svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
           .transition()
@@ -1611,7 +1673,8 @@
       }
       
       else if (d.layerName === 'conv_2_2') {
-        let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
+        let targetX = nodeCoordinate[curLayerIndex][0].x;
+        let leftX = targetX - (2 * nodeLength +
           2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
         let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
@@ -1623,7 +1686,7 @@
           disable: true, delay: 0});
 
         moveLayerX({layerIndex: curLayerIndex,
-          targetX: nodeCoordinate[curLayerIndex][0].x, disable: true,
+          targetX: targetX, disable: true,
           delay: 0, opacity: 0.15, specialIndex: i});
 
         // Hide the edges
@@ -1632,8 +1695,7 @@
         // Compute the gap in the left shrink region
         let leftEnd = leftX - hSpaceAroundGap;
         let leftGap = (leftEnd - nodeCoordinate[0][0].x - 7 * nodeLength) / 7;
-        let rightStart = nodeCoordinate[curLayerIndex][0].x +
-          nodeLength + hSpaceAroundGap;
+        let rightStart = targetX + nodeLength + hSpaceAroundGap;
 
         // Move the left layers
         for (let i = 0; i < curLayerIndex - 1; i++) {
@@ -1682,7 +1744,7 @@
           .style('opacity', 1);
         
         // Draw the intermediate layer
-        let {intermediateLayer, intermediateMinMax, kernelRange} =
+        let {intermediateLayer, intermediateMinMax, kernelRange, kernelMinMax} =
           drawIntermediateLayer(curLayerIndex, leftX,
             nodeCoordinate[curLayerIndex][0].x, rightStart, intermediateGap, d, i);
         addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 5);
@@ -1716,6 +1778,20 @@
           width: 2 * nodeLength + intermediateGap,
           x: leftX,
           y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10
+        });
+
+        drawIntermediateLayerLegend({
+          legendHeight: 5,
+          curLayerIndex: curLayerIndex,
+          range: kernelRange,
+          minMax: kernelMinMax,
+          group: intermediateLayer,
+          width: 2 * nodeLength + intermediateGap,
+          x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
+          y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 10,
+          gradientAppendingName: 'kernelColorGradient',
+          colorScale: layerColorScales.weight,
+          gradientGap: 0.2
         });
 
         // Show everything
