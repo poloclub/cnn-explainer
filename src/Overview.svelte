@@ -96,6 +96,7 @@
   let nodeData;
   let selectedNodeIndex = -1;
   let isExitedFromDetailedView = true;
+  let isExitedFromCollapse = true;
 
   // Helper functions
   const selectedScaleLevelChanged = () => {
@@ -458,6 +459,7 @@
   }
 
   const intermediateNodeClicked = (d, i, g, selectedI, curLayerIndex) => {
+    isExitedFromCollapse = false;
     // Todo: use this event to trigger the detailed view
     if (detailedViewNum === d.index) {
       // Setting this for testing purposes currently.
@@ -468,7 +470,6 @@
         .style('opacity', 0);
 
       // TODO: destroy the detailed view with smooth animation
-
     } 
     // We need to show a new detailed view (two cases: if we need to close the
     // old detailed view or not)
@@ -1263,7 +1264,7 @@
     if (d.type !== 'conv') {
       isExitedFromDetailedView = false;
     }
-    
+
     let overlayRectOffset = 6;
     let curLayerIndex = layerIndexDict[d.layerName];
 
@@ -1275,7 +1276,6 @@
       detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
       detailview.style.position = 'absolute';
     }
-
 
     // Enter the second view (layer-view) when user clicks a conv node
     if ((d.type === 'conv' || d.layerName === 'output') && !isInIntermediateView) {
@@ -2418,6 +2418,7 @@
       svg.select('g.underneath')
         .selectAll('rect')
         .remove();
+      detailedViewNum = undefined;
 
       // Highlight the previous layer and this node
       svg.select(`g#cnn-layer-group-${curLayerIndex - 1}`)
@@ -2440,6 +2441,7 @@
       selectedNode.layerName = '';
       selectedNode.index = -1;
       selectedNode.data = null;
+      isExitedFromCollapse = true;
 
       // Remove the intermediate layer
       let intermediateLayer = svg.select('g.intermediate-layer');
@@ -2546,21 +2548,21 @@
 
   const nodeMouseLeaveHandler = (d, i, g) => {
     if (isInIntermediateView) { return; }
-
-    let layerIndex = layerIndexDict[d.layerName];
-    let nodeIndex = d.index;
-    let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
-    
-    edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
-      .transition()
-      .ease(d3.easeCubicOut)
-      .duration(200)
-      .style('stroke', edgeInitColor)
-      .style('stroke-width', edgeStrokeWidth)
-      .style('opacity', edgeOpacity);
     
     // Keep the highlight if user has clicked
     if (d.layerName !== selectedNode.layerName || d.index !== selectedNode.index){
+      let layerIndex = layerIndexDict[d.layerName];
+      let nodeIndex = d.index;
+      let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
+      
+      edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
+        .transition()
+        .ease(d3.easeCubicOut)
+        .duration(200)
+        .style('stroke', edgeInitColor)
+        .style('stroke-width', edgeStrokeWidth)
+        .style('opacity', edgeOpacity);
+
       d3.select(g[i]).select('rect.bounding').classed('hidden', true);
 
       if (d.inputLinks.length === 1) {
@@ -2574,7 +2576,8 @@
         svg.select(`g#cnn-layer-group-${layerIndex - 1}`)
           .selectAll('g.node-group')
           .selectAll('rect.bounding')
-          .classed('hidden', true);
+          .classed('hidden', d => d.layerName !== selectedNode.layerName ||
+            d.index !== selectedNode.index);
       }
 
       // Dehighlight the output text
@@ -3270,6 +3273,15 @@
           .select('rect.bounding')
           .classed('hidden', true);
       })
+      // Also dehighlight the edge
+      let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
+      edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
+        .transition()
+        .ease(d3.easeCubicOut)
+        .duration(200)
+        .style('stroke', edgeInitColor)
+        .style('stroke-width', edgeStrokeWidth)
+        .style('opacity', edgeOpacity);
       isExitedFromDetailedView = true;
     }
   }
@@ -3289,6 +3301,16 @@
           .select('rect.bounding')
           .classed('hidden', true);
       })
+
+      // Also dehighlight the edge
+      let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
+      edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
+        .transition()
+        .ease(d3.easeCubicOut)
+        .duration(200)
+        .style('stroke', edgeInitColor)
+        .style('stroke-width', edgeStrokeWidth)
+        .style('opacity', edgeOpacity);
       isExitedFromDetailedView = true;
     }
   }
@@ -3499,7 +3521,8 @@
                       dataRange={nodeData.colorRange}
                       colorScale={nodeData.inputIsInputLayer ?
                         layerColorScales.input[0] : layerColorScales.conv}
-                      isInputInputLayer={nodeData.inputIsInputLayer} />
+                      isInputInputLayer={nodeData.inputIsInputLayer}
+                      isExited={isExitedFromCollapse}/>
   {:else if selectedNode.data && selectedNode.data.type === 'relu'}
     <ActivationView on:message={handleExitFromDetiledActivationView} input={nodeData[0].input} 
                     output={nodeData[0].output}
