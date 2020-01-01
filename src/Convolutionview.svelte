@@ -65,6 +65,10 @@
   .box {
     padding: 5px 15px 10px 15px;
   }
+
+  .columns {
+    align-items: flex-end;
+  }
 </style>
 
 {#if !isExited}
@@ -99,7 +103,7 @@
         </div>
       </div>
 
-      <div class="columns is-centered is-vcentered">
+      <div class="columns is-centered">
         <ConvolutionAnimator on:message={handlePauseFromInteraction} 
           kernel={kernel} image={input} output={outputFinal} 
           stride={stride} dilation={dilation} isPaused={isPaused}
