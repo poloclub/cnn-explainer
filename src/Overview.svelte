@@ -67,7 +67,7 @@
     5: [650, 270, 490, 290], // added 
     6 : [775, 270, 490, 290],
     7 : [100, 270, 490, 290], // added
-    8 : [200, 270, 490, 290],
+    8 : [60, 270, 490, 290],
     9 : [200, 270, 490, 290], // added
     10 : [300, 270, 490, 290], // added
   }
@@ -2001,7 +2001,7 @@
             .raise()
             .style('stroke-width', 1)
             .style('stroke', da => gappedColorScale(layerColorScales.weight,
-              flattenRange, da.weight));
+              flattenRange, da.weight, 0.1));
 
           flattenLayer.select(`#bounding-${index}`)
             .raise()
@@ -2063,6 +2063,9 @@
               index: factoredF,
               name: `flatten-${factoredF}`,
               color: '#E5E5E5',
+              // color: gappedColorScale(layerColorScales.conv,
+              //   2 * Math.max(Math.abs(cnnLayerMinMax[10].max), Math.abs(cnnLayerMinMax[10].min)),
+              //   cnn.flatten[factoredF].output, 0.2),
               width: 0.6,
               opacity: 1,
               class: `flatten`
@@ -2121,7 +2124,7 @@
             .attr('points',
               `${leftX + nodeLength + 3}
               ${nodeCoordinate[curLayerIndex - 1][v.index].y},
-              ${leftX + nodeLength + 6}
+              ${leftX + nodeLength + 10}
               ${nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
               ${leftX + nodeLength + 3}
               ${nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength}`)
@@ -2133,7 +2136,7 @@
             target: {x: intermediateX1 - 3,
               y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
                 middleRectHeight * (vi + 0.5)},
-            source: {x: leftX + nodeLength + 6,
+            source: {x: leftX + nodeLength + 10,
               y: nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
             index: -1,
             width: 1,
@@ -2307,7 +2310,7 @@
           group: intermediateLayer,
           width: intermediateGap * 0.5,
           gradientAppendingName: 'flatten-weight-gradient',
-          gradientGap: 0.35,
+          gradientGap: 0.1,
           colorScale: layerColorScales.weight,
           x: leftX + intermediateGap * 0.5 + (nodeLength  +
             intermediateGap) - (2 * 0.5) * intermediateGap,
@@ -2348,22 +2351,35 @@
           .style('text-anchor', 'middle');
         
         plusText.append('tspan')
-          .text('Sum up all');
+          .text('Add up all products');
         
         plusText.append('tspan')
           .attr('x', textX)
           .attr('dy', '1em')
-          .text('products (weight');
+          .text('(');
+
+        plusText.append('tspan')
+          .style('fill', '#66a3c8')
+          .text('element');
+
+        plusText.append('tspan')
+          .text(' × ');
+
+        plusText.append('tspan')
+          .style('fill', '#b58946')
+          .text('weight');
+
+        plusText.append('tspan')
+          .text(')');
 
         plusText.append('tspan')
           .attr('x', textX)
           .attr('dy', '1em')
-          .text('⨉ element) and');
+          .text('and then ');
 
         plusText.append('tspan')
-          .attr('x', textX)
-          .attr('dy', '1em')
-          .text('then add bias');
+          .style('fill', '#479d94')
+          .text('bias');
         
         drawArrow({
           group: plusAnnotation,
@@ -2394,7 +2410,7 @@
         let flattenAnnotation = intermediateLayerAnnotation.append('g')
           .attr('class', 'flatten-annotation');
         
-        textX = leftX - 100;
+        textX = leftX - 80;
         textY = nodeCoordinate[curLayerIndex - 1][0].y;
 
         let flattenText = flattenAnnotation.append('text')
@@ -2405,32 +2421,22 @@
           .style('text-anchor', 'middle');
 
         flattenText.append('tspan')
-          .text('Try to hover over');
+          .text('Hover over matrix to');
         
         flattenText.append('tspan')
           .attr('x', textX)
           .attr('dy', '1em')
-          .text('this node!');
-        
-        flattenText.append('tspan')
-          .attr('x', textX)
-          .attr('dy', '2em')
-          .text('Flatten layer "unrolls"');
+          .text('see how it is flattened');
         
         flattenText.append('tspan')
           .attr('x', textX)
           .attr('dy', '1em')
-          .text('a matrix or a tensor');
-
-        flattenText.append('tspan')
-          .attr('x', textX)
-          .attr('dy', '1em')
-          .text('into a 1D array');
+          .text('into a 1D array!');
 
         drawArrow({
           group: flattenAnnotation,
-          sx: textX + 40,
-          sy: textY + nodeLength * 0.4,
+          sx: textX + 45,
+          sy: textY + nodeLength * 0.4 + 12,
           tx: leftX - 10,
           ty: textY + nodeLength / 2,
           dr: 80,
