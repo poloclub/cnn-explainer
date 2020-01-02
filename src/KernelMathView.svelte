@@ -14,7 +14,7 @@
   let gridFinal;
   let legendFinal;
   const textConstraintDivisor = 2.6;
-  const standardCellColor = "ddd";
+  const multiplicationSymbolPadding = Math.floor(constraint / 3);
 
   let oldData = data;
   let oldKernel = kernel;
@@ -143,7 +143,7 @@
     // Draw cells for slice from input matrix.
     columns.append("rect")
       .attr("class","square")
-      .attr("x", function(d) { return d.x === 1 ? d.x : d.x * 2 })
+      .attr("x", function(d) { return d.x === 1 ? d.x + multiplicationSymbolPadding : d.x * 2 + multiplicationSymbolPadding})
       .attr("y", function(d) { return d.y === 1 ? d.y : d.y * 2 })
       .attr("width", function(d) { return d.width; })
       .attr("height", function(d) { return d.height; })
@@ -161,7 +161,7 @@
     // Draw cells for the kernel.
     columns.append("rect")
       .attr("class","square")
-      .attr("x", function(d) { return d.x === 1 ? d.x : d.x * 2 })
+      .attr("x", function(d) { return d.x === 1 ? d.x + multiplicationSymbolPadding: d.x * 2 + multiplicationSymbolPadding})
       .attr("y", function(d) { return d.y === 1 ? d.y + d.height : d.y * 2 + d.height })
       .attr("width", function(d) { return d.width; })
       .attr("height", function(d) { return d.height / 2; })
@@ -169,8 +169,7 @@
       // Same colorscale as is used for the flatten layers.
       .style("fill", function(d) { 
         let normalizedValue = (kernel[d.row][d.col].text + kernelRange.range / 2) / kernelRange.range;
-        // console.log(kernel[d.row][d.col].text, ": ", normalizedValue)
-        const gap = 0.35;
+        const gap = 0.2;
         let normalizedValueWithGap = normalizedValue * (1 - 2 * gap) + gap;
         return kernelColorScale(normalizedValueWithGap); 
       })
@@ -182,7 +181,7 @@
     texts.append("text")
       .attr("class","text")
       .style("font-size", Math.floor(constraint / textConstraintDivisor) + "px")
-      .attr("x", function(d) { return d.x === 1 ? d.x + d.width / 2 : d.x * 2 + d.width / 2 })
+      .attr("x", function(d) { return d.x === 1 ? d.x + d.width / 2 + multiplicationSymbolPadding: d.x * 2 + d.width / 2 + multiplicationSymbolPadding})
       .attr("y", function(d) { return d.y === 1 ? d.y + d.height / 2 : d.y * 2 + d.height / 2 })
       .style("fill", function(d) { 
         let normalizedValue = d.text;
@@ -203,21 +202,42 @@
       .style("text-anchor", "middle")
       .style("dominant-baseline", "middle")
       .text(function(d) { return d.text; })
-    // Draw 'x' to signify multiplication along with the numbers from the kernel.
+    // Attempted to use FontAwesome icons for the 'x', '+', and '=', but none of these strategies work: https://github.com/FortAwesome/Font-Awesome/issues/12268
+    // Draw 'x' to signify multiplication.
     texts.append("text")
       .attr("class","text")
-      .style("font-size", Math.floor(constraint / (textConstraintDivisor + 1)) + "px")
-      .attr("x", function(d) { return d.x === 1 ? d.x + d.width / 2 : d.x * 2 + d.width / 2 })
+      .style("font-size", Math.floor(constraint / (textConstraintDivisor)) + "px")
+      .attr('font-weight', 600)
+      .attr("x", function(d) { return d.x === 1 ? d.x + multiplicationSymbolPadding / 2: d.x * 2 + multiplicationSymbolPadding / 2})
       .attr("y", function(d) { return d.y === 1 ? d.y + d.height + (d.height / 4) : d.y * 2 + d.height + (d.height / 4) })
       .style("fill", "black")
       .style("text-anchor", "middle")
       .style("dominant-baseline", "middle")
-      .text(function(d) { return 'x ' + kernel[d.row][d.col].text; })
+      .text(function(d) { return 'x' })
+    // Draw kernel values.
+    texts.append("text")
+      .attr("class","text")
+      .style("font-size", Math.floor(constraint / textConstraintDivisor) + "px")
+      .attr("x", function(d) { return d.x === 1 ? d.x + d.width / 2 + multiplicationSymbolPadding: d.x * 2 + d.width / 2 + multiplicationSymbolPadding})
+      .attr("y", function(d) { return d.y === 1 ? d.y + d.height + (d.height / 4) : d.y * 2 + d.height + (d.height / 4) })
+      .style("fill", function(d) { 
+        let normalizedValue = (kernel[d.row][d.col].text + kernelRange.range / 2) / kernelRange.range;
+        const gap = 0.2;
+        let normalizedValueWithGap = normalizedValue * (1 - 2 * gap) + gap;
+        if (normalizedValueWithGap < 0.2 || normalizedValueWithGap > 0.8) {
+          return 'white';
+        } else {
+          return 'black';
+        }
+      })
+      .style("text-anchor", "middle")
+      .style("dominant-baseline", "middle")
+      .text(function(d) { return kernel[d.row][d.col].text; })
     // Draw '+' to signify the summing of products except for the last kernel cell where '=' is drawn.
     texts.append("text")
       .attr("class","text")
       .style("font-size", Math.floor(constraint / (textConstraintDivisor - 1)) + "px")
-      .attr("x", function(d) { return d.x === 1 ? d.x + d.width + d.width / 2 : d.x * 2 + d.width + d.width / 2 })
+      .attr("x", function(d) { return d.x === 1 ? d.x + d.width + d.width / 2 + multiplicationSymbolPadding: d.x * 2 + d.width + d.width / 2 + multiplicationSymbolPadding})
       .attr("y", function(d) { return d.y === 1 ? d.y + d.height : d.y * 2 + d.height })
       .style("text-anchor", "middle")
       .style("dominant-baseline", "middle")
