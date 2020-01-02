@@ -43,6 +43,7 @@
   let selectedNode = {layerName: '', index: -1, data: null};
   let svgPaddings = {top: 25, bottom: 25, left: 50, right: 50};
   let isInIntermediateView = false;
+  let isInActPoolDetailView = false;
   let detailedViewNum = undefined;
   let kernelRectLength = 8/3;
 
@@ -59,16 +60,16 @@
   };
 
   let detailedViewAbsCoords = {
-    1 : [600, 230, 490, 290],
-    2: [500, 230, 490, 290], // added
-    3 : [700, 230, 490, 290],
-    4: [800, 230, 490, 290], // added
-    5: [350, 230, 490, 290], // added 
-    6 : [775, 230, 490, 290],
-    7 : [50, 230, 490, 290], // added
-    8 : [50, 230, 490, 290],
-    9 : [50, 230, 490, 290], // added
-    10 : [50, 230, 490, 290], // added
+    1 : [600, 270, 490, 290],
+    2: [500, 270, 490, 290], // added
+    3 : [700, 270, 490, 290],
+    4: [600, 270, 490, 290], // added
+    5: [650, 270, 490, 290], // added 
+    6 : [775, 270, 490, 290],
+    7 : [100, 270, 490, 290], // added
+    8 : [200, 270, 490, 290],
+    9 : [200, 270, 490, 290], // added
+    10 : [300, 270, 490, 290], // added
   }
 
   let layerIndexDict = {
@@ -1220,6 +1221,91 @@
     return colorScale(normalizedValue * (1 - 2 * gap) + gap);
   }
 
+  const addOverlayRect = (gradientName, x, y, width, height) => {
+    if (svg.select('.intermediate-layer-overlay').empty()) {
+      svg.append('g').attr('class', 'intermediate-layer-overlay');
+    }
+
+    let intermediateLayerOverlay = svg.select('.intermediate-layer-overlay');
+
+    let overlayRect = intermediateLayerOverlay.append('rect')
+      .attr('class', 'overlay')
+      .style('fill', `url(#${gradientName})`)
+      .style('stroke', 'none')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('x', x)
+      .attr('y', y)
+      .style('opacity', 0);
+    
+    overlayRect.transition('move')
+      .duration(800)
+      .ease(d3.easeCubicInOut)
+      .style('opacity', 1);
+  }
+
+  const quitActPoolDetailView = () => {
+    isInActPoolDetailView = false;
+    let layerIndex = layerIndexDict[selectedNode.layerName];
+    let nodeIndex = selectedNode.index;
+    svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+      .select('rect.bounding')
+      .classed('hidden', true);
+
+    selectedNode.data.inputLinks.forEach(link => {
+      let layerIndex = layerIndexDict[link.source.layerName];
+      let nodeIndex = link.source.index;
+      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
+        .select('rect.bounding')
+        .classed('hidden', true);
+    })
+
+    // Also dehighlight the edge
+    let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
+    edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
+      .transition()
+      .ease(d3.easeCubicOut)
+      .duration(200)
+      .style('stroke', edgeInitColor)
+      .style('stroke-width', edgeStrokeWidth)
+      .style('opacity', edgeOpacity);
+
+    // Remove the overlay rect
+    svg.selectAll('g.intermediate-layer-overlay, g.intermediate-layer-annotation')
+      .transition('remove')
+      .duration(500)
+      .ease(d3.easeCubicInOut)
+      .style('opacity', 0)
+      .on('end', (d, i, g) => {
+        svg.selectAll('g.intermediate-layer-overlay, g.intermediate-layer-annotation').remove();
+        svg.selectAll('defs.overlay-gradient').remove();
+      });
+
+    // Turn the fade out nodes back
+    svg.select(`g#cnn-layer-group-${layerIndex}`)
+      .selectAll('g.node-group')
+      .each((sd, si, sg) => {
+        d3.select(sg[si])
+          .style('pointer-events', 'all')
+          .select('foreignObject')
+          .style('opacity', 1);
+    });
+
+    svg.select(`g#cnn-layer-group-${layerIndex - 1}`)
+      .selectAll('g.node-group')
+      .each((sd, si, sg) => {
+        d3.select(sg[si])
+          .style('pointer-events', 'all')
+          .select('foreignObject')
+          .style('opacity', 1);
+    });
+
+    // Deselect the node
+    selectedNode.layerName = '';
+    selectedNode.index = -1;
+    selectedNode.data = null;
+  }
+
   const nodeClickHandler = (d, i, g) => {
     // If clicked a new node, deselect the old clicked node
     if ((selectedNode.layerName !== d.layerName ||
@@ -1268,13 +1354,83 @@
     let overlayRectOffset = 6;
     let curLayerIndex = layerIndexDict[d.layerName];
 
-    // handle moving views for relu or pool nodes
-    if (d.type == 'relu' || d.type == 'pool') {
-      console.log(curLayerIndex)
-      const detailview = document.getElementById('detailview');
-      detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
-      detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
-      detailview.style.position = 'absolute';
+    if (!isInActPoolDetailView) {
+      // Enter the act pool detail view
+      if (d.type == 'relu' || d.type == 'pool') {
+        isInActPoolDetailView = true;
+
+        const detailview = document.getElementById('detailview');
+        detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
+        detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
+        detailview.style.position = 'absolute';
+
+        // Add overlay rects
+        let leftX = nodeCoordinate[curLayerIndex - 1][i].x;
+        let rightStart = nodeCoordinate[curLayerIndex][i].x + nodeLength;
+
+        // Compute the left and right overlay rect width
+        let rightWidth = width - rightStart - overlayRectOffset / 2;
+        let leftWidth = leftX - nodeCoordinate[0][0].x;
+
+        // The overlay rects should be symmetric
+        if (rightWidth > leftWidth) {
+          let stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 0.85},
+            {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.9},
+            {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
+          addOverlayGradient('overlay-gradient-right', stops);
+          
+          let leftEndOpacity = 0.85 + (0.95 - 0.85) * (leftWidth / rightWidth);
+          stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: leftEndOpacity},
+            {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 0.85}];
+          addOverlayGradient('overlay-gradient-left', stops);
+        } else {
+          let stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 1},
+            {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.9},
+            {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 0.85}];
+          addOverlayGradient('overlay-gradient-left', stops);
+
+          let rightEndOpacity = 0.85 + (0.95 - 0.85) * (rightWidth / leftWidth);
+          stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 0.85},
+            {offset: '100%', color: 'rgb(250, 250, 250)', opacity: rightEndOpacity}];
+          addOverlayGradient('overlay-gradient-right', stops);
+        }
+        
+        addOverlayRect('overlay-gradient-right', rightStart + overlayRectOffset / 2,
+          0, rightWidth, height + svgPaddings.top + svgPaddings.bottom);
+        
+        addOverlayRect('overlay-gradient-left', nodeCoordinate[0][0].x - overlayRectOffset / 2,
+          0, leftWidth, height + svgPaddings.top + svgPaddings.bottom);
+        
+        // Fade out unselected pairs
+        console.log(i);
+        svg.select(`g#cnn-layer-group-${curLayerIndex}`)
+          .selectAll('g.node-group')
+          .each((sd, si, sg) => {
+            if (si !== i) {
+              d3.select(sg[si])
+                .style('pointer-events', 'none')
+                .select('foreignObject')
+                .style('opacity', 0.3);
+            }
+        });
+
+        svg.select(`g#cnn-layer-group-${curLayerIndex - 1}`)
+          .selectAll('g.node-group')
+          .each((sd, si, sg) => {
+            d3.select(sg[si])
+              .style('pointer-events', 'none')
+              .select('foreignObject')
+              .style('opacity', si === i ? 1 : 0.3);
+        });
+
+      }
+    }
+    
+    else {
+      // Quit the act pool detail view
+      if (d.type == 'relu' || d.type == 'pool') {
+        quitActPoolDetailView();
+      }
     }
 
     // Enter the second view (layer-view) when user clicks a conv node
@@ -1305,29 +1461,15 @@
           moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
         }
 
-        // Add an overlay
+        // Add an overlay gradient and rect
         let stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 0.85},
           {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
           {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
         addOverlayGradient('overlay-gradient', stops);
 
-        let intermediateLayerOverlay = svg.append('g')
-          .attr('class', 'intermediate-layer-overlay');
-
-        let overlayRect = intermediateLayerOverlay.append('rect')
-          .attr('class', 'overlay')
-          .style('fill', 'url(#overlay-gradient)')
-          .style('stroke', 'none')
-          .attr('width', width - rightStart + overlayRectOffset)
-          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', rightStart - overlayRectOffset / 2)
-          .attr('y', 0)
-          .style('opacity', 0);
-        
-        overlayRect.transition('move')
-          .duration(800)
-          .ease(d3.easeCubicInOut)
-          .style('opacity', 1);
+        addOverlayRect('overlay-gradient', rightStart - overlayRectOffset / 2,
+          0, width - rightStart + overlayRectOffset,
+          height + svgPaddings.top + svgPaddings.bottom);
         
         // Draw the intermediate layer
         let {intermediateLayer, intermediateMinMax, kernelRange, kernelMinMax} =
@@ -1449,35 +1591,14 @@
         stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: endingGradient},
           {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 0.85}];
         addOverlayGradient('overlay-gradient-left', stops);
-
-        let intermediateLayerOverlay = svg.append('g')
-          .attr('class', 'intermediate-layer-overlay');
-
-        intermediateLayerOverlay.append('rect')
-          .attr('class', 'overlay')
-          .style('fill', 'url(#overlay-gradient-right)')
-          .style('stroke', 'none')
-          .attr('width', width - rightStart + overlayRectOffset)
-          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', rightStart - overlayRectOffset/2)
-          .attr('y', 0)
-          .style('opacity', 0);
         
-        intermediateLayerOverlay.append('rect')
-          .attr('class', 'overlay')
-          .style('fill', 'url(#overlay-gradient-left)')
-          .style('stroke', 'none')
-          .attr('width', nodeLength * 2 + hSpaceAroundGap * gapRatio + overlayRectOffset)
-          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
-          .attr('y', 0)
-          .style('opacity', 0);
+        addOverlayRect('overlay-gradient-right', rightStart - overlayRectOffset / 2,
+          0, width - rightStart + overlayRectOffset,
+          height + svgPaddings.top + svgPaddings.bottom);
         
-        intermediateLayerOverlay.selectAll('rect.overlay')
-          .transition('move')
-          .duration(800)
-          .ease(d3.easeCubicInOut)
-          .style('opacity', 1);
+        addOverlayRect('overlay-gradient-left', nodeCoordinate[0][0].x - overlayRectOffset / 2,
+          0, nodeLength * 2 + hSpaceAroundGap * gapRatio + overlayRectOffset,
+          height + svgPaddings.top + svgPaddings.bottom);
         
         // Draw the intermediate layer
         let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
@@ -1583,34 +1704,13 @@
           {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
         addOverlayGradient('overlay-gradient-right', stops);
 
-        let intermediateLayerOverlay = svg.append('g')
-          .attr('class', 'intermediate-layer-overlay');
-
-        intermediateLayerOverlay.append('rect')
-          .attr('class', 'overlay')
-          .style('fill', 'url(#overlay-gradient-left)')
-          .style('stroke', 'none')
-          .attr('width', leftEnd - nodeCoordinate[0][0].x + overlayRectOffset)
-          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
-          .attr('y', 0)
-          .style('opacity', 0);
+        addOverlayRect('overlay-gradient-left', nodeCoordinate[0][0].x - overlayRectOffset / 2,
+          0, leftEnd - nodeCoordinate[0][0].x + overlayRectOffset,
+          height + svgPaddings.top + svgPaddings.bottom);
         
-        intermediateLayerOverlay.append('rect')
-          .attr('class', 'overlay')
-          .style('fill', 'url(#overlay-gradient-right)')
-          .style('stroke', 'none')
-          .attr('width', width - rightStart + overlayRectOffset)
-          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', rightStart - overlayRectOffset/2)
-          .attr('y', 0)
-          .style('opacity', 0);
-        
-        intermediateLayerOverlay.selectAll('rect.overlay')
-          .transition('move')
-          .duration(800)
-          .ease(d3.easeCubicInOut)
-          .style('opacity', 1);
+        addOverlayRect('overlay-gradient-right', rightStart - overlayRectOffset / 2,
+          0, width - rightStart + overlayRectOffset,
+          height + svgPaddings.top + svgPaddings.bottom);
         
         // Draw the intermediate layer
         let {intermediateLayer, intermediateMinMax, kernelRange, kernelMinMax} =
@@ -1714,34 +1814,13 @@
           {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
         addOverlayGradient('overlay-gradient-right', stops);
 
-        let intermediateLayerOverlay = svg.append('g')
-          .attr('class', 'intermediate-layer-overlay');
-
-        intermediateLayerOverlay.append('rect')
-          .attr('class', 'overlay')
-          .style('fill', 'url(#overlay-gradient-left)')
-          .style('stroke', 'none')
-          .attr('width', leftEnd - nodeCoordinate[0][0].x + overlayRectOffset)
-          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
-          .attr('y', 0)
-          .style('opacity', 0);
+        addOverlayRect('overlay-gradient-left', nodeCoordinate[0][0].x - overlayRectOffset / 2,
+          0, leftEnd - nodeCoordinate[0][0].x + overlayRectOffset,
+          height + svgPaddings.top + svgPaddings.bottom);
         
-        intermediateLayerOverlay.append('rect')
-          .attr('class', 'overlay')
-          .style('fill', 'url(#overlay-gradient-right)')
-          .style('stroke', 'none')
-          .attr('width', width - rightStart + overlayRectOffset)
-          .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-          .attr('x', rightStart - overlayRectOffset/2)
-          .attr('y', 0)
-          .style('opacity', 0);
-        
-        intermediateLayerOverlay.selectAll('rect.overlay')
-          .transition('move')
-          .duration(800)
-          .ease(d3.easeCubicInOut)
-          .style('opacity', 1);
+        addOverlayRect('overlay-gradient-right', rightStart - overlayRectOffset / 2,
+          0, width - rightStart + overlayRectOffset,
+          height + svgPaddings.top + svgPaddings.bottom);
         
         // Draw the intermediate layer
         let {intermediateLayer, intermediateMinMax, kernelRange, kernelMinMax} =
@@ -3260,57 +3339,14 @@
 
   function handleExitFromDetiledPoolView(event) {
     if (event.detail.text) {
-      let layerIndex = layerIndexDict[selectedNode.layerName];
-      let nodeIndex = selectedNode.index;
-      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
-        .select('rect.bounding')
-        .classed('hidden', true);
-
-      selectedNode.data.inputLinks.forEach(link => {
-        let layerIndex = layerIndexDict[link.source.layerName];
-        let nodeIndex = link.source.index;
-        svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
-          .select('rect.bounding')
-          .classed('hidden', true);
-      })
-      // Also dehighlight the edge
-      let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
-      edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
-        .transition()
-        .ease(d3.easeCubicOut)
-        .duration(200)
-        .style('stroke', edgeInitColor)
-        .style('stroke-width', edgeStrokeWidth)
-        .style('opacity', edgeOpacity);
+      quitActPoolDetailView();
       isExitedFromDetailedView = true;
     }
   }
 
   function handleExitFromDetiledActivationView(event) {
     if (event.detail.text) {
-      let layerIndex = layerIndexDict[selectedNode.layerName];
-      let nodeIndex = selectedNode.index;
-      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
-        .select('rect.bounding')
-        .classed('hidden', true);
-
-      selectedNode.data.inputLinks.forEach(link => {
-        let layerIndex = layerIndexDict[link.source.layerName];
-        let nodeIndex = link.source.index;
-        svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
-          .select('rect.bounding')
-          .classed('hidden', true);
-      })
-
-      // Also dehighlight the edge
-      let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
-      edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
-        .transition()
-        .ease(d3.easeCubicOut)
-        .duration(200)
-        .style('stroke', edgeInitColor)
-        .style('stroke-width', edgeStrokeWidth)
-        .style('opacity', edgeOpacity);
+      quitActPoolDetailView();
       isExitedFromDetailedView = true;
     }
   }
