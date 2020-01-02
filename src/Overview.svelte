@@ -3519,9 +3519,9 @@
 
         <div class="select">
           <select bind:value={selectedScaleLevel}>
-            <option value="local">Local</option>
-            <option value="module">Module</option>
-            <option value="global">Global</option>
+            <option value="local">Unit level</option>
+            <option value="module">Module level</option>
+            <option value="global">Global level</option>
           </select>
         </div>
       </div>
