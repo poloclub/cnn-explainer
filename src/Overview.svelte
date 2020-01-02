@@ -1202,7 +1202,7 @@
         .attr('width', (2 * nodeLength + intermediateGap) + 2 * padding)
         .attr('height', nodeLength + 2 * padding)
         .attr('rx', 10)
-        .style('fill', 'rgba(175, 135, 255, 0.2)')
+        .style('fill', 'rgba(160, 160, 160, 0.2)')
         .style('opacity', 0);
       
       // Register new events for input layer nodes
