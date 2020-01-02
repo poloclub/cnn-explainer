@@ -213,7 +213,7 @@
       .style("fill", "black")
       .style("text-anchor", "middle")
       .style("dominant-baseline", "middle")
-      .text(function(d) { return 'x' })
+      .text(function(d) { return '×' })
     // Draw kernel values.
     texts.append("text")
       .attr("class","text")
@@ -238,7 +238,7 @@
       .attr("class","text")
       .style("font-size", Math.floor(constraint / (textConstraintDivisor - 1)) + "px")
       .attr("x", function(d) { return d.x === 1 ? d.x + d.width + d.width / 2 + multiplicationSymbolPadding: d.x * 2 + d.width + d.width / 2 + multiplicationSymbolPadding})
-      .attr("y", function(d) { return d.y === 1 ? d.y + d.height : d.y * 2 + d.height })
+      .attr("y", function(d) { return d.y === 1 ? d.y + d.height / 2 : d.y * 2 + d.height / 2 })
       .style("text-anchor", "middle")
       .style("dominant-baseline", "middle")
       .text(function(d) { return d.row == kernel.length - 1 && d.col == kernel.length - 1 ? '=' : '+'; })
