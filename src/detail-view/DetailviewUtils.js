@@ -1,4 +1,4 @@
-import { matrixSlice } from './cnn.js';
+import { matrixSlice } from '../utils/cnn.js';
 
 export function array1d(length, f) {
   return Array.from({length: length}, f ? ((v, i) => f(i)) : undefined);

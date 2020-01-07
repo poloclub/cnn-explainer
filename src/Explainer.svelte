@@ -1,5 +1,5 @@
 <script>
-  import Overview from './Overview.svelte';
+  import Overview from './overview/Overview.svelte';
   import { cnnStore } from './stores.js';
 
   // Enum to control the displaying view

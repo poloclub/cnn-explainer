@@ -1,13 +1,9 @@
 <script>
   import { createEventDispatcher } from 'svelte';
-  import { array1d } from './DetailviewUtils.js';
-  import { generateOutputMappings } from './DetailviewUtils.js';
-  import { compute_input_multiplies_with_weight } from './DetailviewUtils.js';
-  import { getMatrixSliceFromInputHighlights } from './DetailviewUtils.js';
-  import { getMatrixSliceFromOutputHighlights } from './DetailviewUtils.js';
-  import { getVisualizationSizeConstraint } from './DetailviewUtils.js';
-  import { getDataRange } from './DetailviewUtils.js';
-  import { gridData } from './DetailviewUtils.js';
+  import { array1d, getMatrixSliceFromOutputHighlights,
+    compute_input_multiplies_with_weight, getVisualizationSizeConstraint,
+    generateOutputMappings, getMatrixSliceFromInputHighlights, gridData
+  } from './DetailviewUtils.js';
   import Dataview from './Dataview.svelte';
 
   export let stride;

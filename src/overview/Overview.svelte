@@ -1,11 +1,11 @@
 <script>
   import { onMount } from 'svelte';
-  import { loadTrainedModel, constructCNN } from './cnn-tf.js';
-  import { singleConv, init2DArray, matrixAdd } from './cnn.js';
-  import { cnnStore } from './stores.js';
-  import ConvolutionView from './Convolutionview.svelte';
-  import ActivationView from './Activationview.svelte';
-  import PoolView from './Poolview.svelte';
+  import { loadTrainedModel, constructCNN } from '../utils/cnn-tf.js';
+  import { singleConv } from '../utils/cnn.js';
+  import { cnnStore } from '../stores.js';
+  import ConvolutionView from '../detail-view/Convolutionview.svelte';
+  import ActivationView from '../detail-view/Activationview.svelte';
+  import PoolView from '../detail-view/Poolview.svelte';
 
   // View bindings
   let overviewComponent;
