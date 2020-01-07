@@ -454,6 +454,7 @@
   }
 
   const intermediateNodeMouseLeaveHandler = (d, i, g) => {
+    // return;
     if (detailedViewNum !== undefined) { return; }
     svg.select(`rect#underneath-gateway-${d.index}`)
       .style('opacity', 0);
@@ -1402,7 +1403,6 @@
           0, leftWidth, height + svgPaddings.top + svgPaddings.bottom);
         
         // Fade out unselected pairs
-        console.log(i);
         svg.select(`g#cnn-layer-group-${curLayerIndex}`)
           .selectAll('g.node-group')
           .each((sd, si, sg) => {

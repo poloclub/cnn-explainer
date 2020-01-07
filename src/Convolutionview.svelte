@@ -10,7 +10,6 @@
   export let isInputInputLayer = false;
   export let isExited = false;
   // export let output;
-  console.log(isExited);
   
   const dispatch = createEventDispatcher();
 	let stride = 1;
