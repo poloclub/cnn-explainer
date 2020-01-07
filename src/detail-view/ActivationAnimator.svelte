@@ -1,11 +1,8 @@
 <script>
   import { createEventDispatcher } from 'svelte';
-  import { array1d } from './DetailviewUtils.js';
-  import { getMatrixSliceFromOutputHighlights } from './DetailviewUtils.js';
-  import { getMatrixSliceFromInputHighlights } from './DetailviewUtils.js';
-  import { getVisualizationSizeConstraint } from './DetailviewUtils.js';
-  import { getDataRange } from './DetailviewUtils.js';
-  import { gridData } from './DetailviewUtils.js';
+  import { array1d, getMatrixSliceFromOutputHighlights,
+    getVisualizationSizeConstraint, getMatrixSliceFromInputHighlights, gridData
+  } from './DetailviewUtils.js';
   import Dataview from './Dataview.svelte';
 
   export let image;

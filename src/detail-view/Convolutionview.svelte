@@ -1,6 +1,6 @@
 <script>
 	import ConvolutionAnimator from './ConvolutionAnimator.svelte';
-  import { singleConv } from './cnn.js';
+  import { singleConv } from '../utils/cnn.js';
   import { createEventDispatcher } from 'svelte';
 
   export let input;

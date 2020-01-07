@@ -1,6 +1,6 @@
 <script>
 	import PoolAnimator from './PoolAnimator.svelte';
-  import { singleMaxPooling } from './cnn.js';
+  import { singleMaxPooling } from '../utils/cnn.js';
   import { createEventDispatcher } from 'svelte';
 
   export let input;
