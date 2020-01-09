@@ -1,8 +1,11 @@
 <script>
   import { onMount } from 'svelte';
+  import { getExtent } from './overview-utils.js';
+  import { drawOutput } from './overview-draw.js';
   import { loadTrainedModel, constructCNN } from '../utils/cnn-tf.js';
   import { singleConv } from '../utils/cnn.js';
   import { cnnStore } from '../stores.js';
+  import { overviewConfig } from '../config.js';
   import ConvolutionView from '../detail-view/Convolutionview.svelte';
   import ActivationView from '../detail-view/Activationview.svelte';
   import PoolView from '../detail-view/Poolview.svelte';
@@ -22,15 +25,17 @@
   $: selectedScaleLevel, selectedScaleLevelChanged();
 
   // Configs
-  let nodeLength = 40;
-  let plusSymbolRadius = nodeLength / 5;
-  let numLayers = 12;
-  let edgeOpacity = 0.8;
-  let edgeInitColor = 'rgb(230, 230, 230)';
-  let edgeHoverColor = 'rgb(130, 130, 130)';
-  let edgeHoverOuting = false;
-  let edgeStrokeWidth = 0.7;
-  let intermediateColor = 'gray';
+  const layerColorScales = overviewConfig.layerColorScales;
+  const nodeLength = overviewConfig.nodeLength;
+  const plusSymbolRadius = overviewConfig.plusSymbolRadius;
+  const numLayers = overviewConfig.numLayers;
+  const edgeOpacity = overviewConfig.edgeOpacity;
+  const edgeInitColor = overviewConfig.edgeInitColor;
+  const edgeHoverColor = overviewConfig.edgeHoverColor;
+  const edgeHoverOuting = overviewConfig.edgeHoverOuting;
+  const edgeStrokeWidth = overviewConfig.edgeStrokeWidth;
+  const intermediateColor = overviewConfig.intermediateColor;
+
   let width = undefined;
   let height = undefined;
   let model = undefined;
@@ -49,15 +54,6 @@
 
   // Wait to load
   let cnn = undefined;
-
-  let layerColorScales = {
-    input: [d3.interpolateGreys, d3.interpolateGreys, d3.interpolateGreys],
-    conv: d3.interpolateRdBu,
-    relu: d3.interpolateRdBu,
-    pool: d3.interpolateRdBu,
-    fc: d3.interpolateGreys,
-    weight: d3.interpolateBrBG
-  };
 
   let detailedViewAbsCoords = {
     1 : [600, 270, 490, 290],
@@ -128,10 +124,11 @@
         let updatingLayerIndex = updatingLayerIndexDict[
           previousSelectedScaleLevel][selectedScaleLevel];
 
-        updatingLayerIndex.forEach(d => {
-          svg.select(`#cnn-layer-group-${d}`)
+        updatingLayerIndex.forEach(l => {
+          let range = cnnLayerRanges[selectedScaleLevel][l];
+          svg.select(`#cnn-layer-group-${l}`)
             .selectAll('.node-canvas')
-            .each(drawOutput);
+            .each((d, i, g) => drawOutput(d, i, g, range));
         });
  
         // Hide previous legend
@@ -146,104 +143,63 @@
     }
   }
 
-  const getExtent = (array) => {
-    let min = Infinity;
-    let max = -Infinity;
+  // const drawOutput = (d, i, g, range) => {
+  //   let canvas = g[i];
+  //   if (range === undefined) {
+  //     range = cnnLayerRanges[selectedScaleLevel][layerIndexDict[d.layerName]];
+  //   }
+  //   let context = canvas.getContext('2d');
+  //   let colorScale = layerColorScales[d.type];
 
-    // Scalar
-    if (array.length === undefined) {
-      return [array, array];
-    }
+  //   if (d.type === 'input') {
+  //     colorScale = colorScale[d.index];
+  //   }
 
-    // 1D array
-    if (array[0].length === undefined) {
-      for (let i = 0; i < array[0].length; i++) {
-        if (array[i] < min) {
-          min = array[i];
-        } else if (array[i] > max) {
-          max = array[i];
-        }
-      }
-      return [min, max];
-    }
+  //   // Specially handle the output layer (one canvas is just one color fill)
+  //   if (d.layerName === 'output') {
+  //     context.fillStyle = colorScale(d.output);
+  //     context.fillRect(0, 0, canvas.width, canvas.height);
+  //     return;
+  //   }
 
-    // 2D array
-    for (let i = 0; i < array.length; i++) {
-      for (let j = 0; j < array[0].length; j++) {
-        if (array[i][j] < min) {
-          min = array[i][j];
-        } else if (array[i][j] > max) {
-          max = array[i][j];
-        }
-      }
-    }
-    return [min, max];
-  }
+  //   // Set up a second convas in order to resize image
+  //   let imageLength = d.output.length === undefined ? 1 : d.output.length;
+  //   let bufferCanvas = document.createElement("canvas");
+  //   let bufferContext = bufferCanvas.getContext("2d");
+  //   bufferCanvas.width = imageLength;
+  //   bufferCanvas.height = imageLength;
 
-  const drawOutputSafariDebug = (d, i, g) => {
-    let canvas = g[i];
-    let context = canvas.getContext('2d');
-    context.fillStyle = 'blue';
-    context.fillRect(0, 0, 40, 40);
-  }
+  //   // Fill image pixel array
+  //   let imageSingle = bufferContext.getImageData(0, 0, imageLength, imageLength);
+  //   let imageSingleArray = imageSingle.data;
 
-  const drawOutput = (d, i, g, range) => {
-    let canvas = g[i];
-    if (range === undefined) {
-      range = cnnLayerRanges[selectedScaleLevel][layerIndexDict[d.layerName]];
-    }
-    let context = canvas.getContext('2d');
-    let colorScale = layerColorScales[d.type];
+  //   if (imageLength === 1) {
+  //     imageSingleArray[0] = d.output;
+  //   } else {
+  //     for (let i = 0; i < imageSingleArray.length; i+=4) {
+  //       let pixeIndex = Math.floor(i / 4);
+  //       let row = Math.floor(pixeIndex / imageLength);
+  //       let column = pixeIndex % imageLength;
+  //       let color = undefined;
+  //       if (d.type === 'input' || d.type === 'fc' ) {
+  //         color = d3.rgb(colorScale(1 - d.output[row][column]))
+  //       } else {
+  //         color = d3.rgb(colorScale((d.output[row][column] + range / 2) / range));
+  //       }
 
-    if (d.type === 'input') {
-      colorScale = colorScale[d.index];
-    }
+  //       imageSingleArray[i] = color.r;
+  //       imageSingleArray[i + 1] = color.g;
+  //       imageSingleArray[i + 2] = color.b;
+  //       imageSingleArray[i + 3] = 255;
+  //     }
+  //   }
 
-    // Specially handle the output layer (one canvas is just one color fill)
-    if (d.layerName === 'output') {
-      context.fillStyle = colorScale(d.output);
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
-
-    // Set up a second convas in order to resize image
-    let imageLength = d.output.length === undefined ? 1 : d.output.length;
-    let bufferCanvas = document.createElement("canvas");
-    let bufferContext = bufferCanvas.getContext("2d");
-    bufferCanvas.width = imageLength;
-    bufferCanvas.height = imageLength;
-
-    // Fill image pixel array
-    let imageSingle = bufferContext.getImageData(0, 0, imageLength, imageLength);
-    let imageSingleArray = imageSingle.data;
-
-    if (imageLength === 1) {
-      imageSingleArray[0] = d.output;
-    } else {
-      for (let i = 0; i < imageSingleArray.length; i+=4) {
-        let pixeIndex = Math.floor(i / 4);
-        let row = Math.floor(pixeIndex / imageLength);
-        let column = pixeIndex % imageLength;
-        let color = undefined;
-        if (d.type === 'input' || d.type === 'fc' ) {
-          color = d3.rgb(colorScale(1 - d.output[row][column]))
-        } else {
-          color = d3.rgb(colorScale((d.output[row][column] + range / 2) / range));
-        }
-
-        imageSingleArray[i] = color.r;
-        imageSingleArray[i + 1] = color.g;
-        imageSingleArray[i + 2] = color.b;
-        imageSingleArray[i + 3] = 255;
-      }
-    }
-
-    // Use drawImage to resize the original pixel array, and put the new image
-    // (canvas) into corresponding canvas
-    bufferContext.putImageData(imageSingle, 0, 0);
-    context.drawImage(bufferCanvas, 0, 0, imageLength, imageLength,
-      0, 0, nodeLength, nodeLength);
-  }
+  //   // Use drawImage to resize the original pixel array, and put the new image
+  //   // (canvas) into corresponding canvas
+  //   bufferContext.putImageData(imageSingle, 0, 0);
+  //   context.drawImage(bufferCanvas, 0, 0, imageLength, imageLength,
+  //     0, 0, nodeLength, nodeLength);
+  // }
 
   const drawOutputScore = (d, i, g, scale) => {
     let group = d3.select(g[i]);
@@ -2549,14 +2505,15 @@
       
       // Recover the layer if we have drdrawn it
       if (needRedraw[0] !== undefined) {
+        let redrawRange = cnnLayerRanges[selectedScaleLevel][needRedraw[0]];
         if (needRedraw[1] !== undefined) {
           svg.select(`g#layer-${needRedraw[0]}-node-${needRedraw[1]}`)
             .select('canvas.node-canvas')
-            .each(drawOutput);
+            .each((d, i, g) => drawOutput(d, i, g, redrawRange));
         } else {
           svg.select(`g#cnn-layer-group-${needRedraw[0]}`)
             .selectAll('canvas.node-canvas')
-            .each(drawOutput);
+            .each((d, i, g) => drawOutput(d, i, g, redrawRange));
         }
       }
       
@@ -2967,7 +2924,13 @@
           .range([0, nodeLength]);
 
     // Draw the canvas
-    svg.selectAll('canvas.node-canvas').each(drawOutput);
+    for (let l = 0; l < cnn.length; l++) {
+      let range = cnnLayerRanges[selectedScaleLevel][l];
+      svg.select(`g#cnn-layer-group-${l}`)
+        .selectAll('canvas.node-canvas')
+        .each((d, i, g) => drawOutput(d, i, g, range));
+    }
+
     svg.selectAll('g.node-output').each(
       (d, i, g) => drawOutputScore(d, i, g, outputRectScale)
     );
@@ -3084,6 +3047,7 @@
     // Rebind the cnn data to layer groups layer by layer
     for (let l = 0; l < cnn.length; l++) {
       let curLayer = cnn[l];
+      let range = cnnLayerRanges[selectedScaleLevel][l];
       let layerGroup = svg.select(`g#cnn-layer-group-${l}`);
 
       let nodeGroups = layerGroup.selectAll('g.node-group')
@@ -3096,7 +3060,9 @@
           .ease(d3.easeCubicOut)
           .style('opacity', 0)
           .on('end', function() {
-            d3.select(this).select('canvas.node-canvas').each(drawOutput);
+            d3.select(this)
+              .select('canvas.node-canvas')
+              .each((d, i, g) => drawOutput(d, i, g, range));
             d3.select(this).transition('appear')
               .duration(700)
               .ease(d3.easeCubicIn)
