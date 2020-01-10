@@ -1,3 +1,11 @@
 import { writable } from 'svelte/store';
 
 export const cnnStore = writable([]);
+export const svgStore = writable(undefined);
+
+export const vSpaceAroundGapStore = writable(undefined);
+export const hSpaceAroundGapStore = writable(undefined);
+
+export const nodeCoordinateStore = writable(undefined);
+export const selectedScaleLevelStore = writable(undefined);
+export const cnnLayerRangesStore = writable(undefined);
