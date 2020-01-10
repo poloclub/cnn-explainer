@@ -21,5 +21,8 @@ export const overviewConfig = {
   edgeHoverOuting : false,
   edgeStrokeWidth : 0.7,
   intermediateColor : 'gray',
-  layerColorScales: layerColorScales
+  layerColorScales: layerColorScales,
+  svgPaddings: {top: 25, bottom: 25, left: 50, right: 50},
+  kernelRectLength: 8/3,
+  gapRatio: 4
 };
