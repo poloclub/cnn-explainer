@@ -24,5 +24,8 @@ export const overviewConfig = {
   layerColorScales: layerColorScales,
   svgPaddings: {top: 25, bottom: 25, left: 50, right: 50},
   kernelRectLength: 8/3,
-  gapRatio: 4
+  gapRatio: 4,
+  overlayRectOffset: 6,
+  classLists: ['lifeboat', 'ladybug', 'pizza', 'bell pepper', 'school bus',
+    'koala', 'espresso', 'red panda', 'orange', 'sport car']
 };
