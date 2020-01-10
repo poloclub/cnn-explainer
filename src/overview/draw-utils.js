@@ -114,3 +114,17 @@ export const getLinkData = (nodeCoordinate, cnn) => {
   }
   return linkData;
 }
+
+
+/**
+ * Color scale wrapper (support artificially lighter color!)
+ * @param {function} colorScale D3 color scale function
+ * @param {number} range Color range (max - min)
+ * @param {number} value Color value
+ * @param {number} gap Tail of the color scale to skip
+ */
+export const gappedColorScale = (colorScale, range, value, gap) => {
+  if (gap === undefined) { gap = 0; }
+  let normalizedValue = (value + range / 2) / range;
+  return colorScale(normalizedValue * (1 - 2 * gap) + gap);
+}
