@@ -57,20 +57,11 @@ detailedModeStore.subscribe( value => {detailedMode = value;} )
  * @param {number} range color range map (max - min)
  */
 export const drawOutput = (d, i, g, range) => {
-  let canvas = g[i];
-
-  let context = canvas.getContext('2d');
+  let image = g[i];
   let colorScale = layerColorScales[d.type];
 
   if (d.type === 'input') {
     colorScale = colorScale[d.index];
-  }
-
-  // Specially handle the output layer (one canvas is just one color fill)
-  if (d.layerName === 'output') {
-    context.fillStyle = colorScale(d.output);
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    return;
   }
 
   // Set up a second convas in order to resize image
@@ -105,11 +96,25 @@ export const drawOutput = (d, i, g, range) => {
     }
   }
 
+  // canvas.toDataURL() only exports image in 96 DPI, so we can hack it to have
+  // higher DPI by rescaling the image using canvas magic
+  let largeCanvas = document.createElement('canvas');
+  largeCanvas.width = nodeLength * 3;
+  largeCanvas.height = nodeLength * 3;
+  let largeCanvasContext = largeCanvas.getContext('2d');
+
   // Use drawImage to resize the original pixel array, and put the new image
   // (canvas) into corresponding canvas
   bufferContext.putImageData(imageSingle, 0, 0);
-  context.drawImage(bufferCanvas, 0, 0, imageLength, imageLength,
-    0, 0, nodeLength, nodeLength);
+  largeCanvasContext.drawImage(bufferCanvas, 0, 0, imageLength, imageLength,
+    0, 0, nodeLength * 3, nodeLength * 3);
+  
+  let imageDataURL = largeCanvas.toDataURL();
+  d3.select(image).attr('xlink:href', imageDataURL);
+
+  // Destory the buffer canvas
+  bufferCanvas.remove();
+  largeCanvas.remove();
 }
 
 /**
@@ -400,22 +405,13 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
       });
     
     if (curLayer[0].layerName !== 'output') {
-      // Embed canvas in these groups
-      nodeGroups.append('foreignObject')
+      // Embed raster image in these groups
+      nodeGroups.append('image')
+        .attr('class', 'node-image')
         .attr('width', nodeLength)
         .attr('height', nodeLength)
         .attr('x', left)
-        .attr('y', (d, i) => nodeCoordinate[l][i].y)
-        .append('xhtml:body')
-        .style('margin', 0)
-        .style('padding', 0)
-        .style('background-color', 'none')
-        .style('width', '100%')
-        .style('height', '100%')
-        .append('canvas')
-        .attr('class', 'node-canvas')
-        .attr('width', nodeLength)
-        .attr('height', nodeLength);
+        .attr('y', (d, i) => nodeCoordinate[l][i].y);
       
       // Add a rectangle to show the border
       nodeGroups.append('rect')
@@ -462,7 +458,7 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
   for (let l = 0; l < cnn.length; l++) {
     let range = cnnLayerRanges[selectedScaleLevel][l];
     svg.select(`g#cnn-layer-group-${l}`)
-      .selectAll('canvas.node-canvas')
+      .selectAll('image.node-image')
       .each((d, i, g) => drawOutput(d, i, g, range));
   }
 
@@ -598,7 +594,7 @@ export const updateCNN = () => {
         .style('opacity', 0)
         .on('end', function() {
           d3.select(this)
-            .select('canvas.node-canvas')
+            .select('image.node-image')
             .each((d, i, g) => drawOutput(d, i, g, range));
           d3.select(this).transition('appear')
             .duration(700)

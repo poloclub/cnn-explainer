@@ -1,19 +1,7 @@
-/* global d3 */
-
-import { get } from 'svelte/store';
 import { overviewConfig } from '../config.js';
 
 // Configs
-const layerColorScales = overviewConfig.layerColorScales;
 const nodeLength = overviewConfig.nodeLength;
-const plusSymbolRadius = overviewConfig.plusSymbolRadius;
-const numLayers = overviewConfig.numLayers;
-const edgeOpacity = overviewConfig.edgeOpacity;
-const edgeInitColor = overviewConfig.edgeInitColor;
-const edgeHoverColor = overviewConfig.edgeHoverColor;
-const edgeHoverOuting = overviewConfig.edgeHoverOuting;
-const edgeStrokeWidth = overviewConfig.edgeStrokeWidth;
-const intermediateColor = overviewConfig.intermediateColor;
 
 /**
  * Compute the [minimum, maximum] of a 1D or 2D array.

@@ -82,7 +82,7 @@ export const moveLayerX = (arg) => {
     d3.select(g[i])
       .style('cursor', disable && i !== specialIndex ? 'default' : 'pointer')
       .style('pointer-events', disable && i !== specialIndex ? 'none' : 'all')
-      .select('foreignObject')
+      .select('image')
       .transition(transitionName)
       .ease(d3.easeCubicInOut)
       .delay(delay)
@@ -99,7 +99,7 @@ export const moveLayerX = (arg) => {
     
     if (opacity !== undefined && i !== specialIndex) {
       d3.select(g[i])
-        .select('foreignObject')
+        .select('image')
         .style('opacity', opacity);
     }
   });
@@ -162,15 +162,15 @@ export const addOverlayGradient = (gradientID, stops, group) => {
 
 /**
  * Draw the intermediate layer activation heatmaps
- * @param {element} context Neuron heatmap canvas context
+ * @param {element} image Neuron heatmap image
  * @param {number} range Colormap range
  * @param {function} colorScale Colormap
  * @param {number} length Image length
  * @param {[[number]]} dataMatrix Heatmap matrix
  */
-const drawIntermidiateCanvas = (context, range, colorScale, length,
+const drawIntermidiateImage = (image, range, colorScale, length,
   dataMatrix) => {
-  // Set up a second convas in order to resize image
+  // Set up a buffer convas in order to resize image
   let imageLength = length;
   let bufferCanvas = document.createElement("canvas");
   let bufferContext = bufferCanvas.getContext("2d");
@@ -193,11 +193,25 @@ const drawIntermidiateCanvas = (context, range, colorScale, length,
     imageSingleArray[i + 3] = 255;
   }
 
+  // canvas.toDataURL() only exports image in 96 DPI, so we can hack it to have
+  // higher DPI by rescaling the image using canvas magic
+  let largeCanvas = document.createElement('canvas');
+  largeCanvas.width = nodeLength * 3;
+  largeCanvas.height = nodeLength * 3;
+  let largeCanvasContext = largeCanvas.getContext('2d');
+
   // Use drawImage to resize the original pixel array, and put the new image
   // (canvas) into corresponding canvas
   bufferContext.putImageData(imageSingle, 0, 0);
-  context.drawImage(bufferCanvas, 0, 0, imageLength, imageLength,
-    0, 0, nodeLength, nodeLength);
+  largeCanvasContext.drawImage(bufferCanvas, 0, 0, imageLength, imageLength,
+    0, 0, nodeLength * 3, nodeLength * 3);
+  
+  let imageDataURL = largeCanvas.toDataURL();
+  image.attr('xlink:href', imageDataURL);
+
+  // Destory the buffer canvas
+  bufferCanvas.remove();
+  largeCanvas.remove();
 }
 
 /**
@@ -226,11 +240,12 @@ const createIntermediateNode = (curLayerIndex, selectedI, groupLayer, x, y,
     .on('mouseleave', intermediateNodeMouseLeaveHandler)
     .on('click', (d, g, i) => intermediateNodeClicked(d, g, i, selectedI, curLayerIndex));
   
-  newNode.append('foreignObject')
+  newNode.append('image')
     .attr('width', nodeLength)
     .attr('height', nodeLength)
     .attr('x', x)
-    .attr('y', y)
+    .attr('y', y);
+    /*
     .append('xhtml:body')
     .style('margin', 0)
     .style('padding', 0)
@@ -241,6 +256,7 @@ const createIntermediateNode = (curLayerIndex, selectedI, groupLayer, x, y,
     .attr('class', 'node-canvas')
     .attr('width', nodeLength)
     .attr('height', nodeLength);
+    */
 
   // Add a rectangle to show the border
   newNode.append('rect')
@@ -329,9 +345,9 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       intermediateX1, n.y, ni, intermediateNodeMouseOverHandler,
       intermediateNodeMouseLeaveHandler, intermediateNodeClicked, true);
     
-    // Draw the canvas
-    let context = newNode.select('canvas').node().getContext('2d');
-    drawIntermidiateCanvas(context, range, colorScale, d.output.length,
+    // Draw the image
+    let image = newNode.select('image');
+    drawIntermidiateImage(image, range, colorScale, d.output.length,
       interMatrix);      
 
     // Edge: input -> intermediate1
@@ -547,10 +563,10 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
   const animateEdge = (d, i, g, dashoffset) => {
     let curPath = d3.select(g[i]);
     curPath.transition()
-      .duration(8000)
+      .duration(60000)
       .ease(d3.easeLinear)
       .attr('stroke-dashoffset', dashoffset)
-      .on('end', (d, i, g) => animateEdge(d, i, g, dashoffset - 160));
+      .on('end', (d, i, g) => animateEdge(d, i, g, dashoffset - 1000));
   }
 
   edgeGroup.selectAll('path')
@@ -570,7 +586,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
   edgeGroup.selectAll('path.flow-edge')
     .attr('stroke-dasharray', '4 2')
     .attr('stroke-dashoffset', 0)
-    .each((d, i, g) => animateEdge(d, i, g, dashoffset - 160));
+    .each((d, i, g) => animateEdge(d, i, g, dashoffset - 1000));
   
   return {intermediateLayer: intermediateLayer,
     intermediateMinMax: aggregatedMinMax,
@@ -952,7 +968,7 @@ const redrawLayerIfNeeded = (curLayerIndex, i) => {
   if (rangePre > rangeCur) {
     // Redraw the current layer (selected node)
     svg.select(`g#layer-${curLayerIndex}-node-${i}`)
-      .select('canvas.node-canvas')
+      .select('image.node-image')
       .each((d, g, i) => drawOutput(d, g, i, range));
     
     // Record the change so we will re-redraw the layer when user quits
@@ -963,7 +979,7 @@ const redrawLayerIfNeeded = (curLayerIndex, i) => {
   } else if (rangePre < rangeCur) {
     // Redraw the previous layer (whole layer)
     svg.select(`g#cnn-layer-group-${curLayerIndex - 1}`)
-      .selectAll('canvas.node-canvas')
+      .selectAll('image.node-image')
       .each((d, g, i) => drawOutput(d, g, i, range));
 
     // Record the change so we will re-redraw the layer when user quits
