@@ -1025,12 +1025,13 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
   let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
   let leftX = nodeCoordinate[curLayerIndex - 1][0].x;
 
+  // Hide the edges
+  svg.select('g.edge-group')
+    .style('visibility', 'hidden');
+
   // Move the selected layer
   moveLayerX({layerIndex: curLayerIndex, targetX: targetX, disable: true,
-  delay: 0, opacity: 0.15, specialIndex: i});
-
-  // Hide the edges
-  svg.select('g.edge-group').classed('hidden', true);
+    delay: 0, opacity: 0.15, specialIndex: i});
 
   // Compute the gap in the right shrink region
   let rightStart = targetX + nodeLength + hSpaceAroundGap * gapRatio;
@@ -1159,12 +1160,13 @@ export const drawConv2 = (curLayerIndex, d, i, width, height,
   // Make sure two layers have the same range
   let {range, minMax} = redrawLayerIfNeeded(curLayerIndex, i);
 
+  // Hide the edges
+  svg.select('g.edge-group')
+    .style('visibility', 'hidden');
+
   // Move the selected layer
   moveLayerX({layerIndex: curLayerIndex, targetX: targetX, disable: true,
     delay: 0, opacity: 0.15, specialIndex: i});
-
-  // Hide the edges
-  svg.select('g.edge-group').classed('hidden', true);
 
   // Compute the gap in the right shrink region
   let rightStart = targetX + nodeLength + hSpaceAroundGap * gapRatio;
@@ -1281,6 +1283,10 @@ export const drawConv3 = (curLayerIndex, d, i, width, height,
     2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
   let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
+  // Hide the edges
+  svg.select('g.edge-group')
+    .style('visibility', 'hidden');
+
   // Make sure two layers have the same range
   let {range, minMax} = redrawLayerIfNeeded(curLayerIndex, i);
 
@@ -1291,9 +1297,6 @@ export const drawConv3 = (curLayerIndex, d, i, width, height,
   moveLayerX({layerIndex: curLayerIndex,
     targetX: targetX, disable: true,
     delay: 0, opacity: 0.15, specialIndex: i});
-
-  // Hide the edges
-  svg.select('g.edge-group').classed('hidden', true);
 
   // Compute the gap in the left shrink region
   let leftEnd = leftX - hSpaceAroundGap;
@@ -1409,6 +1412,10 @@ export const drawConv4 = (curLayerIndex, d, i, width, height,
     2 * hSpaceAroundGap * gapRatio + plusSymbolRadius * 2);
   let intermediateGap = (hSpaceAroundGap * gapRatio * 2) / 3;
 
+  // Hide the edges
+  svg.select('g.edge-group')
+    .style('visibility', 'hidden');
+
   // Make sure two layers have the same range
   let {range, minMax} = redrawLayerIfNeeded(curLayerIndex, i);
 
@@ -1419,9 +1426,6 @@ export const drawConv4 = (curLayerIndex, d, i, width, height,
   moveLayerX({layerIndex: curLayerIndex,
     targetX: targetX, disable: true,
     delay: 0, opacity: 0.15, specialIndex: i});
-
-  // Hide the edges
-  svg.select('g.edge-group').classed('hidden', true);
 
   // Compute the gap in the left shrink region
   let leftEnd = leftX - hSpaceAroundGap;
@@ -1535,6 +1539,10 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     4 * hSpaceAroundGap * gapRatio + pixelWidth);
   let intermediateGap = (hSpaceAroundGap * gapRatio * 4) / 2;
 
+  // Hide the edges
+  svg.select('g.edge-group')
+    .style('visibility', 'hidden');
+
   // Move the previous layer
   moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
     disable: true, delay: 0});
@@ -1542,9 +1550,6 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   moveLayerX({layerIndex: curLayerIndex,
     targetX: nodeCoordinate[curLayerIndex][0].x, disable: true,
     delay: 0, opacity: 0.15, specialIndex: i});
-
-  // Hide the edges
-  svg.select('g.edge-group').classed('hidden', true);
 
   // Compute the gap in the left shrink region
   let leftEnd = leftX - hSpaceAroundGap;
