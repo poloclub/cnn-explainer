@@ -480,7 +480,8 @@
       targetX: nodeCoordinate[numLayers - 2][0].x, opacity: 1,
       disable:false, delay:500, onEndFunc: () => {
         // Show all edges on the last moving animation end
-        svg.select('g.edge-group').classed('hidden', false);
+        svg.select('g.edge-group')
+          .style('visibility', 'visible');
       }});
   }
 
@@ -937,7 +938,7 @@
     stroke-width: 3px;
   }
 
-  :global(.bounding, .edge-group, foreignObject, .bounding-flatten, .underneath-gateway) {
+  :global(.bounding, .edge, .edge-group, foreignObject, .bounding-flatten, .underneath-gateway) {
     transition: opacity 300ms ease-in-out;
   }
 
