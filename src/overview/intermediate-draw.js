@@ -24,6 +24,7 @@ const kernelRectLength = overviewConfig.kernelRectLength;
 const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
 const overlayRectOffset = overviewConfig.overlayRectOffset;
+const isSafari = window.safari !== undefined;
 
 // Shared variables
 let svg = undefined;
@@ -642,6 +643,8 @@ const drawIntermediateLayerAnnotation = (arg) => {
     dr = 40;
   }
 
+  if (isSafari) { sliderY += 2 * kernelRectLength; }
+
   let slideText = kernelAnnotation.append('text')
     .attr('x', sliderX)
     .attr('y', sliderY)
@@ -679,6 +682,9 @@ const drawIntermediateLayerAnnotation = (arg) => {
   let textX = intermediateX2;
   let textY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
       kernelRectLength * 3;
+  
+  // Safari special position
+  if (isSafari) { textY += 2 * kernelRectLength; }
 
   // Special case 1: first node
   if (i === 0) { textX += 30; }
@@ -1982,6 +1988,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   let arrowTY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 +
     plusSymbolRadius;
 
+  if (isSafari) { textY += 3 * kernelRectLength; }
+
   if (i == 0) {
     textY += 10;
     arrowSY += 10;
@@ -2041,11 +2049,15 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   // Add annotation for the bias
   let biasTextY = nodeCoordinate[curLayerIndex][i].y;
+  if (isSafari) { biasTextY -= 0.5 * kernelRectLength; }
+
   if (i === 0) {
-    biasTextY += nodeLength + 2 * kernelRectLength;
+    biasTextY += nodeLength + 2.5 * kernelRectLength;
+    if (isSafari) { biasTextY += kernelRectLength; }
   } else {
     biasTextY -= 2 * kernelRectLength + 5;
   }
+  
   plusAnnotation.append('text')
     .attr('class', 'annotation-text')
     .attr('x', intermediateX2 + plusSymbolRadius)
