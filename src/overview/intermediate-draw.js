@@ -290,8 +290,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
   intermediateGap, d, i, intermediateNodeMouseOverHandler,
   intermediateNodeMouseLeaveHandler, intermediateNodeClicked) => {
   // Add the intermediate layer
-  let intermediateLayer = svg.select('.cnn-group')
-    .append('g')
+  let intermediateLayer = svg.append('g')
     .attr('class', 'intermediate-layer')
     .style('opacity', 0);
   
@@ -1065,8 +1064,8 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
     intermediateGap, d, i, intermediateNodeMouseOverHandler,
     intermediateNodeMouseLeaveHandler, intermediateNodeClicked);
   addUnderneathRect(curLayerIndex, i, leftX, intermediateGap, 8,
-  intermediateNodeMouseOverHandler, intermediateNodeMouseLeaveHandler,
-  intermediateNodeClicked);
+    intermediateNodeMouseOverHandler, intermediateNodeMouseLeaveHandler,
+    intermediateNodeClicked);
 
   // Compute the selected node's min max
   // Selected node
@@ -1090,59 +1089,59 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
   .style('opacity', 0);
 
   drawIntermediateLayerAnnotation({
-  leftX: leftX,
-  curLayerIndex: curLayerIndex,
-  group: intermediateLayerAnnotation,
-  intermediateGap: intermediateGap,
-  isFirstConv: true,
-  i: i
+    leftX: leftX,
+    curLayerIndex: curLayerIndex,
+    group: intermediateLayerAnnotation,
+    intermediateGap: intermediateGap,
+    isFirstConv: true,
+    i: i
   });
 
   let range = cnnLayerRanges.local[curLayerIndex];
 
   drawIntermediateLayerLegend({
-  legendHeight: 5,
-  curLayerIndex: curLayerIndex,
-  range: 1,
-  group: intermediateLayer,
-  width: 2 * nodeLength + intermediateGap,
-  isInput: true,
-  x: leftX,
-  y: nodeCoordinate[curLayerIndex][9].y,
+    legendHeight: 5,
+    curLayerIndex: curLayerIndex,
+    range: 1,
+    group: intermediateLayer,
+    width: 2 * nodeLength + intermediateGap,
+    isInput: true,
+    x: leftX,
+    y: nodeCoordinate[curLayerIndex][9].y,
   });
 
   drawIntermediateLayerLegend({
-  legendHeight: 5,
-  curLayerIndex: curLayerIndex,
-  range: range,
-  minMax: finalMinMax,
-  group: intermediateLayer,
-  width: 2 * nodeLength + intermediateGap,
-  x: nodeCoordinate[curLayerIndex - 1][2].x,
-  y: nodeCoordinate[curLayerIndex][9].y + 25
+    legendHeight: 5,
+    curLayerIndex: curLayerIndex,
+    range: range,
+    minMax: finalMinMax,
+    group: intermediateLayer,
+    width: 2 * nodeLength + intermediateGap,
+    x: nodeCoordinate[curLayerIndex - 1][2].x,
+    y: nodeCoordinate[curLayerIndex][9].y + 25
   });
 
   drawIntermediateLayerLegend({
-  legendHeight: 5,
-  curLayerIndex: curLayerIndex,
-  range: kernelRange,
-  minMax: kernelMinMax,
-  group: intermediateLayer,
-  width: 2 * nodeLength + intermediateGap,
-  x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
-  y: nodeCoordinate[curLayerIndex][9].y + 25,
-  gradientAppendingName: 'kernelColorGradient',
-  colorScale: layerColorScales.weight,
-  gradientGap: 0.2
+    legendHeight: 5,
+    curLayerIndex: curLayerIndex,
+    range: kernelRange,
+    minMax: kernelMinMax,
+    group: intermediateLayer,
+    width: 2 * nodeLength + intermediateGap,
+    x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
+    y: nodeCoordinate[curLayerIndex][9].y + 25,
+    gradientAppendingName: 'kernelColorGradient',
+    colorScale: layerColorScales.weight,
+    gradientGap: 0.2
   });
 
   // Show everything
   svg.selectAll('g.intermediate-layer, g.intermediate-layer-annotation')
-  .transition()
-  .delay(500)
-  .duration(500)
-  .ease(d3.easeCubicInOut)
-  .style('opacity', 1);
+    .transition()
+    .delay(500)
+    .duration(500)
+    .ease(d3.easeCubicInOut)
+    .style('opacity', 1);
 }
 
 /**
@@ -1610,8 +1609,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('opacity', 1);
 
   // Add the intermediate layer
-  let intermediateLayer = svg.select('.cnn-group')
-    .append('g')
+  let intermediateLayer = svg.append('g')
     .attr('class', 'intermediate-layer')
     .style('opacity', 0);
   

@@ -48,7 +48,7 @@
 <div id="header">
   <div id="logo">
     <div id="logo-text">
-      CNN 101
+      CNN Explainer
     </div>
     <div id="logo-tagline">
       Learn Convolutional Neural Network (CNN) in your browser!

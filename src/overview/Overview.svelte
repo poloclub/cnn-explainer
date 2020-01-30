@@ -843,6 +843,8 @@
 
   svg {
     margin: 0 auto;
+    min-height: 490px;
+    max-height: 700px;
     height: calc(100vh - 100px);
     width: 100vw;
   }
