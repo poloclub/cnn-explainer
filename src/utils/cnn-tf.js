@@ -254,25 +254,54 @@ export const constructCNN = async (inputImageFile, model) => {
 // Helper functions
 
 /**
+ * Crop the largest central square of size 64x64x3 of a 3d array.
+ * 
+ * @param {[int8]} arr array that requires cropping and padding (if a 64x64 crop
+ * is not present)
+ * @returns 64x64x3 array
+ */
+const cropCentralSquare = (arr) => {
+  let width = arr.length;
+  let height = arr[0].length;
+  let croppedArray;
+
+  // Crop largest square from image if the image is smaller than 64x64 and pad the
+  // cropped image.
+  if (width < 64 || height < 64) {
+    // TODO(robert): Finish the padding logic.  Pushing now for Omar to work on when he is ready.
+    let cropDimensions = Math.min(width, height);
+    let startXIdx = Math.floor(width / 2) - (cropDimensions / 2);
+    let startYIdx = Math.floor(height / 2) - (cropDimensions / 2);
+    let unpaddedSubarray = arr.slice(startXIdx, startXIdx + cropDimensions).map(i => i.slice(startYIdx, startYIdx + cropDimensions));
+  } else {
+    let startXIdx = Math.floor(width / 2) - 32;
+    let startYIdx = Math.floor(height / 2) - 32;
+    croppedArray = arr.slice(startXIdx, startXIdx + 64).map(i => i.slice(startYIdx, startYIdx + 64));
+  }
+  return croppedArray;
+}
+
+/**
  * Convert canvas image data into a 3D tensor with dimension [height, width, 3].
  * Recall that tensorflow uses NHWC order (batch, height, width, channel).
  * Each pixel is in 0-255 scale.
  * 
  * @param {[int8]} imageData Canvas image data
+ * @param {int} width Canvas image width
+ * @param {int} height Canvas image height
  */
-const imageDataTo3DTensor = (imageData, normalize=true) => {
-  // Get image dimension (assume square image)
-  let width = Math.sqrt(imageData.length / 4);
-
+const imageDataTo3DTensor = (imageData, width, height, normalize=true) => {
   // Create array placeholder for the 3d array
-  let imageArray = tf.fill([width, width, 3], 0).arraySync();
-  
+  let imageArray = tf.fill([width, height, 3], 0).arraySync();
+
   // Iterate through the data to fill out channel arrays above
   for (let i = 0; i < imageData.length; i++) {
     let pixelIndex = Math.floor(i / 4),
       channelIndex = i % 4,
-      row = Math.floor(pixelIndex / width),
-      column = pixelIndex % width;
+      row = width === height ? Math.floor(pixelIndex / width)
+                              : pixelIndex % width,
+      column = width === height ? pixelIndex % width
+                              : Math.floor(pixelIndex / width);
     
     if (channelIndex < 3) {
       let curEntry  = imageData[i];
@@ -282,6 +311,11 @@ const imageDataTo3DTensor = (imageData, normalize=true) => {
       }
       imageArray[row][column][channelIndex] = curEntry;
     }
+  }
+
+  // If the image is not 64x64, crop and or pad the image appropriately.
+  if (width != 64 && height != 64) {
+    imageArray = cropCentralSquare(imageArray)
   }
 
   let tensor = tf.tensor3d(imageArray);
@@ -306,13 +340,16 @@ const getInputImageArray = (imgFile, normalize=true) => {
     inputImage.onload = () => {
       context.drawImage(inputImage, 0, 0,);
       // Get image data and convert it to a 3D array
-      let imageData = context.getImageData(0, 0, inputImage.width,
-        inputImage.height).data;
+      let canvasImage = context.getImageData(0, 0, inputImage.width,
+        inputImage.height);
+      let imageData = canvasImage.data;
+      let imageWidth = canvasImage.width;
+      let imageHeight = canvasImage.height;
 
       // Remove this newly created canvas element
       canvas.parentNode.removeChild(canvas);
 
-      resolve(imageDataTo3DTensor(imageData, normalize));
+      resolve(imageDataTo3DTensor(imageData, imageWidth, imageHeight, normalize));
     }
     inputImage.onerror = reject;
   })
