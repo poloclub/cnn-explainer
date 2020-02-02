@@ -82,6 +82,7 @@
   let selectedNode = {layerName: '', index: -1, data: null};
   let isInIntermediateView = false;
   let isInActPoolDetailView = false;
+  let actPoolDetailViewNodeIndex = -1;
   let detailedViewNum = undefined;
 
   // Wait to load
@@ -196,8 +197,6 @@
       detailedViewNum = undefined;
       svg.select(`rect#underneath-gateway-${d.index}`)
         .style('opacity', 0);
-
-      // TODO: destroy the detailed view with smooth animation
     } 
     // We need to show a new detailed view (two cases: if we need to close the
     // old detailed view or not)
@@ -264,6 +263,8 @@
 
   const quitActPoolDetailView = () => {
     isInActPoolDetailView = false;
+    actPoolDetailViewNodeIndex = -1;
+
     let layerIndex = layerIndexDict[selectedNode.layerName];
     let nodeIndex = selectedNode.index;
     svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
@@ -277,6 +278,16 @@
         .select('rect.bounding')
         .classed('hidden', true);
     })
+
+    // Clean up the underneath rects
+    svg.select('g.underneath')
+      .selectAll('rect')
+      .remove();
+
+    // Show all edges
+    svg.select('g.edge-group')
+      .selectAll('.edge')
+      .style('visibility', 'visible');
 
     // Also dehighlight the edge
     let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
@@ -324,13 +335,20 @@
     selectedNode.data = null;
   }
 
-  const enterDetailMode = (curLayerIndex, i) => {
+  const enterDetailView = (curLayerIndex, i) => {
     isInActPoolDetailView = true;
+    actPoolDetailViewNodeIndex = i;
 
     const detailview = document.getElementById('detailview');
     detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
     detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
     detailview.style.position = 'absolute';
+
+    // Hide all edges
+    svg.select('g.edge-group')
+      .selectAll('.edge')
+      .filter(d => {d.targetLayerIndex !== curLayerIndex})
+      .style('visibility', 'hidden');
 
     // Add overlay rects
     let leftX = nodeCoordinate[curLayerIndex - 1][i].x;
@@ -366,10 +384,34 @@
     addOverlayRect('overlay-gradient-right', rightStart + overlayRectOffset / 2,
       0, rightWidth, height + svgPaddings.top + svgPaddings.bottom);
     
-    addOverlayRect('overlay-gradient-left', nodeCoordinate[0][0].x - overlayRectOffset / 2,
+    addOverlayRect('overlay-gradient-left',
+      nodeCoordinate[0][0].x - overlayRectOffset / 2,
       0, leftWidth, height + svgPaddings.top + svgPaddings.bottom);
     
+    // Add underneath rectangles
+    let underGroup = svg.select('g.underneath');
+    for (let n = 0; n < cnn[curLayerIndex - 1].length; n++) {
+      underGroup.append('rect')
+        .attr('class', 'underneath-gateway')
+        .attr('id', `underneath-gateway-${n}`)
+        .attr('x', nodeCoordinate[curLayerIndex - 1][n].x - 5)
+        .attr('y', nodeCoordinate[curLayerIndex - 1][n].y - 5)
+        .attr('width', (2 * nodeLength + hSpaceAroundGap) + 2 * 5)
+        .attr('height', nodeLength + 2 * 5)
+        .attr('rx', 10)
+        .style('fill', 'rgba(160, 160, 160, 0.2)')
+        .style('opacity', 0);
+    }
+    underGroup.lower();
+
+    // Highlight the selcted pair
+    underGroup.select(`#underneath-gateway-${i}`)
+      .style('opacity', 1);
+
+    // Add underlying rectangle
+    
     // Fade out unselected pairs
+    /*
     svg.select(`g#cnn-layer-group-${curLayerIndex}`)
       .selectAll('g.node-group')
       .each((sd, si, sg) => {
@@ -389,6 +431,7 @@
           .select('foreignObject')
           .style('opacity', si === i ? 1 : 0.3);
     });
+    */
   }
 
   const quitIntermediateView = (curLayerIndex, g, i) => {
@@ -486,24 +529,6 @@
   }
 
   const nodeClickHandler = (d, i, g) => {
-    // If clicked a new node, deselect the old clicked node
-    if ((selectedNode.layerName !== d.layerName ||
-      selectedNode.index !== d.index) && selectedNode.index !== -1) {
-      let layerIndex = layerIndexDict[selectedNode.layerName];
-      let nodeIndex = selectedNode.index;
-      svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
-        .select('rect.bounding')
-        .classed('hidden', true);
-
-      selectedNode.data.inputLinks.forEach(link => {
-        let layerIndex = layerIndexDict[link.source.layerName];
-        let nodeIndex = link.source.index;
-        svg.select(`g#layer-${layerIndex}-node-${nodeIndex}`)
-          .select('rect.bounding')
-          .classed('hidden', true);
-      })
-    }
-
     // Record the current clicked node
     selectedNode.layerName = d.layerName;
     selectedNode.index = d.index;
@@ -531,10 +556,61 @@
       isExitedFromDetailedView = false;
       if (!isInActPoolDetailView) {
         // Enter the act pool detail view
-        enterDetailMode(curLayerIndex, i);
+        enterDetailView(curLayerIndex, i);
       } else {
-        // Quit the act pool detail view
-        quitActPoolDetailView();
+        if (i == actPoolDetailViewNodeIndex) {
+          // Quit the act pool detail view
+          quitActPoolDetailView();
+        } else {
+          // Switch the detail view input to the new clicked pair
+
+          // Remove the previous selection effect
+          svg.select(`g#layer-${curLayerIndex}-node-${actPoolDetailViewNodeIndex}`)
+            .select('rect.bounding')
+            .classed('hidden', true);
+
+          svg.select(`g#layer-${curLayerIndex - 1}-node-${actPoolDetailViewNodeIndex}`)
+            .select('rect.bounding')
+            .classed('hidden', true);
+          
+          let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
+      
+          edgeGroup.selectAll(`path.edge-${curLayerIndex}-${actPoolDetailViewNodeIndex}`)
+            .transition()
+            .ease(d3.easeCubicOut)
+            .duration(200)
+            .style('stroke', edgeInitColor)
+            .style('stroke-width', edgeStrokeWidth)
+            .style('opacity', edgeOpacity);
+          
+          let underGroup = svg.select('g.underneath');
+          underGroup.select(`#underneath-gateway-${actPoolDetailViewNodeIndex}`)
+            .style('opacity', 0);
+        
+          // Add selection effect on the new selected pair
+          svg.select(`g#layer-${curLayerIndex}-node-${i}`)
+            .select('rect.bounding')
+            .classed('hidden', false);
+
+          svg.select(`g#layer-${curLayerIndex - 1}-node-${i}`)
+            .select('rect.bounding')
+            .classed('hidden', false);
+
+          edgeGroup.selectAll(`path.edge-${curLayerIndex}-${i}`)
+            .raise()
+            .transition()
+            .ease(d3.easeCubicInOut)
+            .duration(400)
+            .style('stroke', edgeHoverColor)
+            .style('stroke-width', '1')
+            .style('opacity', 1);
+
+          underGroup.select(`#underneath-gateway-${i}`)
+            .style('opacity', 1);
+
+          actPoolDetailViewNodeIndex = i;
+          console.log(1);
+        }
       }
     }
 
@@ -569,7 +645,6 @@
       else if (d.layerName === 'output') {
         drawFlatten(curLayerIndex, d, i, width, height);
       }
-
     }
     // Quit the layerview
     else if ((d.type === 'conv' || d.layerName === 'output') && isInIntermediateView) {
@@ -578,7 +653,7 @@
   }
 
   const nodeMouseOverHandler = (d, i, g) => {
-    if (isInIntermediateView) { return; }
+    if (isInIntermediateView || isInActPoolDetailView) { return; }
 
     // Highlight the edges
     let layerIndex = layerIndexDict[d.layerName];
@@ -633,7 +708,7 @@
   }
 
   const nodeMouseLeaveHandler = (d, i, g) => {
-    if (isInIntermediateView) { return; }
+    if (isInIntermediateView || isInActPoolDetailView) { return; }
     
     // Keep the highlight if user has clicked
     if (d.layerName !== selectedNode.layerName || d.index !== selectedNode.index){

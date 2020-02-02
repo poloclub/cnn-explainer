@@ -25,7 +25,7 @@ export const overviewConfig = {
   svgPaddings: {top: 25, bottom: 25, left: 50, right: 50},
   kernelRectLength: 8/3,
   gapRatio: 4,
-  overlayRectOffset: 6,
+  overlayRectOffset: 12,
   classLists: ['lifeboat', 'ladybug', 'pizza', 'bell pepper', 'school bus',
     'koala', 'espresso', 'red panda', 'orange', 'sport car']
 };
