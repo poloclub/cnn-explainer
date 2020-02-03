@@ -6,7 +6,6 @@
   export let input;
   export let kernelLength;
   export let dataRange;
-  // export let output;
   export let isExited;
   
   const dispatch = createEventDispatcher();

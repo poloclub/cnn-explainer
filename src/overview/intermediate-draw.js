@@ -924,7 +924,8 @@ const addUnderneathRect = (curLayerIndex, i, leftX,
       .on('mouseover', intermediateNodeMouseOverHandler)
       .on('mouseleave', intermediateNodeMouseLeaveHandler)
       .on('click', (d, g, ni) => intermediateNodeClicked(d, g, ni,
-        i, curLayerIndex));
+         i, curLayerIndex));
+      // .on('click', (d, i) => {console.log(i)});
   }
   underGroup.lower();
 }

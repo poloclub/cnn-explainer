@@ -383,7 +383,7 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     vSpaceAroundGapStore.set(vSpaceAroundGap);
 
     let nodeGroups = layerGroup.selectAll('g.node-group')
-      .data(curLayer)
+      .data(curLayer, d => d.index)
       .enter()
       .append('g')
       .attr('class', 'node-group')

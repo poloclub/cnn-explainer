@@ -158,7 +158,7 @@
         updatingLayerIndex.forEach(l => {
           let range = cnnLayerRanges[selectedScaleLevel][l];
           svg.select(`#cnn-layer-group-${l}`)
-            .selectAll('.node-canvas')
+            .selectAll('.node-image')
             .each((d, i, g) => drawOutput(d, i, g, range));
         });
  
@@ -342,6 +342,7 @@
   }
 
   const enterDetailView = (curLayerIndex, i) => {
+    console.log(curLayerIndex, i);
     isInActPoolDetailView = true;
     actPoolDetailViewNodeIndex = i;
     actPoolDetailViewLayerIndex = curLayerIndex;
@@ -459,6 +460,7 @@
         .on('mouseover', nodeMouseOverHandler)
         .on('mouseleave', nodeMouseLeaveHandler)
         .on('click', nodeClickHandler);
+        // .on('click', (d, i) => {console.log(i)});
     }
 
     // Clean up the underneath rects
@@ -510,15 +512,17 @@
       });
     
     // Recover the layer if we have drdrawn it
+    console.log(needRedraw);
     if (needRedraw[0] !== undefined) {
       let redrawRange = cnnLayerRanges[selectedScaleLevel][needRedraw[0]];
       if (needRedraw[1] !== undefined) {
         svg.select(`g#layer-${needRedraw[0]}-node-${needRedraw[1]}`)
-          .select('canvas.node-canvas')
+          .select('image.node-image')
           .each((d, i, g) => drawOutput(d, i, g, redrawRange));
       } else {
+        console.log(1);
         svg.select(`g#cnn-layer-group-${needRedraw[0]}`)
-          .selectAll('canvas.node-canvas')
+          .selectAll('image.node-image')
           .each((d, i, g) => drawOutput(d, i, g, redrawRange));
       }
     }
@@ -539,6 +543,7 @@
   }
 
   const nodeClickHandler = (d, i, g) => {
+    console.log(d, i);
     // Record the current clicked node
     selectedNode.layerName = d.layerName;
     selectedNode.index = d.index;
@@ -566,9 +571,10 @@
       isExitedFromDetailedView = false;
       if (!isInActPoolDetailView) {
         // Enter the act pool detail view
+        console.log(i);
         enterDetailView(curLayerIndex, i);
       } else {
-        if (i == actPoolDetailViewNodeIndex) {
+        if (i === actPoolDetailViewNodeIndex) {
           // Quit the act pool detail view
           quitActPoolDetailView();
         } else {
@@ -619,7 +625,6 @@
             .style('opacity', 1);
 
           actPoolDetailViewNodeIndex = i;
-          console.log(1);
         }
       }
     }
@@ -1111,8 +1116,7 @@
                     isExited={isExitedFromDetailedView}/>
   {:else if selectedNode.data && selectedNode.data.type === 'pool'}
     <PoolView on:message={handleExitFromDetiledPoolView} input={nodeData[0].input} 
-              kernelLength={2} 
-              output={nodeData[0].output}
+              kernelLength={2}
               dataRange={nodeData.colorRange}
               isExited={isExitedFromDetailedView}/>
   {/if}
