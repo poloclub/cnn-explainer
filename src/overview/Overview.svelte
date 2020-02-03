@@ -190,7 +190,7 @@
 
   const intermediateNodeClicked = (d, i, g, selectedI, curLayerIndex) => {
     isExitedFromCollapse = false;
-    // Todo: use this event to trigger the detailed view
+    // Use this event to trigger the detailed view
     if (detailedViewNum === d.index) {
       // Setting this for testing purposes currently.
       selectedNodeIndex = -1; 
@@ -204,7 +204,6 @@
     else {
       // Setting this for testing purposes currently.
       selectedNodeIndex = d.index;
-      // Here are some variables you might need
       let inputMatrix = d.output;
       let kernelMatrix = d.outputLinks[selectedI].weight;
       // let interMatrix = singleConv(inputMatrix, kernelMatrix);
@@ -544,6 +543,8 @@
 
   const nodeClickHandler = (d, i, g) => {
     console.log(d, i);
+    let nodeIndex = d.index;
+
     // Record the current clicked node
     selectedNode.layerName = d.layerName;
     selectedNode.index = d.index;
@@ -571,10 +572,9 @@
       isExitedFromDetailedView = false;
       if (!isInActPoolDetailView) {
         // Enter the act pool detail view
-        console.log(i);
-        enterDetailView(curLayerIndex, i);
+        enterDetailView(curLayerIndex, d.index);
       } else {
-        if (i === actPoolDetailViewNodeIndex) {
+        if (d.index === actPoolDetailViewNodeIndex) {
           // Quit the act pool detail view
           quitActPoolDetailView();
         } else {
@@ -604,15 +604,15 @@
             .style('opacity', 0);
         
           // Add selection effect on the new selected pair
-          svg.select(`g#layer-${curLayerIndex}-node-${i}`)
+          svg.select(`g#layer-${curLayerIndex}-node-${nodeIndex}`)
             .select('rect.bounding')
             .classed('hidden', false);
 
-          svg.select(`g#layer-${curLayerIndex - 1}-node-${i}`)
+          svg.select(`g#layer-${curLayerIndex - 1}-node-${nodeIndex}`)
             .select('rect.bounding')
             .classed('hidden', false);
 
-          edgeGroup.selectAll(`path.edge-${curLayerIndex}-${i}`)
+          edgeGroup.selectAll(`path.edge-${curLayerIndex}-${nodeIndex}`)
             .raise()
             .transition()
             .ease(d3.easeCubicInOut)
@@ -621,10 +621,10 @@
             .style('stroke-width', '1')
             .style('opacity', 1);
 
-          underGroup.select(`#underneath-gateway-${i}`)
+          underGroup.select(`#underneath-gateway-${nodeIndex}`)
             .style('opacity', 1);
 
-          actPoolDetailViewNodeIndex = i;
+          actPoolDetailViewNodeIndex = nodeIndex;
         }
       }
     }
