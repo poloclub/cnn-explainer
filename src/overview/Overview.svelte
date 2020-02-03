@@ -83,6 +83,7 @@
   let isInIntermediateView = false;
   let isInActPoolDetailView = false;
   let actPoolDetailViewNodeIndex = -1;
+  let actPoolDetailViewLayerIndex = -1;
   let detailedViewNum = undefined;
 
   // Wait to load
@@ -285,9 +286,12 @@
       .remove();
 
     // Show all edges
-    svg.select('g.edge-group')
+    let unimportantEdges = svg.select('g.edge-group')
       .selectAll('.edge')
-      .style('visibility', 'visible');
+      .filter(d => {
+        return d.targetLayerIndex !== actPoolDetailViewLayerIndex;
+      })
+      .style('visibility', null);
 
     // Also dehighlight the edge
     let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
@@ -333,11 +337,14 @@
     selectedNode.layerName = '';
     selectedNode.index = -1;
     selectedNode.data = null;
+
+    actPoolDetailViewLayerIndex = -1;
   }
 
   const enterDetailView = (curLayerIndex, i) => {
     isInActPoolDetailView = true;
     actPoolDetailViewNodeIndex = i;
+    actPoolDetailViewLayerIndex = curLayerIndex;
 
     const detailview = document.getElementById('detailview');
     detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
@@ -345,9 +352,11 @@
     detailview.style.position = 'absolute';
 
     // Hide all edges
-    svg.select('g.edge-group')
+    let unimportantEdges = svg.select('g.edge-group')
       .selectAll('.edge')
-      .filter(d => {d.targetLayerIndex !== curLayerIndex})
+      .filter(d => {
+        return d.targetLayerIndex !== curLayerIndex;
+      })
       .style('visibility', 'hidden');
 
     // Add overlay rects
@@ -390,16 +399,17 @@
     
     // Add underneath rectangles
     let underGroup = svg.select('g.underneath');
+    let padding = 7;
     for (let n = 0; n < cnn[curLayerIndex - 1].length; n++) {
       underGroup.append('rect')
         .attr('class', 'underneath-gateway')
         .attr('id', `underneath-gateway-${n}`)
-        .attr('x', nodeCoordinate[curLayerIndex - 1][n].x - 5)
-        .attr('y', nodeCoordinate[curLayerIndex - 1][n].y - 5)
-        .attr('width', (2 * nodeLength + hSpaceAroundGap) + 2 * 5)
-        .attr('height', nodeLength + 2 * 5)
+        .attr('x', nodeCoordinate[curLayerIndex - 1][n].x - padding)
+        .attr('y', nodeCoordinate[curLayerIndex - 1][n].y - padding)
+        .attr('width', (2 * nodeLength + hSpaceAroundGap) + 2 * padding)
+        .attr('height', nodeLength + 2 * padding)
         .attr('rx', 10)
-        .style('fill', 'rgba(160, 160, 160, 0.2)')
+        .style('fill', 'rgba(160, 160, 160, 0.3)')
         .style('opacity', 0);
     }
     underGroup.lower();
@@ -653,7 +663,8 @@
   }
 
   const nodeMouseOverHandler = (d, i, g) => {
-    if (isInIntermediateView || isInActPoolDetailView) { return; }
+    // if (isInIntermediateView || isInActPoolDetailView) { return; }
+    if (isInIntermediateView) { return; }
 
     // Highlight the edges
     let layerIndex = layerIndexDict[d.layerName];
@@ -708,10 +719,13 @@
   }
 
   const nodeMouseLeaveHandler = (d, i, g) => {
-    if (isInIntermediateView || isInActPoolDetailView) { return; }
+    // if (isInIntermediateView || isInActPoolDetailView) { return; }
+    if (isInIntermediateView) { return; }
     
     // Keep the highlight if user has clicked
-    if (d.layerName !== selectedNode.layerName || d.index !== selectedNode.index){
+    if (isInActPoolDetailView || (
+      d.layerName !== selectedNode.layerName ||
+      d.index !== selectedNode.index)){
       let layerIndex = layerIndexDict[d.layerName];
       let nodeIndex = d.index;
       let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
