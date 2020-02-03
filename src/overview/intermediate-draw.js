@@ -904,6 +904,7 @@ const addUnderneathRect = (curLayerIndex, i, leftX,
   intermediateNodeMouseLeaveHandler, intermediateNodeClicked) => {
   // Add underneath rects
   let underGroup = svg.select('g.underneath');
+
   for (let n = 0; n < cnn[curLayerIndex - 1].length; n++) {
     underGroup.append('rect')
       .attr('class', 'underneath-gateway')
@@ -918,10 +919,12 @@ const addUnderneathRect = (curLayerIndex, i, leftX,
     
     // Register new events for input layer nodes
     svg.select(`g#layer-${curLayerIndex - 1}-node-${n}`)
+      .style('pointer-events', 'all')
+      .style('cursor', 'pointer')
       .on('mouseover', intermediateNodeMouseOverHandler)
       .on('mouseleave', intermediateNodeMouseLeaveHandler)
       .on('click', (d, g, ni) => intermediateNodeClicked(d, g, ni,
-        i, curLayerIndex))
+        i, curLayerIndex));
   }
   underGroup.lower();
 }
