@@ -1596,16 +1596,6 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('y', 0)
     .style('opacity', 0);
   
-  intermediateLayerOverlay.append('rect')
-    .attr('class', 'overlay')
-    .style('fill', 'url(#overlay-gradient-right)')
-    .style('stroke', 'none')
-    .attr('width', width - rightStart + overlayRectOffset)
-    .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-    .attr('x', rightStart - overlayRectOffset/2)
-    .attr('y', 0)
-    .style('opacity', 0);
-  
   intermediateLayerOverlay.selectAll('rect.overlay')
     .transition('move')
     .duration(800)

@@ -318,18 +318,18 @@
       .selectAll('g.node-group')
       .each((sd, si, sg) => {
         d3.select(sg[si])
-          .style('pointer-events', 'all')
-          .select('foreignObject')
-          .style('opacity', 1);
+          .style('pointer-events', 'all');
     });
 
     svg.select(`g#cnn-layer-group-${layerIndex - 1}`)
       .selectAll('g.node-group')
       .each((sd, si, sg) => {
+        // Recover the old events
         d3.select(sg[si])
           .style('pointer-events', 'all')
-          .select('foreignObject')
-          .style('opacity', 1);
+          .on('mouseover', nodeMouseOverHandler)
+          .on('mouseleave', nodeMouseLeaveHandler)
+          .on('click', nodeClickHandler);
     });
 
     // Deselect the node
@@ -340,8 +340,78 @@
     actPoolDetailViewLayerIndex = -1;
   }
 
+  const actPoolDetailViewPreNodeMouseOverHandler = (d, i, g) => {
+    // Highlight the edges
+    let layerIndex = layerIndexDict[d.layerName];
+    let nodeIndex = d.index;
+    let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
+    
+    edgeGroup.selectAll(`path.edge-${actPoolDetailViewLayerIndex}-${nodeIndex}`)
+      .raise()
+      .transition()
+      .ease(d3.easeCubicInOut)
+      .duration(400)
+      .style('stroke', edgeHoverColor)
+      .style('stroke-width', '1')
+      .style('opacity', 1);
+    
+    // Highlight its border
+    d3.select(g[i]).select('rect.bounding')
+      .classed('hidden', false);
+    
+    // Highlight node's pair
+    let associatedLayerIndex = layerIndex - 1;
+    if (layerIndex === actPoolDetailViewLayerIndex - 1) {
+      associatedLayerIndex = layerIndex + 1;
+    }
+
+    svg.select(`g#layer-${associatedLayerIndex}-node-${nodeIndex}`)
+      .select('rect.bounding')
+      .classed('hidden', false);
+  }
+
+  const actPoolDetailViewPreNodeMouseLeaveHandler = (d, i, g) => {
+    // De-highlight the edges
+    let layerIndex = layerIndexDict[d.layerName];
+    let nodeIndex = d.index;
+    let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
+
+    edgeGroup.selectAll(`path.edge-${actPoolDetailViewLayerIndex}-${nodeIndex}`)
+      .transition()
+      .ease(d3.easeCubicOut)
+      .duration(200)
+      .style('stroke', edgeInitColor)
+      .style('stroke-width', edgeStrokeWidth)
+      .style('opacity', edgeOpacity);
+    
+    // De-highlight its border
+    d3.select(g[i]).select('rect.bounding')
+      .classed('hidden', true);
+    
+    // De-highlight node's pair
+    let associatedLayerIndex = layerIndex - 1;
+    if (layerIndex === actPoolDetailViewLayerIndex - 1) {
+      associatedLayerIndex = layerIndex + 1;
+    }
+
+    svg.select(`g#layer-${associatedLayerIndex}-node-${nodeIndex}`)
+      .select('rect.bounding')
+      .classed('hidden', true);
+  }
+
+  const actPoolDetailViewPreNodeClickHandler = (d, i, g) => {
+    let layerIndex = layerIndexDict[d.layerName];
+    let nodeIndex = d.index;
+
+    // Click the pre-layer node in detail view has the same effect as clicking
+    // the cur-layer node, which is to open a new detail view window
+    svg.select(`g#layer-${layerIndex + 1}-node-${nodeIndex}`)
+      .node()
+      .dispatchEvent(new Event('click'));
+  }
+
+
   const enterDetailView = (curLayerIndex, i) => {
-    console.log(curLayerIndex, i);
     isInActPoolDetailView = true;
     actPoolDetailViewNodeIndex = i;
     actPoolDetailViewLayerIndex = curLayerIndex;
@@ -411,37 +481,20 @@
         .attr('rx', 10)
         .style('fill', 'rgba(160, 160, 160, 0.3)')
         .style('opacity', 0);
+      
+      // Update the event functions for these two layers
+      svg.select(`g#layer-${curLayerIndex - 1}-node-${n}`)
+        .style('pointer-events', 'all')
+        .style('cursor', 'pointer')
+        .on('mouseover', actPoolDetailViewPreNodeMouseOverHandler)
+        .on('mouseleave', actPoolDetailViewPreNodeMouseLeaveHandler)
+        .on('click', actPoolDetailViewPreNodeClickHandler);
     }
     underGroup.lower();
 
     // Highlight the selcted pair
     underGroup.select(`#underneath-gateway-${i}`)
       .style('opacity', 1);
-
-    // Add underlying rectangle
-    
-    // Fade out unselected pairs
-    /*
-    svg.select(`g#cnn-layer-group-${curLayerIndex}`)
-      .selectAll('g.node-group')
-      .each((sd, si, sg) => {
-        if (si !== i) {
-          d3.select(sg[si])
-            .style('pointer-events', 'none')
-            .select('foreignObject')
-            .style('opacity', 0.3);
-        }
-    });
-
-    svg.select(`g#cnn-layer-group-${curLayerIndex - 1}`)
-      .selectAll('g.node-group')
-      .each((sd, si, sg) => {
-        d3.select(sg[si])
-          .style('pointer-events', 'none')
-          .select('foreignObject')
-          .style('opacity', si === i ? 1 : 0.3);
-    });
-    */
   }
 
   const quitIntermediateView = (curLayerIndex, g, i) => {
@@ -459,7 +512,6 @@
         .on('mouseover', nodeMouseOverHandler)
         .on('mouseleave', nodeMouseLeaveHandler)
         .on('click', nodeClickHandler);
-        // .on('click', (d, i) => {console.log(i)});
     }
 
     // Clean up the underneath rects
@@ -511,7 +563,6 @@
       });
     
     // Recover the layer if we have drdrawn it
-    console.log(needRedraw);
     if (needRedraw[0] !== undefined) {
       let redrawRange = cnnLayerRanges[selectedScaleLevel][needRedraw[0]];
       if (needRedraw[1] !== undefined) {
@@ -519,7 +570,6 @@
           .select('image.node-image')
           .each((d, i, g) => drawOutput(d, i, g, redrawRange));
       } else {
-        console.log(1);
         svg.select(`g#cnn-layer-group-${needRedraw[0]}`)
           .selectAll('image.node-image')
           .each((d, i, g) => drawOutput(d, i, g, redrawRange));
@@ -542,7 +592,6 @@
   }
 
   const nodeClickHandler = (d, i, g) => {
-    console.log(d, i);
     let nodeIndex = d.index;
 
     // Record the current clicked node
@@ -631,34 +680,34 @@
 
     // Enter the second view (layer-view) when user clicks a conv node
     if ((d.type === 'conv' || d.layerName === 'output') && !isInIntermediateView) {
-      prepareToEnterIntermediateView(d, g, i, curLayerIndex);
+      prepareToEnterIntermediateView(d, g, nodeIndex, curLayerIndex);
 
       if (d.layerName === 'conv_1_1') {
-        drawConv1(curLayerIndex, d, i, width, height,
+        drawConv1(curLayerIndex, d, nodeIndex, width, height,
           intermediateNodeMouseOverHandler, intermediateNodeMouseLeaveHandler,
           intermediateNodeClicked);
       }
 
       else if (d.layerName === 'conv_1_2') {
-        drawConv2(curLayerIndex, d, i, width, height,
+        drawConv2(curLayerIndex, d, nodeIndex, width, height,
           intermediateNodeMouseOverHandler, intermediateNodeMouseLeaveHandler,
           intermediateNodeClicked);
       }
 
       else if (d.layerName === 'conv_2_1') {
-        drawConv3(curLayerIndex, d, i, width, height,
+        drawConv3(curLayerIndex, d, nodeIndex, width, height,
           intermediateNodeMouseOverHandler, intermediateNodeMouseLeaveHandler,
           intermediateNodeClicked);
       }
       
       else if (d.layerName === 'conv_2_2') {
-        drawConv4(curLayerIndex, d, i, width, height,
+        drawConv4(curLayerIndex, d, nodeIndex, width, height,
           intermediateNodeMouseOverHandler, intermediateNodeMouseLeaveHandler,
           intermediateNodeClicked);
       }
     
       else if (d.layerName === 'output') {
-        drawFlatten(curLayerIndex, d, i, width, height);
+        drawFlatten(curLayerIndex, d, nodeIndex, width, height);
       }
     }
     // Quit the layerview
