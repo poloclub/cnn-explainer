@@ -1781,15 +1781,19 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   
   // Use abstract symbol to represent the flatten nodes in between (between
   // the first and the last nodes)
+
   
   // Compute the average value of input node and weights
   let meanValues = [];
   for (let n = 1; n < cnn[curLayerIndex - 1].length - 1; n++) {
+    /*
     let meanOutput = d3.mean(cnn.flatten.slice(flattenLength * n,
       flattenLength * (n + 1)).map(d => d.output));
     let meanWeight= d3.mean(cnn.flatten.slice(flattenLength * n,
       flattenLength * (n + 1)).map(d => d.outputLinks[i].weight));
     meanValues.push({index: n, output: meanOutput, weight: meanWeight});
+    */
+   meanValues.push({index: n});
   }
 
   // Compute the middle gap
@@ -1806,7 +1810,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
         middleRectHeight * vi)
       .attr('width', pixelWidth / 2)
       .attr('height', middleRectHeight)
-      .style('fill', colorScale((v.output + range / 2) / range));
+      // .style('fill', colorScale((v.output + range / 2) / range));
+      .style('fill', '#E5E5E5');
     
     // Add a triangle next to the input node
     flattenLayer.append('polyline')
@@ -1838,14 +1843,15 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     // Flatten -> output
     linkData.push({
       source: {x: intermediateX1 + pixelWidth + 3,
-        y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
-          middleRectHeight * (vi + 0.5)},
+      y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
+        middleRectHeight * (vi + 0.5)},
       target: {x: nodeCoordinate[curLayerIndex][i].x - nodeLength,
-        y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
+      y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
       index: -1,
       name: `flatten-abstract-${v.index}-output`,
-      color: gappedColorScale(layerColorScales.weight, flattenRange,
-        v.weight, 0.35),
+      // color: gappedColorScale(layerColorScales.weight, flattenRange,
+      //   v.weight, 0.35),
+      color: '#E5E5E5',
       weight: v.weight,
       width: 1,
       opacity: 1,
