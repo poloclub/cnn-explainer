@@ -339,6 +339,7 @@ const getInputImageArray = (imgFile, normalize=true) => {
 
   return new Promise((resolve, reject) => {
     let inputImage = new Image();
+    inputImage.crossOrigin = "Anonymous";
     inputImage.src = imgFile;
     let canvasImage;
     inputImage.onload = () => {
