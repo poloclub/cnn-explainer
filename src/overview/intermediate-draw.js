@@ -3,7 +3,7 @@
 import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
   nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
-  needRedrawStore, cnnLayerMinMaxStore
+  needRedrawStore, cnnLayerMinMaxStore, shouldIntermediateAnimateStore
 } from '../stores.js';
 import {
   getExtent, getOutputKnot, getInputKnot, gappedColorScale
@@ -53,6 +53,11 @@ cnnLayerMinMaxStore.subscribe( value => {cnnLayerMinMax = value;} )
 
 let needRedraw = [undefined, undefined];
 needRedrawStore.subscribe( value => {needRedraw = value;} )
+
+let shouldIntermediateAnimate = undefined;
+shouldIntermediateAnimateStore.subscribe(value => {
+  shouldIntermediateAnimate = value;
+})
 
 /**
  * Move one layer horizontally
@@ -382,7 +387,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     let tickTime1D = nodeLength / (kernelRectLength * 3);
     let kernelRectX = leftX - kernelRectLength * 3 * 2;
     let kernelGroup = intermediateLayer.append('g')
-      .attr('class', `kernel-${i}`)
+      .attr('class', `kernel kernel-${i}`)
       .attr('transform', `translate(${kernelRectX}, ${n.y})`);
 
     for (let r = 0; r < kernelMatrix.length; r++) {
@@ -467,7 +472,10 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
               .duration(300)
               .style('opacity', '1');
           }
-          slidingAnimation();
+
+          if (shouldIntermediateAnimate) {
+            slidingAnimation();
+          }
         });
     }
 
@@ -597,7 +605,11 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .duration(60000)
       .ease(d3.easeLinear)
       .attr('stroke-dashoffset', dashoffset)
-      .on('end', (d, i, g) => animateEdge(d, i, g, dashoffset - 1000));
+      .on('end', (d, i, g) => {
+        if (shouldIntermediateAnimate) {
+          animateEdge(d, i, g, dashoffset - 1000);
+        }
+      });
   }
 
   edgeGroup.selectAll('path')

@@ -4,7 +4,8 @@
   import {
     cnnStore, svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore,
     nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
-    needRedrawStore, cnnLayerMinMaxStore, detailedModeStore
+    needRedrawStore, cnnLayerMinMaxStore, detailedModeStore,
+    shouldIntermediateAnimateStore
   } from '../stores.js';
 
   // Svelte views
@@ -69,6 +70,11 @@
 
   let detailedMode = undefined;
   detailedModeStore.subscribe( value => {detailedMode = value;} )
+
+  let shouldIntermediateAnimate = undefined;
+  shouldIntermediateAnimateStore.subscribe(value => {
+    shouldIntermediateAnimate = value;
+  })
 
   let vSpaceAroundGap = undefined;
   vSpaceAroundGapStore.subscribe( value => {vSpaceAroundGap = value;} )
@@ -252,6 +258,9 @@
     d3.select(g[i])
       .select('rect.bounding')
       .style('stroke-width', 2);
+    
+    // Allow infinite animation loop
+    shouldIntermediateAnimateStore.set(true);
 
     // Highlight the labels
     svg.selectAll(`g#layer-label-${curLayerIndex - 1},
@@ -545,6 +554,10 @@
 
     // Remove the intermediate layer
     let intermediateLayer = svg.select('g.intermediate-layer');
+
+    // Kill the infinite animation loop
+    shouldIntermediateAnimateStore.set(false);
+
     intermediateLayer.transition('remove')
       .duration(500)
       .ease(d3.easeCubicInOut)

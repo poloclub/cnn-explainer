@@ -15,3 +15,5 @@ export const cnnLayerMinMaxStore = writable([]);
 export const needRedrawStore = writable([undefined, undefined]);
 
 export const detailedModeStore = writable(false);
+
+export const shouldIntermediateAnimateStore = writable(false);
