@@ -1,5 +1,8 @@
 /* global tf */
 
+// Network input image size
+const networkInputSize = 64;
+
 // Enum of node types
 const nodeType = {
   INPUT: 'input',
@@ -267,16 +270,16 @@ const cropCentralSquare = (arr) => {
 
   // Crop largest square from image if the image is smaller than 64x64 and pad the
   // cropped image.
-  if (width < 64 || height < 64) {
+  if (width < networkInputSize || height < networkInputSize) {
     // TODO(robert): Finish the padding logic.  Pushing now for Omar to work on when he is ready.
     let cropDimensions = Math.min(width, height);
     let startXIdx = Math.floor(width / 2) - (cropDimensions / 2);
     let startYIdx = Math.floor(height / 2) - (cropDimensions / 2);
     let unpaddedSubarray = arr.slice(startXIdx, startXIdx + cropDimensions).map(i => i.slice(startYIdx, startYIdx + cropDimensions));
   } else {
-    let startXIdx = Math.floor(width / 2) - 32;
-    let startYIdx = Math.floor(height / 2) - 32;
-    croppedArray = arr.slice(startXIdx, startXIdx + 64).map(i => i.slice(startYIdx, startYIdx + 64));
+    let startXIdx = Math.floor(width / 2) - Math.floor(networkInputSize / 2);
+    let startYIdx = Math.floor(height / 2) - Math.floor(networkInputSize / 2);
+    croppedArray = arr.slice(startXIdx, startXIdx + networkInputSize).map(i => i.slice(startYIdx, startYIdx + networkInputSize));
   }
   return croppedArray;
 }
@@ -314,7 +317,7 @@ const imageDataTo3DTensor = (imageData, width, height, normalize=true) => {
   }
 
   // If the image is not 64x64, crop and or pad the image appropriately.
-  if (width != 64 && height != 64) {
+  if (width != networkInputSize && height != networkInputSize) {
     imageArray = cropCentralSquare(imageArray)
   }
 
@@ -337,11 +340,35 @@ const getInputImageArray = (imgFile, normalize=true) => {
   return new Promise((resolve, reject) => {
     let inputImage = new Image();
     inputImage.src = imgFile;
+    let canvasImage;
     inputImage.onload = () => {
-      context.drawImage(inputImage, 0, 0,);
-      // Get image data and convert it to a 3D array
-      let canvasImage = context.getImageData(0, 0, inputImage.width,
+      canvas.width = inputImage.width;
+      canvas.height = inputImage.height;
+      // Resize the input image of the network if it is too large to simply crop
+      // the center 64x64 portion in order to still provide a representative
+      // input image into the network.
+      if (inputImage.width > networkInputSize || inputImage.height > networkInputSize) {
+        // Step 1 - Resize using smaller dimension to scale the image down. 
+        let resizeCanvas = document.createElement('canvas'),
+            resizeContext = resizeCanvas.getContext('2d');
+        let smallerDimension = Math.min(inputImage.width, inputImage.height);
+        let resizeFactor = (networkInputSize + 1) / smallerDimension;
+        resizeCanvas.width = inputImage.width * resizeFactor;
+        resizeCanvas.height = inputImage.height * resizeFactor;
+        resizeContext.drawImage(inputImage, 0, 0, resizeCanvas.width,
+          resizeCanvas.height);
+
+        // Step 2 - Draw resized image on original canvas.
+        context.drawImage(resizeCanvas, 0, 0, resizeCanvas.width,
+          resizeCanvas.height);
+        canvasImage = context.getImageData(0, 0, resizeCanvas.width,
+          resizeCanvas.height);
+      } else {
+        context.drawImage(inputImage, 0, 0,);
+        canvasImage = context.getImageData(0, 0, inputImage.width,
         inputImage.height);
+      }
+      // Get image data and convert it to a 3D array
       let imageData = canvasImage.data;
       let imageWidth = canvasImage.width;
       let imageHeight = canvasImage.height;
