@@ -1083,7 +1083,8 @@
     stroke-width: 3px;
   }
 
-  :global(.bounding, .edge, .edge-group, foreignObject, .bounding-flatten, .underneath-gateway) {
+  :global(.bounding, .edge, .edge-group, foreignObject, .bounding-flatten,
+    .underneath-gateway) {
     transition: opacity 300ms ease-in-out;
   }
 

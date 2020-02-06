@@ -229,8 +229,8 @@ const drawIntermidiateImage = (image, range, colorScale, length,
  * @param {bool} interaction Whether support interaction
  */
 const createIntermediateNode = (curLayerIndex, selectedI, groupLayer, x, y,
-  nodeIndex, intermediateNodeMouseOverHandler, intermediateNodeMouseLeaveHandler,
-  intermediateNodeClicked, interaction) => {
+  nodeIndex, stride, intermediateNodeMouseOverHandler,
+  intermediateNodeMouseLeaveHandler, intermediateNodeClicked, interaction) => {
   let newNode = groupLayer.append('g')
     .datum(cnn[curLayerIndex - 1][nodeIndex])
     .attr('class', 'intermediate-node')
@@ -246,18 +246,26 @@ const createIntermediateNode = (curLayerIndex, selectedI, groupLayer, x, y,
     .attr('height', nodeLength)
     .attr('x', x)
     .attr('y', y);
-    /*
-    .append('xhtml:body')
-    .style('margin', 0)
-    .style('padding', 0)
-    .style('background-color', 'none')
-    .style('width', '100%')
-    .style('height', '100%')
-    .append('canvas')
-    .attr('class', 'node-canvas')
-    .attr('width', nodeLength)
-    .attr('height', nodeLength);
-    */
+
+  // Overlay the image with a mask of many small rectangles
+  let strideTime = Math.floor(nodeLength / stride);
+  let overlayGroup = newNode.append('g')
+    .attr('class', 'overlay-group')
+    .attr('transform', `translate(${x}, ${y})`);
+  
+  for (let i = 0; i < strideTime; i++) {
+    for (let j = 0; j < strideTime; j++) {
+      overlayGroup.append('rect')
+        .attr('class', `mask-overlay mask-${i}-${j}`)
+        .attr('width', stride)
+        .attr('height', stride)
+        .attr('x', i * stride)
+        .attr('y', j * stride)
+        .style('fill', 'var(--light-gray)')
+        .style('stroke', 'var(--light-gray)')
+        .style('opacity', 1);
+    }
+  }
 
   // Add a rectangle to show the border
   newNode.append('rect')
@@ -326,6 +334,9 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     Math.max(...kernelExtent.map(Math.abs)) * 1000) / 1000);
   let kernelColorGap = 0.2;
 
+  // Compute stride for the kernel animation
+  let stride = kernelRectLength * 3; 
+
   // First intermediate layer
   nodeCoordinate[curLayerIndex - 1].forEach((n, ni) => {
 
@@ -342,7 +353,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
 
     // Layout the canvas and rect
     let newNode = createIntermediateNode(curLayerIndex, i, intermediateLayer,
-      intermediateX1, n.y, ni, intermediateNodeMouseOverHandler,
+      intermediateX1, n.y, ni, stride, intermediateNodeMouseOverHandler,
       intermediateNodeMouseLeaveHandler, intermediateNodeClicked, true);
     
     // Draw the image
@@ -367,7 +378,8 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
 
     // Create a small kernel illustration
     // Here we minus 2 because of no padding
-    let tickTime1D = nodeLength / kernelRectLength - 2;
+    // let tickTime1D = nodeLength / (kernelRectLength) - 2;
+    let tickTime1D = nodeLength / (kernelRectLength * 3);
     let kernelRectX = leftX - kernelRectLength * 3 * 2;
     let kernelGroup = intermediateLayer.append('g')
       .attr('class', `kernel-${i}`)
@@ -422,22 +434,41 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       let originY = +kernelGroupInput.attr('data-origin-y');
       let originXResult = +kernelGroupResult.attr('data-origin-x');
       let oldTick = +kernelGroupInput.attr('data-tick');
-      let x = originX + (oldTick % tickTime1D) * kernelRectLength;
-      let y = originY + Math.floor(oldTick / tickTime1D) * kernelRectLength;
-      let xResult = originXResult + (oldTick % tickTime1D) * kernelRectLength;
+      let i = (oldTick) % tickTime1D;
+      let j = Math.floor((oldTick) / tickTime1D);
+      let x = originX + i * stride;
+      let y = originY + j * stride;
+      let xResult = originXResult + (oldTick % tickTime1D) * stride;
+      let newTick = (oldTick + 1) % (tickTime1D * tickTime1D);
 
-      kernelGroupInput.attr('data-tick', (oldTick + 1) % (tickTime1D * tickTime1D))
+      // Remove one mask rect at each tick
+      svg.selectAll(`rect.mask-${i}-${j}`)
+        .transition('window-sliding-mask')
+        .delay(1200)
+        .duration(300)
+        .style('opacity', '0');
+
+      kernelGroupInput.attr('data-tick', newTick)
         .transition('window-sliding-input')
-        .delay(800)
-        .duration(0)
+        .delay(900)
+        .duration(200)
         .attr('transform', `translate(${x}, ${y})`);
 
-      kernelGroupResult.attr('data-tick', (oldTick + 1) % (tickTime1D * tickTime1D))
+      kernelGroupResult.attr('data-tick', newTick)
         .transition('window-sliding-result')
-        .delay(800)
-        .duration(0)
+        .delay(900)
+        .duration(200)
         .attr('transform', `translate(${xResult}, ${y})`)
-        .on('end', slidingAnimation);
+        .on('end', () => {
+          if (newTick === 0) {
+            svg.selectAll(`rect.mask-overlay`)
+              .transition('window-sliding-mask')
+              .delay(700)
+              .duration(300)
+              .style('opacity', '1');
+          }
+          slidingAnimation();
+        });
     }
 
     slidingAnimation();
