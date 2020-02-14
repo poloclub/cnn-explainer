@@ -283,6 +283,7 @@ const createIntermediateNode = (curLayerIndex, selectedI, groupLayer, x, y,
     .style('stroke', intermediateColor)
     .style('stroke-width', 1);
   
+  
   return newNode;
 }
 
@@ -434,6 +435,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('data-origin-x', intermediateX1)
       .attr('data-origin-y', n.y);
     
+    let delay = 200;
     const slidingAnimation = () => {
       let originX = +kernelGroupInput.attr('data-origin-x');
       let originY = +kernelGroupInput.attr('data-origin-y');
@@ -449,28 +451,28 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       // Remove one mask rect at each tick
       svg.selectAll(`rect.mask-${i}-${j}`)
         .transition('window-sliding-mask')
-        .delay(1200)
+        .delay(delay + 100)
         .duration(300)
-        .style('opacity', '0');
+        .style('opacity', 0);
 
       kernelGroupInput.attr('data-tick', newTick)
         .transition('window-sliding-input')
-        .delay(900)
+        .delay(delay)
         .duration(200)
         .attr('transform', `translate(${x}, ${y})`);
 
       kernelGroupResult.attr('data-tick', newTick)
         .transition('window-sliding-result')
-        .delay(900)
+        .delay(delay)
         .duration(200)
         .attr('transform', `translate(${xResult}, ${y})`)
         .on('end', () => {
           if (newTick === 0) {
             svg.selectAll(`rect.mask-overlay`)
               .transition('window-sliding-mask')
-              .delay(700)
+              .delay(delay - 200)
               .duration(300)
-              .style('opacity', '1');
+              .style('opacity', 1);
           }
 
           if (shouldIntermediateAnimate) {
