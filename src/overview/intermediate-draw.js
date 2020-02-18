@@ -410,7 +410,7 @@ const animationButtonClicked = (curLayerIndex) => {
       .style('opacity', 1);
 
     // Start the intermediate animation
-    for (let i  = 0; i < nodeCoordinate[curLayerIndex].length; i++) {
+    for (let i  = 0; i < nodeCoordinate[curLayerIndex - 1].length; i++) {
       startIntermediateAnimation(d3.select(`.kernel-input-${i}`),
         d3.select(`.kernel-result-${i}`), tickTime1D, stride);
     }
@@ -500,6 +500,9 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
   let intermediateLayer = svg.append('g')
     .attr('class', 'intermediate-layer')
     .style('opacity', 0);
+  
+  // Recovert the animation counter
+  isEndOfAnimation = false;
   
   // Tried to add a rectangle to block the intermediate because of webkit's
   // horrible support (decade old bug) for foreignObject. It doesnt work either.
@@ -1355,7 +1358,7 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
     width: 2 * nodeLength + intermediateGap,
     isInput: true,
     x: leftX,
-    y: nodeCoordinate[curLayerIndex][9].y,
+    y: nodeCoordinate[curLayerIndex][9].y + nodeLength - 15,
   });
 
   drawIntermediateLayerLegend({
@@ -1366,7 +1369,7 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
     group: intermediateLayer,
     width: 2 * nodeLength + intermediateGap,
     x: nodeCoordinate[curLayerIndex - 1][2].x,
-    y: nodeCoordinate[curLayerIndex][9].y + 25
+    y: nodeCoordinate[curLayerIndex][9].y + nodeLength + 10
   });
 
   drawIntermediateLayerLegend({
@@ -1377,7 +1380,7 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
     group: intermediateLayer,
     width: 2 * nodeLength + intermediateGap,
     x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
-    y: nodeCoordinate[curLayerIndex][9].y + 25,
+    y: nodeCoordinate[curLayerIndex][9].y + nodeLength + 10,
     gradientAppendingName: 'kernelColorGradient',
     colorScale: layerColorScales.weight,
     gradientGap: 0.2
