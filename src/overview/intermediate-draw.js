@@ -25,6 +25,7 @@ const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
 const overlayRectOffset = overviewConfig.overlayRectOffset;
 const isSafari = window.safari !== undefined;
+let isEndOfAnimation = false;
 
 // Shared variables
 let svg = undefined;
@@ -283,8 +284,177 @@ const createIntermediateNode = (curLayerIndex, selectedI, groupLayer, x, y,
     .style('stroke', intermediateColor)
     .style('stroke-width', 1);
   
-  
   return newNode;
+}
+
+const startOutputAnimation = (kernelGroup, tickTime1D, stride, delay) => {
+  const slidingAnimation = () => {
+    let originX = +kernelGroup.attr('data-origin-x');
+    let originY = +kernelGroup.attr('data-origin-y');
+    let oldTick = +kernelGroup.attr('data-tick');
+    let i = (oldTick) % tickTime1D;
+    let j = Math.floor((oldTick) / tickTime1D);
+    let x = originX + i * stride;
+    let y = originY + j * stride;
+    let newTick = (oldTick + 1) % (tickTime1D * tickTime1D);
+
+    // Remove one mask rect at each tick
+    svg.selectAll(`rect.mask-${i}-${j}`)
+      .transition('window-sliding-mask')
+      .delay(delay + 100)
+      .duration(300)
+      .style('opacity', 0);
+
+      kernelGroup.attr('data-tick', newTick)
+      .transition('window-sliding-input')
+      .delay(delay)
+      .duration(200)
+      .attr('transform', `translate(${x}, ${y})`)
+      .on('end', () => {
+        if (newTick === 0) {
+          svg.selectAll(`rect.mask-overlay`)
+            .transition('window-sliding-mask')
+            .delay(delay - 200)
+            .duration(300)
+            .style('opacity', 1);
+        }
+
+        if (shouldIntermediateAnimate) {
+          slidingAnimation();
+        }
+      });
+  }
+
+  slidingAnimation();
+}
+
+const startIntermediateAnimation = (kernelGroupInput, kernelGroupResult,
+  tickTime1D, stride) => {
+  let delay = 200;
+  const slidingAnimation = () => {
+    let originX = +kernelGroupInput.attr('data-origin-x');
+    let originY = +kernelGroupInput.attr('data-origin-y');
+    let originXResult = +kernelGroupResult.attr('data-origin-x');
+    let oldTick = +kernelGroupInput.attr('data-tick');
+    let i = (oldTick) % tickTime1D;
+    let j = Math.floor((oldTick) / tickTime1D);
+    let x = originX + i * stride;
+    let y = originY + j * stride;
+    let xResult = originXResult + (oldTick % tickTime1D) * stride;
+    let newTick = (oldTick + 1) % (tickTime1D * tickTime1D);
+
+    // Remove one mask rect at each tick
+    svg.selectAll(`rect.mask-${i}-${j}`)
+      .transition('window-sliding-mask')
+      .delay(delay + 100)
+      .duration(300)
+      .style('opacity', 0);
+
+    kernelGroupInput.attr('data-tick', newTick)
+      .transition('window-sliding-input')
+      .delay(delay)
+      .duration(200)
+      .attr('transform', `translate(${x}, ${y})`);
+
+    kernelGroupResult.attr('data-tick', newTick)
+      .transition('window-sliding-result')
+      .delay(delay)
+      .duration(200)
+      .attr('transform', `translate(${xResult}, ${y})`)
+      .on('end', () => {
+        if (newTick === 0) {
+          svg.selectAll(`rect.mask-overlay`)
+            .transition('window-sliding-mask')
+            .delay(delay - 200)
+            .duration(300)
+            .style('opacity', 1);
+        }
+
+        if (shouldIntermediateAnimate) {
+          slidingAnimation();
+        }
+      });
+  }
+
+  slidingAnimation();
+}
+
+const animationButtonClicked = (curLayerIndex) => {
+  let delay = 200;
+  let tickTime1D = nodeLength / (kernelRectLength * 3);
+  let stride = kernelRectLength * 3; 
+
+  console.log('test');
+  if (isEndOfAnimation) {
+    // Start the animation
+    shouldIntermediateAnimateStore.set(true);
+
+    // Show kernel
+    svg.selectAll('.kernel-clone')
+      .transition()
+      .duration(300)
+      .style('opacity', 1)
+
+    // Restore the mask
+    svg.selectAll(`rect.mask-overlay`)
+      .transition()
+      .duration(300)
+      .style('opacity', 1);
+
+    // Start the intermediate animation
+    for (let i  = 0; i < nodeCoordinate[curLayerIndex].length; i++) {
+      startIntermediateAnimation(d3.select(`.kernel-input-${i}`),
+        d3.select(`.kernel-result-${i}`), tickTime1D, stride);
+    }
+
+
+    // Start the output animation
+    startOutputAnimation(d3.select('.kernel-output'),
+      tickTime1D, stride, delay);
+
+    // Change button icon
+    svg.select('.animation-control-button')
+      .text('\uf050');
+    
+    isEndOfAnimation = false;
+
+  } else {
+    // End the animation
+    shouldIntermediateAnimateStore.set(false);
+    
+    // Show all intermediate and output results
+    svg.selectAll(`rect.mask-overlay`)
+      .transition('skip')
+      .duration(600)
+      .style('opacity', 0);
+    
+    // Move kernel to the beginning to prepare for the next animation
+    let kernelClones = svg.selectAll('.kernel-clone');
+    kernelClones.attr('data-tick', 0)
+      .transition('skip')
+      .duration(300)
+      .style('opacity', 0)
+      .on('end', (d, i, g) => {
+        let element = d3.select(g[i]);
+        console.log(element.attr('transform'));
+        let originX = +element.attr('data-origin-x');
+        let originY = +element.attr('data-origin-y');
+        element.attr('transform', `translate(${originX}, ${originY})`);
+        console.log(element.attr('transform'));
+      });
+    
+    // Change flow edge style
+    svg.selectAll('path.flow-edge')
+      .transition('skip')
+      .delay(300)
+      .attr('stroke-dasharray', '0 0');
+    
+    // Change button icon
+    svg.select('.animation-control-button')
+      .text('\uf01e');
+    
+    isEndOfAnimation = true;
+  }
 }
 
 /**
@@ -343,6 +513,54 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
   // Compute stride for the kernel animation
   let stride = kernelRectLength * 3; 
 
+  // Also add the overlay mask on the output node
+  let outputY = nodeCoordinate[curLayerIndex][i].y;
+  let curNode = svg.select(`#layer-${curLayerIndex}-node-${i}`);
+  let outputOverlayGroup = curNode.append('g')
+    .attr('class', 'overlay-group')
+    .attr('transform', `translate(${rightX}, ${outputY})`);
+
+  let strideTime = Math.floor(nodeLength / stride);
+  
+  for (let i = 0; i < strideTime; i++) {
+    for (let j = 0; j < strideTime; j++) {
+      outputOverlayGroup.append('rect')
+        .attr('class', `mask-overlay mask-${i}-${j}`)
+        .attr('width', stride)
+        .attr('height', stride)
+        .attr('x', i * stride)
+        .attr('y', j * stride)
+        .style('fill', 'var(--light-gray)')
+        .style('stroke', 'var(--light-gray)')
+        .style('opacity', 1);
+    }
+  }
+
+  // Make sure the bounding box is on top of other things
+  curNode.select('rect.bounding').raise();
+
+  // Add sliding kernel for the output node
+  let kernelGroup = intermediateLayer.append('g')
+    .attr('class', `kernel kernel-output kernel-clone`)
+    .attr('transform', `translate(${rightX}, ${outputY})`);
+
+  kernelGroup.append('rect')
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('width', kernelRectLength * 3)
+    .attr('height', kernelRectLength * 3)
+    .attr('fill', 'none')
+    .attr('stroke', intermediateColor);
+  
+  kernelGroup.attr('data-tick', 0)
+    .attr('data-origin-x', rightX)
+    .attr('data-origin-y', outputY);
+
+  let delay = 200;
+  let tickTime1D = nodeLength / (kernelRectLength * 3);
+
+  startOutputAnimation(kernelGroup, tickTime1D, stride, delay);
+
   // First intermediate layer
   nodeCoordinate[curLayerIndex - 1].forEach((n, ni) => {
 
@@ -385,10 +603,9 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     // Create a small kernel illustration
     // Here we minus 2 because of no padding
     // let tickTime1D = nodeLength / (kernelRectLength) - 2;
-    let tickTime1D = nodeLength / (kernelRectLength * 3);
     let kernelRectX = leftX - kernelRectLength * 3 * 2;
     let kernelGroup = intermediateLayer.append('g')
-      .attr('class', `kernel kernel-${i}`)
+      .attr('class', `kernel kernel-${ni}`)
       .attr('transform', `translate(${kernelRectX}, ${n.y})`);
 
     for (let r = 0; r < kernelMatrix.length; r++) {
@@ -414,7 +631,10 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
 
     // Sliding the kernel on the input channel and result channel at the same
     // time
-    let kernelGroupInput = kernelGroup.clone(true);
+    let kernelGroupInput = kernelGroup.clone(true)
+      .classed('kernel-clone', true)
+      .classed(`kernel-input-${ni}`, true);
+
     kernelGroupInput.style('opacity', 0.9)
       .selectAll('rect.kernel')
       .style('opacity', 0.7);
@@ -425,7 +645,10 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('data-origin-x', leftX)
       .attr('data-origin-y', n.y);
 
-    let kernelGroupResult = kernelGroup.clone(true);
+    let kernelGroupResult = kernelGroup.clone(true)
+      .classed('kernel-clone', true)
+      .classed(`kernel-result-${ni}`, true);
+
     kernelGroupResult.style('opacity', 0.9)
       .selectAll('rect.kernel')
       .style('fill', 'none');
@@ -435,53 +658,8 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('data-origin-x', intermediateX1)
       .attr('data-origin-y', n.y);
     
-    let delay = 200;
-    const slidingAnimation = () => {
-      let originX = +kernelGroupInput.attr('data-origin-x');
-      let originY = +kernelGroupInput.attr('data-origin-y');
-      let originXResult = +kernelGroupResult.attr('data-origin-x');
-      let oldTick = +kernelGroupInput.attr('data-tick');
-      let i = (oldTick) % tickTime1D;
-      let j = Math.floor((oldTick) / tickTime1D);
-      let x = originX + i * stride;
-      let y = originY + j * stride;
-      let xResult = originXResult + (oldTick % tickTime1D) * stride;
-      let newTick = (oldTick + 1) % (tickTime1D * tickTime1D);
-
-      // Remove one mask rect at each tick
-      svg.selectAll(`rect.mask-${i}-${j}`)
-        .transition('window-sliding-mask')
-        .delay(delay + 100)
-        .duration(300)
-        .style('opacity', 0);
-
-      kernelGroupInput.attr('data-tick', newTick)
-        .transition('window-sliding-input')
-        .delay(delay)
-        .duration(200)
-        .attr('transform', `translate(${x}, ${y})`);
-
-      kernelGroupResult.attr('data-tick', newTick)
-        .transition('window-sliding-result')
-        .delay(delay)
-        .duration(200)
-        .attr('transform', `translate(${xResult}, ${y})`)
-        .on('end', () => {
-          if (newTick === 0) {
-            svg.selectAll(`rect.mask-overlay`)
-              .transition('window-sliding-mask')
-              .delay(delay - 200)
-              .duration(300)
-              .style('opacity', 1);
-          }
-
-          if (shouldIntermediateAnimate) {
-            slidingAnimation();
-          }
-        });
-    }
-
-    slidingAnimation();
+    startIntermediateAnimation(kernelGroupInput, kernelGroupResult, tickTime1D,
+      stride);
   });
 
   // Aggregate the intermediate min max
@@ -590,7 +768,17 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .append('text')
     .style('dominant-baseline', 'middle')
     .style('opacity', '0.8')
-    .text('intermediate')
+    .text('intermediate');
+  
+  intermediateLayer.select('.layer-intermediate-label')
+    // .select('text')
+    .append('text')
+    .attr('class', 'animation-control-button')
+    .style('dominant-baseline', 'middle')
+    .attr('x', 50)
+    .on('click', () => animationButtonClicked(curLayerIndex))
+    .text('\uf050');
+  //\uf01e
 
   // Draw the edges
   let linkGen = d3.linkHorizontal()

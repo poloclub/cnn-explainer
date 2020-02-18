@@ -564,6 +564,9 @@
       .style('opacity', 0)
       .on('end', (d, i, g) => { d3.select(g[i]).remove()});
     
+    // Remove the output node overlay mask
+    svg.selectAll('.overlay-group').remove();
+    
     // Remove the overlay rect
     svg.selectAll('g.intermediate-layer-overlay, g.intermediate-layer-annotation')
       .transition('remove')
@@ -1109,6 +1112,12 @@
     font-size: 10px;
     font-style: italic;
     fill: gray;
+  }
+
+  :global(.animation-control-button) {
+    font-family: FontAwesome;
+    opacity: 0.8;
+    cursor: pointer;
   }
 
 </style>
