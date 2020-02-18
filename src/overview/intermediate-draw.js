@@ -287,7 +287,8 @@ const createIntermediateNode = (curLayerIndex, selectedI, groupLayer, x, y,
   return newNode;
 }
 
-const startOutputAnimation = (kernelGroup, tickTime1D, stride, delay) => {
+const startOutputAnimation = (kernelGroup, tickTime1D, stride, delay,
+  curLayerIndex) => {
   const slidingAnimation = () => {
     let originX = +kernelGroup.attr('data-origin-x');
     let originY = +kernelGroup.attr('data-origin-y');
@@ -312,19 +313,26 @@ const startOutputAnimation = (kernelGroup, tickTime1D, stride, delay) => {
       .attr('transform', `translate(${x}, ${y})`)
       .on('end', () => {
         if (newTick === 0) {
+          /* Uncomment to wrap the sliding
           svg.selectAll(`rect.mask-overlay`)
             .transition('window-sliding-mask')
             .delay(delay - 200)
             .duration(300)
             .style('opacity', 1);
-        }
+          */
 
+          // Stop the animation
+          // Be careful with animation racing so call this function here instead
+          // of under selectALL
+          if (!isEndOfAnimation) {
+            animationButtonClicked(curLayerIndex);
+          }
+        }
         if (shouldIntermediateAnimate) {
           slidingAnimation();
         }
       });
   }
-
   slidingAnimation();
 }
 
@@ -362,6 +370,7 @@ const startIntermediateAnimation = (kernelGroupInput, kernelGroupResult,
       .duration(200)
       .attr('transform', `translate(${xResult}, ${y})`)
       .on('end', () => {
+        /* Uncomment to wrap the sliding
         if (newTick === 0) {
           svg.selectAll(`rect.mask-overlay`)
             .transition('window-sliding-mask')
@@ -369,13 +378,12 @@ const startIntermediateAnimation = (kernelGroupInput, kernelGroupResult,
             .duration(300)
             .style('opacity', 1);
         }
-
+        */
         if (shouldIntermediateAnimate) {
           slidingAnimation();
         }
       });
   }
-
   slidingAnimation();
 }
 
@@ -407,10 +415,15 @@ const animationButtonClicked = (curLayerIndex) => {
         d3.select(`.kernel-result-${i}`), tickTime1D, stride);
     }
 
-
     // Start the output animation
     startOutputAnimation(d3.select('.kernel-output'),
-      tickTime1D, stride, delay);
+      tickTime1D, stride, delay, curLayerIndex);
+    
+    // Change the flow edge style
+    svg.selectAll('path.flow-edge')
+      .attr('stroke-dasharray', '4 2')
+      .attr('stroke-dashoffset', 0)
+      .each((d, i, g) => animateEdge(d, i, g, 0 - 1000));
 
     // Change button icon
     svg.select('.animation-control-button')
@@ -436,17 +449,14 @@ const animationButtonClicked = (curLayerIndex) => {
       .style('opacity', 0)
       .on('end', (d, i, g) => {
         let element = d3.select(g[i]);
-        console.log(element.attr('transform'));
         let originX = +element.attr('data-origin-x');
         let originY = +element.attr('data-origin-y');
         element.attr('transform', `translate(${originX}, ${originY})`);
-        console.log(element.attr('transform'));
       });
     
     // Change flow edge style
     svg.selectAll('path.flow-edge')
-      .transition('skip')
-      .delay(300)
+      .interrupt()
       .attr('stroke-dasharray', '0 0');
     
     // Change button icon
@@ -455,6 +465,19 @@ const animationButtonClicked = (curLayerIndex) => {
     
     isEndOfAnimation = true;
   }
+}
+
+const animateEdge = (d, i, g, dashoffset) => {
+  let curPath = d3.select(g[i]);
+  curPath.transition()
+    .duration(60000)
+    .ease(d3.easeLinear)
+    .attr('stroke-dashoffset', dashoffset)
+    .on('end', (d, i, g) => {
+      if (shouldIntermediateAnimate) {
+        animateEdge(d, i, g, dashoffset - 2000);
+      }
+    });
 }
 
 /**
@@ -559,7 +582,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
   let delay = 200;
   let tickTime1D = nodeLength / (kernelRectLength * 3);
 
-  startOutputAnimation(kernelGroup, tickTime1D, stride, delay);
+  startOutputAnimation(kernelGroup, tickTime1D, stride, delay, curLayerIndex);
 
   // First intermediate layer
   nodeCoordinate[curLayerIndex - 1].forEach((n, ni) => {
@@ -789,18 +812,6 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .attr('class', 'edge-group');
   
   let dashoffset = 0;
-  const animateEdge = (d, i, g, dashoffset) => {
-    let curPath = d3.select(g[i]);
-    curPath.transition()
-      .duration(60000)
-      .ease(d3.easeLinear)
-      .attr('stroke-dashoffset', dashoffset)
-      .on('end', (d, i, g) => {
-        if (shouldIntermediateAnimate) {
-          animateEdge(d, i, g, dashoffset - 1000);
-        }
-      });
-  }
 
   edgeGroup.selectAll('path')
     .data(linkData)
