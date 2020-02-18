@@ -18,9 +18,16 @@
   import { overviewConfig } from '../config.js';
 
   import {
-    moveLayerX, addOverlayGradient, addOverlayRect, drawConv1,
-    drawConv2, drawConv3, drawConv4, drawFlatten
+    addOverlayRect, drawConv1, drawConv2, drawConv3, drawConv4
   } from './intermediate-draw.js';
+
+  import {
+    moveLayerX, addOverlayGradient
+  } from './intermediate-utils.js';
+
+  import {
+    drawFlatten
+  } from './flatten-draw.js';
 
   import {
     drawOutput, drawCNN, updateCNN, updateCNNLayerRanges
