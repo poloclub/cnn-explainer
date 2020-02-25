@@ -1114,7 +1114,8 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
     width: 2 * nodeLength + intermediateGap,
     isInput: true,
     x: leftX,
-    y: nodeCoordinate[curLayerIndex][9].y + nodeLength - 9,
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10 - 25
   });
 
   drawIntermediateLayerLegend({
@@ -1125,7 +1126,8 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
     group: intermediateLayer,
     width: 2 * nodeLength + intermediateGap,
     x: nodeCoordinate[curLayerIndex - 1][2].x,
-    y: nodeCoordinate[curLayerIndex][9].y + nodeLength + 16
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10
   });
 
   drawIntermediateLayerLegend({
@@ -1136,7 +1138,8 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
     group: intermediateLayer,
     width: 2 * nodeLength + intermediateGap,
     x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
-    y: nodeCoordinate[curLayerIndex][9].y + nodeLength + 16,
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10,
     gradientAppendingName: 'kernelColorGradient',
     colorScale: layerColorScales.weight,
     gradientGap: 0.2
@@ -1249,7 +1252,8 @@ export const drawConv2 = (curLayerIndex, d, i, width, height,
     group: intermediateLayer,
     width: 2 * nodeLength + intermediateGap,
     x: leftX,
-    y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 16,
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10
   });
 
   drawIntermediateLayerLegend({
@@ -1260,7 +1264,8 @@ export const drawConv2 = (curLayerIndex, d, i, width, height,
     group: intermediateLayer,
     width: 2 * nodeLength + intermediateGap,
     x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
-    y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 16,
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10,
     gradientAppendingName: 'kernelColorGradient',
     colorScale: layerColorScales.weight,
     gradientGap: 0.2
@@ -1379,7 +1384,8 @@ export const drawConv3 = (curLayerIndex, d, i, width, height,
     width: 2 * nodeLength + intermediateGap,
     minMax: finalMinMax,
     x: leftX,
-    y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 16
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10
   });
 
   drawIntermediateLayerLegend({
@@ -1390,7 +1396,8 @@ export const drawConv3 = (curLayerIndex, d, i, width, height,
     group: intermediateLayer,
     width: 2 * nodeLength + intermediateGap,
     x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
-    y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 16,
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10,
     gradientAppendingName: 'kernelColorGradient',
     colorScale: layerColorScales.weight,
     gradientGap: 0.2
@@ -1507,7 +1514,8 @@ export const drawConv4 = (curLayerIndex, d, i, width, height,
     minMax: finalMinMax,
     width: 2 * nodeLength + intermediateGap,
     x: leftX,
-    y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 16
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10
   });
 
   drawIntermediateLayerLegend({
@@ -1518,7 +1526,8 @@ export const drawConv4 = (curLayerIndex, d, i, width, height,
     group: intermediateLayer,
     width: 2 * nodeLength + intermediateGap,
     x: targetX + nodeLength - (2 * nodeLength + intermediateGap),
-    y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 16,
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10,
     gradientAppendingName: 'kernelColorGradient',
     colorScale: layerColorScales.weight,
     gradientGap: 0.2

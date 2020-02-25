@@ -501,7 +501,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     group: intermediateLayer,
     width: intermediateGap * 0.5,
     x: leftX,
-    y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 16,
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10
   });
 
   drawIntermediateLayerLegend({
@@ -516,7 +517,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     colorScale: layerColorScales.weight,
     x: leftX + intermediateGap * 0.5 + (nodeLength  +
       intermediateGap) - (2 * 0.5) * intermediateGap,
-    y: nodeCoordinate[curLayerIndex - 1][9].y + nodeLength + 16,
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10
   });
 
   // Add annotation to the intermediate layer
