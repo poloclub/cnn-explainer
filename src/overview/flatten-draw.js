@@ -64,8 +64,9 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   let pixelWidth = nodeLength / 2;
   let pixelHeight = 1.1;
-  let leftX = nodeCoordinate[curLayerIndex][0].x - (2 * nodeLength +
-    4 * hSpaceAroundGap * gapRatio + pixelWidth);
+  let totalLength = (2 * nodeLength +
+    5 * hSpaceAroundGap * gapRatio + pixelWidth);
+  let leftX = nodeCoordinate[curLayerIndex][0].x - totalLength;
   let intermediateGap = (hSpaceAroundGap * gapRatio * 4) / 2;
 
   // Hide the edges
@@ -126,6 +127,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('opacity', 0);
   
   let intermediateX1 = leftX + nodeLength + intermediateGap;
+  let intermediateX2 = intermediateX1 + intermediateGap + pixelWidth;
   let range = cnnLayerRanges[selectedScaleLevel][curLayerIndex - 1];
   let colorScale = layerColorScales.conv;
   let flattenLength = cnn.flatten.length / cnn[1].length;
@@ -205,7 +207,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
       linkData.push({
         source: {x: intermediateX1 + pixelWidth + 3,
           y:  l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight},
-        target: {x: nodeCoordinate[curLayerIndex][i].x - nodeLength,
+        target: {x: intermediateX2,
+          //nodeCoordinate[curLayerIndex][i].x - nodeLength,
           y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
         index: factoredF,
         weight: cnn.flatten[factoredF].outputLinks[i].weight,
@@ -302,11 +305,11 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     
     // Input -> flatten
     linkData.push({
+      source: {x: leftX + nodeLength + 10,
+        y: nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
       target: {x: intermediateX1 - 3,
         y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
           middleRectHeight * (vi + 0.5)},
-      source: {x: leftX + nodeLength + 10,
-        y: nodeCoordinate[curLayerIndex - 1][v.index].y + nodeLength / 2},
       index: -1,
       width: 1,
       opacity: 1,
@@ -320,7 +323,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
       source: {x: intermediateX1 + pixelWidth + 3,
       y: topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
         middleRectHeight * (vi + 0.5)},
-      target: {x: nodeCoordinate[curLayerIndex][i].x - nodeLength,
+      target: {x: intermediateX2,
       y: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2},
       index: -1,
       name: `flatten-abstract-${v.index}-output`,
@@ -335,17 +338,19 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   })
 
   // Draw the plus operation symbol
-  let intermediateX2 = intermediateX1 + intermediateGap + pixelWidth;
   let symbolY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2;
   let symbolRectHeight = 1;
   let symbolGroup = intermediateLayer.append('g')
     .attr('class', 'plus-symbol')
     .attr('transform', `translate(${intermediateX2 + plusSymbolRadius}, ${symbolY})`);
   
-  symbolGroup.append('circle')
-    .attr('cx', 0)
-    .attr('cy', 0)
-    .attr('r', plusSymbolRadius)
+  symbolGroup.append('rect')
+    .attr('x', -plusSymbolRadius)
+    .attr('y', -plusSymbolRadius)
+    .attr('width', plusSymbolRadius * 2)
+    .attr('height', plusSymbolRadius * 2)
+    .attr('rx', 3)
+    .attr('ry', 3)
     .style('fill', 'none')
     .style('stroke', intermediateColor);
   
@@ -367,11 +372,10 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   // conv node
   if (i == 0) {
     // Add bias symbol to the plus symbol
-    symbolGroup.append('rect')
-      .attr('x', -kernelRectLength)
-      .attr('y', nodeLength / 2)
-      .attr('width', 2 * kernelRectLength)
-      .attr('height', 2 * kernelRectLength)
+    symbolGroup.append('circle')
+      .attr('cx', 0)
+      .attr('cy', nodeLength / 2)
+      .attr('r', kernelRectLength * 1.5)
       .style('stroke', intermediateColor)
       .style('fill', gappedColorScale(layerColorScales.weight,
           flattenRange, d.bias, 0.35));
@@ -388,11 +392,10 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     });
   } else {
     // Add bias symbol to the plus symbol
-    symbolGroup.append('rect')
-      .attr('x', -kernelRectLength)
-      .attr('y', -nodeLength / 2 - 2 * kernelRectLength)
-      .attr('width', 2 * kernelRectLength)
-      .attr('height', 2 * kernelRectLength)
+    symbolGroup.append('circle')
+      .attr('cx', 0)
+      .attr('cy', -nodeLength / 2 - 0.5 * kernelRectLength)
+      .attr('r', kernelRectLength * 1.5)
       .style('stroke', intermediateColor)
       .style('fill', gappedColorScale(layerColorScales.weight,
           flattenRange, d.bias, 0.35));
@@ -419,6 +422,35 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     width: 1.2,
     color: '#E5E5E5'
   });
+
+  // Draw softmax operation symbol
+  let softmaxWidth = 55;
+  let softmaxX = ((totalLength - 2 * nodeLength - 2 * intermediateGap)
+    - softmaxWidth) / 2 + intermediateX2 + plusSymbolRadius * 2;
+
+  let softmaxSymbol = intermediateLayer.append('g')
+    .attr('class', 'softmax-symbol')
+    .attr('transform', `translate(${softmaxX}, ${symbolY})`)
+    .style('pointer-event', 'all')
+    .style('cursor', 'pointer');
+  
+  softmaxSymbol.append('rect')
+    .attr('x', 0)
+    .attr('y', -plusSymbolRadius)
+    .attr('width', softmaxWidth)
+    .attr('height', plusSymbolRadius * 2)
+    .attr('stroke', intermediateColor)
+    .attr('rx', 2)
+    .attr('ry', 2)
+    .attr('fill', '#FAFAFA');
+  
+  softmaxSymbol.append('text')
+    .attr('x', 5)
+    .attr('y', 1)
+    .style('dominant-baseline', 'middle')
+    .style('font-size', '12px')
+    .style('opacity', 0.5)
+    .text('softmax');
 
   // Draw the layer label
   intermediateLayer.append('g')
@@ -496,7 +528,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   let plusAnnotation = intermediateLayerAnnotation.append('g')
     .attr('class', 'plus-annotation');
   
-  let textX = nodeCoordinate[curLayerIndex][i].x - 50;
+  // let textX = nodeCoordinate[curLayerIndex][i].x - 50;
+  let textX = intermediateX2;
   let textY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
     kernelRectLength * 3;
   let arrowSY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
@@ -510,7 +543,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     textY += 10;
     arrowSY += 10;
   } else if (i == 9) {
-    textY -= 120;
+    textY -= 110;
     arrowSY -= 70;
     arrowTY -= 18;
   }
@@ -568,10 +601,10 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   if (isSafari) { biasTextY -= 0.5 * kernelRectLength; }
 
   if (i === 0) {
-    biasTextY += nodeLength + 2.5 * kernelRectLength;
+    biasTextY += nodeLength + 2 * kernelRectLength;
     if (isSafari) { biasTextY += kernelRectLength; }
   } else {
-    biasTextY -= 2 * kernelRectLength + 5;
+    biasTextY -= 2 * kernelRectLength + 3;
   }
   
   plusAnnotation.append('text')
