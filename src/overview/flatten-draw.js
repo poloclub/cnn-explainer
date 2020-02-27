@@ -22,7 +22,6 @@ const intermediateColor = overviewConfig.intermediateColor;
 const kernelRectLength = overviewConfig.kernelRectLength;
 const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
-const overlayRectOffset = overviewConfig.overlayRectOffset;
 const isSafari = window.safari !== undefined;
 
 // Shared variables
@@ -49,6 +48,74 @@ cnnLayerRangesStore.subscribe( value => {cnnLayerRanges = value;} )
 
 let cnnLayerMinMax = undefined;
 cnnLayerMinMaxStore.subscribe( value => {cnnLayerMinMax = value;} )
+
+
+const softmaxClicked = (curLayerIndex, symbolX, symbolY, outputX, outputY) => {
+  let duration = 300;
+  let moveX = 50;
+  
+  // Move the overlay gradient
+  svg.select('.intermediate-layer-overlay')
+    .select('rect.overlay')
+    .transition('softmax')
+    .duration(duration)
+    .attr('transform', `translate(${-moveX}, ${0})`);
+
+  // Move the legends TODO
+
+  // Also move all layers on the left
+  for (let i = curLayerIndex - 1; i >= 0; i--) {
+    let curLayer = svg.select(`g#cnn-layer-group-${i}`);
+    let previousX = +curLayer.select('image').attr('x');
+    let newX = previousX - moveX;
+    moveLayerX({
+      layerIndex: i,
+      targetX: newX,
+      disable: true,
+      delay: 0,
+      transitionName: 'softmax',
+      duration: duration
+    });
+  }
+
+  // Hide the bias annotation
+  svg.select('.plus-annotation')
+    .transition('softmax')
+    .duration(duration)
+    .style('opacity', 0);
+
+  // Hide the annotation
+  svg.select('.flatten-annotation')
+    .transition('softmax')
+    .duration(duration)
+    .style('opacity', 0);
+
+  // Move the left part of faltten layer elements
+  let flattenLeftPart = svg.select('.flatten-layer-left');
+  flattenLeftPart.transition('softmax')
+    .duration(duration)
+    .ease(d3.easeCubicInOut)
+    .attr('transform', `translate(${-moveX}, ${0})`);
+  
+  // Redraw the line from the plus symbol to the output node
+  let newLine = flattenLeftPart.select('.edge-group')
+    .append('line')
+    .attr('class', 'symbol-output-line')
+    .attr('x1', symbolX)
+    .attr('y1', symbolY)
+    .attr('x2', outputX + moveX)
+    .attr('y2', outputY)
+    .style('stroke-width', 1.2)
+    .style('stroke', '#E5E5E5')
+    .style('opacity', 0);
+  
+  newLine.transition('softmax')
+    .delay(duration / 3)
+    .duration(duration * 2 / 3)
+    .style('opacity', 1);
+  
+}
+
 
 /**
  * Draw the flatten layer before output layer
@@ -77,18 +144,24 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   moveLayerX({layerIndex: curLayerIndex - 1, targetX: leftX,
     disable: true, delay: 0});
 
+  // Disable the current layer (output layer)
   moveLayerX({layerIndex: curLayerIndex,
     targetX: nodeCoordinate[curLayerIndex][0].x, disable: true,
     delay: 0, opacity: 0.15, specialIndex: i});
+  
+  // Different from other intermediate view, we push layers out of screen in
+  // the flatten layer view. In other words, we will use a fixed gap between
+  // moved layers.
+  let leftGap = 15;
+  let curLeftBound = leftX - leftGap * 2 - nodeLength;
 
   // Compute the gap in the left shrink region
   let leftEnd = leftX - hSpaceAroundGap;
-  let leftGap = (leftEnd - nodeCoordinate[0][0].x - 10 * nodeLength) / 10;
 
   // Move the left layers
-  for (let i = 0; i < curLayerIndex - 1; i++) {
-    let curX = nodeCoordinate[0][0].x + i * (nodeLength + leftGap);
-    moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
+  for (let i = curLayerIndex - 2; i >= 0; i--) {
+    moveLayerX({layerIndex: i, targetX: curLeftBound, disable: true, delay: 0});
+    curLeftBound = curLeftBound - leftGap - nodeLength;
   }
 
   // Add an overlay
@@ -97,11 +170,6 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 0.85}];
   addOverlayGradient('overlay-gradient-left', stops);
 
-  stops = [{offset: '0%', color: 'rgb(250, 250, 250)', opacity: 0.85},
-    {offset: '50%', color: 'rgb(250, 250, 250)', opacity: 0.95},
-    {offset: '100%', color: 'rgb(250, 250, 250)', opacity: 1}];
-  addOverlayGradient('overlay-gradient-right', stops);
-
   let intermediateLayerOverlay = svg.append('g')
     .attr('class', 'intermediate-layer-overlay');
 
@@ -109,9 +177,9 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('class', 'overlay')
     .style('fill', 'url(#overlay-gradient-left)')
     .style('stroke', 'none')
-    .attr('width', leftEnd - nodeCoordinate[0][0].x + overlayRectOffset)
+    .attr('width', leftEnd + svgPaddings.left + leftGap / 2)
     .attr('height', height + svgPaddings.top + svgPaddings.bottom)
-    .attr('x', nodeCoordinate[0][0].x - overlayRectOffset/2)
+    .attr('x', -svgPaddings.left)
     .attr('y', 0)
     .style('opacity', 0);
   
@@ -136,6 +204,9 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   let flattenLayer = intermediateLayer.append('g')
     .attr('class', 'flatten-layer');
   
+  let flattenLayerLeftPart = flattenLayer.append('g')
+    .attr('class', 'flatten-layer-left');
+  
   let topY = nodeCoordinate[curLayerIndex - 1][0].y;
   let bottomY = nodeCoordinate[curLayerIndex - 1][9].y + nodeLength -
         flattenLength * pixelHeight;
@@ -158,34 +229,34 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   let flattenMouseOverHandler = (d) => {
     let index = d.index;
-    flattenLayer.select(`#edge-flatten-${index}`)
+    flattenLayerLeftPart.select(`#edge-flatten-${index}`)
       .raise()
       .style('stroke', intermediateColor)
       .style('stroke-width', 1);
 
-    flattenLayer.select(`#edge-flatten-${index}-output`)
+      flattenLayerLeftPart.select(`#edge-flatten-${index}-output`)
       .raise()
       .style('stroke-width', 1)
       .style('stroke', da => gappedColorScale(layerColorScales.weight,
         flattenRange, da.weight, 0.1));
 
-    flattenLayer.select(`#bounding-${index}`)
+        flattenLayerLeftPart.select(`#bounding-${index}`)
       .raise()
       .style('opacity', 1);
   }
 
   let flattenMouseLeaveHandler = (d) => {
     let index = d.index;
-    flattenLayer.select(`#edge-flatten-${index}`)
+    flattenLayerLeftPart.select(`#edge-flatten-${index}`)
       .style('stroke-width', 0.6)
       .style('stroke', '#E5E5E5')
 
-    flattenLayer.select(`#edge-flatten-${index}-output`)
+      flattenLayerLeftPart.select(`#edge-flatten-${index}-output`)
       .style('stroke-width', 0.6)
       .style('stroke', da => gappedColorScale(layerColorScales.weight,
         flattenRange, da.weight, 0.35));
 
-    flattenLayer.select(`#bounding-${index}`)
+        flattenLayerLeftPart.select(`#bounding-${index}`)
       .raise()
       .style('opacity', 0);
   }
@@ -194,7 +265,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     let loopFactors = [0, 9];
     loopFactors.forEach(l => {
       let factoredF = f + l * flattenLength;
-      flattenLayer.append('rect')
+      flattenLayerLeftPart.append('rect')
         .attr('x', intermediateX1)
         .attr('y', l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight)
         .attr('width', pixelWidth)
@@ -240,7 +311,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
       // Add original pixel bounding box
       let loc = cnn.flatten[factoredF].inputLinks[0].weight;
-      flattenLayer.append('rect')
+      flattenLayerLeftPart.append('rect')
         .attr('id', `bounding-${factoredF}`)
         .attr('class', 'flatten-bounding')
         .attr('x', leftX + loc[1] * boundingBoxLength)
@@ -271,7 +342,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
       flattenLength * (n + 1)).map(d => d.outputLinks[i].weight));
     meanValues.push({index: n, output: meanOutput, weight: meanWeight});
     */
-   meanValues.push({index: n});
+    meanValues.push({index: n});
   }
 
   // Compute the middle gap
@@ -282,7 +353,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   // Add middle nodes
   meanValues.forEach((v, vi) => {
     // Add a small rectangle
-    flattenLayer.append('rect')
+    flattenLayerLeftPart.append('rect')
       .attr('x', intermediateX1 + pixelWidth / 4)
       .attr('y', topY + flattenLength * pixelHeight + middleGap * (vi + 1) +
         middleRectHeight * vi)
@@ -292,7 +363,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
       .style('fill', '#E5E5E5');
     
     // Add a triangle next to the input node
-    flattenLayer.append('polyline')
+    flattenLayerLeftPart.append('polyline')
       .attr('points',
         `${leftX + nodeLength + 3}
         ${nodeCoordinate[curLayerIndex - 1][v.index].y},
@@ -338,11 +409,12 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   })
 
   // Draw the plus operation symbol
+  let symbolX = intermediateX2 + plusSymbolRadius;
   let symbolY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2;
   let symbolRectHeight = 1;
-  let symbolGroup = intermediateLayer.append('g')
+  let symbolGroup = flattenLayerLeftPart.append('g')
     .attr('class', 'plus-symbol')
-    .attr('transform', `translate(${intermediateX2 + plusSymbolRadius}, ${symbolY})`);
+    .attr('transform', `translate(${symbolX}, ${symbolY})`);
   
   symbolGroup.append('rect')
     .attr('x', -plusSymbolRadius)
@@ -432,7 +504,9 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('class', 'softmax-symbol')
     .attr('transform', `translate(${softmaxX}, ${symbolY})`)
     .style('pointer-event', 'all')
-    .style('cursor', 'pointer');
+    .style('cursor', 'pointer')
+    .on('click', () => softmaxClicked(curLayerIndex, symbolX, symbolY,
+      nodeCoordinate[curLayerIndex][i].x, symbolY));
   
   softmaxSymbol.append('rect')
     .attr('x', 0)
@@ -471,8 +545,9 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .x(d => d.x)
     .y(d => d.y);
 
-  let edgeGroup = flattenLayer.append('g')
-    .attr('class', 'edge-group');
+  let edgeGroup = flattenLayerLeftPart.append('g')
+    .attr('class', 'edge-group')
+    .lower();
   
   edgeGroup.selectAll('path')
     .data(linkData)

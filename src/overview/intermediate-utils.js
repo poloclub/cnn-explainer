@@ -37,7 +37,8 @@ export const moveLayerX = (arg) => {
   let opacity = arg.opacity;
   let specialIndex = arg.specialIndex;
   let onEndFunc = arg.onEndFunc;
-  let transitionName = arg.onEndFunc === undefined ? 'move': arg.onEndFunc;
+  let transitionName = arg.transitionName === undefined ? 'move' : arg.transitionName;
+  let duration = arg.duration === undefined ? 500 : arg.duration;
 
   // Move the selected layer
   let curLayer = svg.select(`g#cnn-layer-group-${layerIndex}`);
@@ -49,7 +50,7 @@ export const moveLayerX = (arg) => {
       .transition(transitionName)
       .ease(d3.easeCubicInOut)
       .delay(delay)
-      .duration(500)
+      .duration(duration)
       .attr('x', targetX);
     
     d3.select(g[i])
@@ -57,7 +58,7 @@ export const moveLayerX = (arg) => {
       .transition(transitionName)
       .ease(d3.easeCubicInOut)
       .delay(delay)
-      .duration(500)
+      .duration(duration)
       .attr('x', targetX);
     
     if (opacity !== undefined && i !== specialIndex) {
@@ -72,7 +73,7 @@ export const moveLayerX = (arg) => {
     .transition(transitionName)
     .ease(d3.easeCubicInOut)
     .delay(delay)
-    .duration(500)
+    .duration(duration)
     .attr('transform', () => {
       let x = targetX + nodeLength / 2;
       let y = (svgPaddings.top + vSpaceAroundGap) / 2;
@@ -84,7 +85,7 @@ export const moveLayerX = (arg) => {
     .transition(transitionName)
     .ease(d3.easeCubicInOut)
     .delay(delay)
-    .duration(500)
+    .duration(duration)
     .attr('transform', () => {
       let x = targetX + nodeLength / 2;
       let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 6;
@@ -205,7 +206,7 @@ export const drawIntermediateLayerLegend = (arg) => {
     .tickValues(isInput ? [0, range] : [minMax.min, 0, minMax.max]);
   
   let intermediateLegend = group.append('g')
-    .attr('id', `intermediate-legend-${curLayerIndex - 1}`)
+    .attr('class', `intermediate-legend-${curLayerIndex - 1}`)
     .attr('transform', `translate(${x}, ${y})`);
   
   let legendGroup = intermediateLegend.append('g')
