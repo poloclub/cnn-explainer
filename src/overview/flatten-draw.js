@@ -24,6 +24,8 @@ const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
 const isSafari = window.safari !== undefined;
 
+let isInSoftmax = false;
+
 // Shared variables
 let svg = undefined;
 svgStore.subscribe( value => {svg = value;} )
@@ -49,25 +51,60 @@ cnnLayerRangesStore.subscribe( value => {cnnLayerRanges = value;} )
 let cnnLayerMinMax = undefined;
 cnnLayerMinMaxStore.subscribe( value => {cnnLayerMinMax = value;} )
 
+const moveLegend = (d, i, g, moveX, duration, restore) => {
+  let legend = d3.select(g[i]);
+
+  if (!restore) {
+    let previousTransform = legend.attr('transform');
+    let previousLegendX = +previousTransform.replace(/.*\(([\d\.]+),.*/, '$1');
+    let previousLegendY = +previousTransform.replace(/.*,\s([\d\.]+)\)/, '$1');
+  
+    legend.transition('softmax')
+      .duration(duration)
+      .ease(d3.easeCubicInOut)
+      .attr('transform', `translate(${previousLegendX - moveX}, ${previousLegendY})`);
+    
+    // If not in restore mode, we register the previous location to the DOM element
+    legend.attr('data-preX', previousLegendX);
+    legend.attr('data-preY', previousLegendY);
+  } else {
+    // Restore the recorded location
+    let previousLegendX = +legend.attr('data-preX');
+    let previousLegendY = +legend.attr('data-preY');
+
+    legend.transition('softmax')
+      .duration(duration)
+      .ease(d3.easeCubicInOut)
+      .attr('transform', `translate(${previousLegendX}, ${previousLegendY})`);
+  }
+
+}
 
 const softmaxClicked = (curLayerIndex, symbolX, symbolY, outputX, outputY) => {
-  let duration = 300;
-  let moveX = 50;
+  let duration = 600;
+  let moveX = 80;
   
   // Move the overlay gradient
   svg.select('.intermediate-layer-overlay')
     .select('rect.overlay')
     .transition('softmax')
+    .ease(d3.easeCubicInOut)
     .duration(duration)
-    .attr('transform', `translate(${-moveX}, ${0})`);
+    .attr('transform', `translate(${isInSoftmax ? 0 : -moveX}, ${0})`);
 
-  // Move the legends TODO
+  // Move the legends
+  svg.selectAll(`.intermediate-legend-${curLayerIndex - 1}`)
+    .each((d, i, g) => moveLegend(d, i, g, moveX, duration, isInSoftmax));
+
+  svg.select('.intermediate-layer')
+    .select(`.layer-label`)
+    .each((d, i, g) => moveLegend(d, i, g, moveX, duration, isInSoftmax));
 
   // Also move all layers on the left
   for (let i = curLayerIndex - 1; i >= 0; i--) {
     let curLayer = svg.select(`g#cnn-layer-group-${i}`);
     let previousX = +curLayer.select('image').attr('x');
-    let newX = previousX - moveX;
+    let newX = isInSoftmax ? previousX + moveX : previousX - moveX;
     moveLayerX({
       layerIndex: i,
       targetX: newX,
@@ -82,38 +119,43 @@ const softmaxClicked = (curLayerIndex, symbolX, symbolY, outputX, outputY) => {
   svg.select('.plus-annotation')
     .transition('softmax')
     .duration(duration)
-    .style('opacity', 0);
+    .style('opacity', isInSoftmax ? 1 : 0);
 
   // Hide the annotation
   svg.select('.flatten-annotation')
     .transition('softmax')
     .duration(duration)
-    .style('opacity', 0);
+    .style('opacity', isInSoftmax ? 1 : 0);
 
   // Move the left part of faltten layer elements
   let flattenLeftPart = svg.select('.flatten-layer-left');
   flattenLeftPart.transition('softmax')
     .duration(duration)
     .ease(d3.easeCubicInOut)
-    .attr('transform', `translate(${-moveX}, ${0})`);
+    .attr('transform', `translate(${isInSoftmax ? 0 : -moveX}, ${0})`);
   
   // Redraw the line from the plus symbol to the output node
-  let newLine = flattenLeftPart.select('.edge-group')
-    .append('line')
-    .attr('class', 'symbol-output-line')
-    .attr('x1', symbolX)
-    .attr('y1', symbolY)
-    .attr('x2', outputX + moveX)
-    .attr('y2', outputY)
-    .style('stroke-width', 1.2)
-    .style('stroke', '#E5E5E5')
-    .style('opacity', 0);
+  if (!isInSoftmax) {
+    let newLine = flattenLeftPart.select('.edge-group')
+      .append('line')
+      .attr('class', 'symbol-output-line')
+      .attr('x1', symbolX)
+      .attr('y1', symbolY)
+      .attr('x2', outputX + moveX)
+      .attr('y2', outputY)
+      .style('stroke-width', 1.2)
+      .style('stroke', '#E5E5E5')
+      .style('opacity', 0);
+    
+    newLine.transition('softmax')
+      .delay(duration / 3)
+      .duration(duration * 2 / 3)
+      .style('opacity', 1);
+  } else {
+    flattenLeftPart.select('.symbol-output-line').remove();
+  }
   
-  newLine.transition('softmax')
-    .delay(duration / 3)
-    .duration(duration * 2 / 3)
-    .style('opacity', 1);
-  
+  isInSoftmax = !isInSoftmax;
 }
 
 
