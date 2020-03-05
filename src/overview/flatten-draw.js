@@ -567,6 +567,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('font-size', '12px')
     .style('opacity', 0.5)
     .text('softmax');
+  
+  // Add annotation for the softmax symbol
 
   // Draw the layer label
   intermediateLayer.append('g')
