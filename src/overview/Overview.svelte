@@ -12,6 +12,7 @@
   import ConvolutionView from '../detail-view/Convolutionview.svelte';
   import ActivationView from '../detail-view/Activationview.svelte';
   import PoolView from '../detail-view/Poolview.svelte';
+  import Article from '../Article.svelte';
 
   // Overview functions
   import { loadTrainedModel, constructCNN } from '../utils/cnn-tf.js';
@@ -1178,6 +1179,8 @@
     <svg id="cnn-svg"></svg>
   </div>
 </div>
+
+<Article/>
 
 <div id='detailview'>
   {#if selectedNode.data && selectedNode.data.type === 'conv' && selectedNodeIndex != -1}
