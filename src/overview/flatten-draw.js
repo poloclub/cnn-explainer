@@ -177,6 +177,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     5 * hSpaceAroundGap * gapRatio + pixelWidth);
   let leftX = nodeCoordinate[curLayerIndex][0].x - totalLength;
   let intermediateGap = (hSpaceAroundGap * gapRatio * 4) / 2;
+  const minimumGap = 15;
 
   // Hide the edges
   svg.select('g.edge-group')
@@ -191,19 +192,29 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     targetX: nodeCoordinate[curLayerIndex][0].x, disable: true,
     delay: 0, opacity: 0.15, specialIndex: i});
   
-  // Different from other intermediate view, we push layers out of screen in
-  // the flatten layer view. In other words, we will use a fixed gap between
-  // moved layers.
-  let leftGap = 15;
-  let curLeftBound = leftX - leftGap * 2 - nodeLength;
-
   // Compute the gap in the left shrink region
   let leftEnd = leftX - hSpaceAroundGap;
+  let leftGap = (leftEnd - nodeCoordinate[0][0].x - 10 * nodeLength) / 10;
 
-  // Move the left layers
-  for (let i = curLayerIndex - 2; i >= 0; i--) {
-    moveLayerX({layerIndex: i, targetX: curLeftBound, disable: true, delay: 0});
-    curLeftBound = curLeftBound - leftGap - nodeLength;
+  // Different from other intermediate view, we push the left part dynamically
+  // 1. If there is enough space, we fix the first layer position and move all
+  // other layers;
+  // 2. If there is not enough space, we maintain the minimum gap and push all
+  // left layers to the left (could be out-of-screen)
+  if (leftGap > minimumGap) {
+    // Move the left layers
+    for (let i = 0; i < curLayerIndex - 1; i++) {
+      let curX = nodeCoordinate[0][0].x + i * (nodeLength + leftGap);
+      moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
+    }
+  } else {
+    leftGap = minimumGap;
+    let curLeftBound = leftX - leftGap * 2 - nodeLength;
+    // Move the left layers
+    for (let i = curLayerIndex - 2; i >= 0; i--) {
+      moveLayerX({layerIndex: i, targetX: curLeftBound, disable: true, delay: 0});
+      curLeftBound = curLeftBound - leftGap - nodeLength;
+    }
   }
 
   // Add an overlay

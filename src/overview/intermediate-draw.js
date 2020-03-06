@@ -1051,8 +1051,8 @@ export const drawConv1 = (curLayerIndex, d, i, width, height,
 
   // Move the right layers
   for (let i = curLayerIndex + 1; i < numLayers; i++) {
-  let curX = rightStart + (i - (curLayerIndex + 1)) * (nodeLength + rightGap);
-  moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
+    let curX = rightStart + (i - (curLayerIndex + 1)) * (nodeLength + rightGap);
+    moveLayerX({layerIndex: i, targetX: curX, disable: true, delay: 0});
   }
 
   // Add an overlay gradient and rect
