@@ -84,7 +84,7 @@
     </p>
     <h4>Input Layer:</h4>
     <p>
-    	The input layer (leftmost layer) represents the input image into the CNN architecture. Because we use RGB images as input, the input layer has three channels, corresponding to the red, green, and blue channels, respectively, which are visualized in this layer using the defined color scale when you click on the <img class="icon" align="top" src="/assets/figures/eye.png" /> icon above to display detailed information on each layer.
+    	The input layer (leftmost layer) represents the input image into the CNN architecture. Because we use RGB images as input, the input layer has three channels, corresponding to the red, green, and blue channels, respectively, which are visualized in this layer using the defined color scale when you click on the <img class="icon" align="top" src="/assets/figures/eye.png" alt="eye icon" /> icon above to display detailed information on each layer.
     </p>
     <h4>Convolutional Layers:</h4>
     <p>
@@ -133,9 +133,9 @@
     <h2>Interactive features</h2>
     <ol>
 		<li><strong>Upload your own image</strong> via url to understand how your image is classified into the 10 classes.  By analyzing at the neurons throughout the network, you can understand the activations maps and extracted features.  <em>TODO: insert image here showing where/how a user can upload an image</em></li>
-		<li><strong>Change the activation map colorscale</strong> to better understand the impact of activations at different levels of abstraction by adjusting (<img class="is-rounded" width="20%" height="5%" align="top" src="/assets/figures/heatmap_scale.png" />)</li>
-		<li><strong>Understand network details</strong> such as layer dimensions and colorscales by clicking the <img class="icon" align="top" src="/assets/figures/eye.png" /> icon</li>
-		<li><strong>Simulate network operations</strong> by clicking the <img class="icon" align="top" src="/assets/figures/play_button.png" /> button or interact with the layer slice in the <em>Detail View</em> by hovering over portions of the input or output to understand the mappings and underlying operations.</li>
+		<li><strong>Change the activation map colorscale</strong> to better understand the impact of activations at different levels of abstraction by adjusting (<img class="is-rounded" width="20%" height="5%" align="top" src="/assets/figures/heatmap_scale.png" alt="heatmap"/>)</li>
+		<li><strong>Understand network details</strong> such as layer dimensions and colorscales by clicking the <img class="icon" align="top" src="/assets/figures/eye.png" alt="eye icon"/> icon</li>
+		<li><strong>Simulate network operations</strong> by clicking the <img class="icon" align="top" src="/assets/figures/play_button.png" alt="play icon"/> button or interact with the layer slice in the <em>Detail View</em> by hovering over portions of the input or output to understand the mappings and underlying operations.</li>
 	</ol> 
 
     <h2>How is CNN Explainer implemented?</h2>
