@@ -5,7 +5,7 @@
     cnnStore, svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore,
     nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
     needRedrawStore, cnnLayerMinMaxStore, detailedModeStore,
-    shouldIntermediateAnimateStore
+    shouldIntermediateAnimateStore, isInSoftmaxStore
   } from '../stores.js';
 
   // Svelte views
@@ -89,6 +89,9 @@
 
   let hSpaceAroundGap = undefined;
   hSpaceAroundGapStore.subscribe( value => {hSpaceAroundGap = value;} )
+
+  let isInSoftmax = undefined;
+  isInSoftmaxStore.subscribe( value => {isInSoftmax = value;} )
 
   let width = undefined;
   let height = undefined;
@@ -515,6 +518,7 @@
   }
 
   const quitIntermediateView = (curLayerIndex, g, i) => {
+    isInSoftmaxStore.set(false);
     isInIntermediateView = false;
 
     // Hide the legend

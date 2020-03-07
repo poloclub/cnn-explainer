@@ -17,3 +17,5 @@ export const needRedrawStore = writable([undefined, undefined]);
 export const detailedModeStore = writable(false);
 
 export const shouldIntermediateAnimateStore = writable(false);
+
+export const isInSoftmaxStore = writable(false);

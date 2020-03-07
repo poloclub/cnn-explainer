@@ -3,7 +3,7 @@
 import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
   nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
-  cnnLayerMinMaxStore
+  cnnLayerMinMaxStore, isInSoftmaxStore
 } from '../stores.js';
 import {
   getOutputKnot, getInputKnot, gappedColorScale
@@ -23,8 +23,6 @@ const kernelRectLength = overviewConfig.kernelRectLength;
 const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
 const isSafari = window.safari !== undefined;
-
-let isInSoftmax = false;
 
 // Shared variables
 let svg = undefined;
@@ -50,6 +48,9 @@ cnnLayerRangesStore.subscribe( value => {cnnLayerRanges = value;} )
 
 let cnnLayerMinMax = undefined;
 cnnLayerMinMaxStore.subscribe( value => {cnnLayerMinMax = value;} )
+
+let isInSoftmax = undefined;
+isInSoftmaxStore.subscribe( value => {isInSoftmax = value;} )
 
 const moveLegend = (d, i, g, moveX, duration, restore) => {
   let legend = d3.select(g[i]);
@@ -121,6 +122,12 @@ const softmaxClicked = (curLayerIndex, symbolX, symbolY, outputX, outputY) => {
     .duration(duration)
     .style('opacity', isInSoftmax ? 1 : 0);
 
+  // Hide the softmax annotation
+  svg.select('.softmax-annotation')
+    .transition('softmax')
+    .duration(duration)
+    .style('opacity', isInSoftmax ? 1 : 0);
+
   // Hide the annotation
   svg.select('.flatten-annotation')
     .transition('softmax')
@@ -156,6 +163,7 @@ const softmaxClicked = (curLayerIndex, symbolX, symbolY, outputX, outputY) => {
   }
   
   isInSoftmax = !isInSoftmax;
+  isInSoftmaxStore.set(isInSoftmax);
 }
 
 
@@ -493,7 +501,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('height', 2 * (plusSymbolRadius - 3))
     .style('fill', intermediateColor);
 
-  // Place the bias rectangle below the plus sign if user clicks the firrst
+  // Place the bias rectangle below the plus sign if user clicks the first
   // conv node
   if (i == 0) {
     // Add bias symbol to the plus symbol
@@ -578,8 +586,6 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('font-size', '12px')
     .style('opacity', 0.5)
     .text('softmax');
-  
-  // Add annotation for the softmax symbol
 
   // Draw the layer label
   intermediateLayer.append('g')
@@ -746,6 +752,29 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('text-anchor', 'middle')
     .style('dominant-baseline', i === 0 ? 'hanging' : 'baseline')
     .text('Bias');
+  
+  // Add annotation for the softmax symbol
+  let softmaxTextY = nodeCoordinate[curLayerIndex][i].y - 2 * kernelRectLength - 13;
+  let softmaxAnnotation = intermediateLayerAnnotation.append('g')
+    .attr('class', 'softmax-annotation');
+  
+  softmaxAnnotation.append('text')
+    .attr('x', softmaxX + softmaxWidth / 2)
+    .attr('y', softmaxTextY)
+    .attr('class', 'annotation-text')
+    .style('dominant-baseline', 'baseline')
+    .style('text-anchor', 'middle')
+    .text('Click to learn more');
+
+  drawArrow({
+    group: softmaxAnnotation,
+    sx: softmaxX + softmaxWidth / 2 + 5,
+    sy: softmaxTextY + 5,
+    tx: softmaxX + softmaxWidth / 2,
+    ty: symbolY - plusSymbolRadius - 5,
+    dr: 35,
+    hFlip: false
+  });
 
   // Add annotation for the flatten layer
   let flattenAnnotation = intermediateLayerAnnotation.append('g')
