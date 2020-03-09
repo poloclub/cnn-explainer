@@ -81,9 +81,36 @@ const moveLegend = (d, i, g, moveX, duration, restore) => {
 
 }
 
-const softmaxClicked = (curLayerIndex, symbolX, symbolY, outputX, outputY) => {
+const drawLogitLayer = (curLayerIndex, moveX, softmaxLeftMid) => {
+  let logitLayer = svg.select('.intermediate-layer')
+    .append('g')
+    .attr('class', 'logit-layer');
+  
+  // Use circles to encode logit values
+  let centerX = softmaxLeftMid - moveX / 2;
+
+  for (let i = 0; i < 10; i++) {
+    logitLayer.append('circle')
+      .attr('class', 'logit-circle')
+      .attr('id', `logit-circle-${i}`)
+      .attr('cx', centerX)
+      .attr('cy', nodeCoordinate[curLayerIndex - 1][i].y + nodeLength / 2)
+      .attr('r', 5)
+      .style('fill', 'black');
+  }
+
+  console.log('logit here');
+}
+
+const removeLogitLayer = () => {
+  console.log('logit gone');
+}
+
+const softmaxClicked = (curLayerIndex, moveX, symbolX, symbolY, outputX,
+  outputY, softmaxLeftMid) => {
   let duration = 600;
-  let moveX = 80;
+  // let moveX = intermediateX2 - (intermediateX1 + pixelWidth + 3);
+  // let moveX = 80;
   
   // Move the overlay gradient
   svg.select('.intermediate-layer-overlay')
@@ -141,6 +168,13 @@ const softmaxClicked = (curLayerIndex, symbolX, symbolY, outputX, outputY) => {
     .ease(d3.easeCubicInOut)
     .attr('transform', `translate(${isInSoftmax ? 0 : -moveX}, ${0})`);
   
+  // Add the logit layer
+  if (!isInSoftmax) {
+    drawLogitLayer(curLayerIndex, moveX, softmaxLeftMid);
+  } else {
+    removeLogitLayer();
+  }
+  
   // Redraw the line from the plus symbol to the output node
   if (!isInSoftmax) {
     let newLine = flattenLeftPart.select('.edge-group')
@@ -182,10 +216,10 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   let pixelWidth = nodeLength / 2;
   let pixelHeight = 1.1;
   let totalLength = (2 * nodeLength +
-    5 * hSpaceAroundGap * gapRatio + pixelWidth);
+    5.5 * hSpaceAroundGap * gapRatio + pixelWidth);
   let leftX = nodeCoordinate[curLayerIndex][0].x - totalLength;
   let intermediateGap = (hSpaceAroundGap * gapRatio * 4) / 2;
-  const minimumGap = 15;
+  const minimumGap = 20;
 
   // Hide the edges
   svg.select('g.edge-group')
@@ -238,7 +272,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('class', 'overlay')
     .style('fill', 'url(#overlay-gradient-left)')
     .style('stroke', 'none')
-    .attr('width', leftEnd + svgPaddings.left + leftGap / 2)
+    .attr('width', leftX + svgPaddings.left - (leftGap * 2))
     .attr('height', height + svgPaddings.top + svgPaddings.bottom)
     .attr('x', -svgPaddings.left)
     .attr('y', 0)
@@ -558,16 +592,21 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   // Draw softmax operation symbol
   let softmaxWidth = 55;
-  let softmaxX = ((totalLength - 2 * nodeLength - 2 * intermediateGap)
-    - softmaxWidth) / 2 + intermediateX2 + plusSymbolRadius * 2;
+  let emptySpace = ((totalLength - 2 * nodeLength - 2 * intermediateGap)
+    - softmaxWidth) / 2;
+  let symbolEndX = intermediateX2 + plusSymbolRadius * 2;
+  let softmaxX = emptySpace + symbolEndX;
+  let softmaxLeftMid = emptySpace / 2 + symbolEndX;
 
+  let moveX = (intermediateX2 - (intermediateX1 + pixelWidth + 3)) / 2
   let softmaxSymbol = intermediateLayer.append('g')
     .attr('class', 'softmax-symbol')
     .attr('transform', `translate(${softmaxX}, ${symbolY})`)
     .style('pointer-event', 'all')
     .style('cursor', 'pointer')
-    .on('click', () => softmaxClicked(curLayerIndex, symbolX, symbolY,
-      nodeCoordinate[curLayerIndex][i].x, symbolY));
+    .on('click', () => softmaxClicked(curLayerIndex, moveX,
+      symbolX, symbolY, nodeCoordinate[curLayerIndex][i].x, symbolY,
+      softmaxLeftMid));
   
   softmaxSymbol.append('rect')
     .attr('x', 0)
@@ -742,7 +781,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     biasTextY += nodeLength + 2 * kernelRectLength;
     if (isSafari) { biasTextY += kernelRectLength; }
   } else {
-    biasTextY -= 2 * kernelRectLength + 3;
+    biasTextY -= 2 * kernelRectLength + 6;
   }
   
   plusAnnotation.append('text')
@@ -754,7 +793,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .text('Bias');
   
   // Add annotation for the softmax symbol
-  let softmaxTextY = nodeCoordinate[curLayerIndex][i].y - 2 * kernelRectLength - 13;
+  let softmaxTextY = nodeCoordinate[curLayerIndex][i].y - 2 * kernelRectLength - 6;
   let softmaxAnnotation = intermediateLayerAnnotation.append('g')
     .attr('class', 'softmax-annotation');
   
@@ -768,12 +807,12 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   drawArrow({
     group: softmaxAnnotation,
-    sx: softmaxX + softmaxWidth / 2 + 5,
-    sy: softmaxTextY + 5,
+    sx: softmaxX + softmaxWidth / 2 - 5,
+    sy: softmaxTextY + 4,
     tx: softmaxX + softmaxWidth / 2,
-    ty: symbolY - plusSymbolRadius - 5,
-    dr: 35,
-    hFlip: false
+    ty: symbolY - plusSymbolRadius - 4,
+    dr: 50,
+    hFlip: true
   });
 
   // Add annotation for the flatten layer

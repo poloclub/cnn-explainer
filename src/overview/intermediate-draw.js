@@ -289,7 +289,6 @@ const animationButtonClicked = (curLayerIndex) => {
   let tickTime1D = nodeLength / (kernelRectLength * 3);
   let stride = kernelRectLength * 3; 
 
-  console.log('test');
   if (isEndOfAnimation) {
     // Start the animation
     shouldIntermediateAnimateStore.set(true);
