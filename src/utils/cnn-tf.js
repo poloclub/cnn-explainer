@@ -137,14 +137,24 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
 
           // Connect this node to all previous nodes (create links)
           // FC layers have weights in links. Links are one-to-multiple.
+
+          // Since we are visualizing the logit values, we need to track
+          // the raw value before softmax
+          let curLogit = 0;
           for (let j = 0; j < cnn[curLayerIndex - 1].length; j++) {
             let preNode = cnn[curLayerIndex - 1][j];
             let curLink = new Link(preNode, node, weights[i][j]);
             preNode.outputLinks.push(curLink);
             node.inputLinks.push(curLink);
+            curLogit += preNode.output * weights[i][j];
           }
+          curLogit += biases[i];
+          node.logit = curLogit;
           curLayerNodes.push(node);
         }
+
+        // Sort flatten layer based on the node TF index
+        cnn[curLayerIndex - 1].sort((a, b) => a.realIndex - b.realIndex);
         break;
       }
       case nodeType.RELU:
@@ -186,8 +196,13 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
             curNodeRealIndex = preNodeIndex * (preNodeWidth * preNodeWidth) +
               preNodeRow * preNodeWidth + preNodeCol;
           
-          let node = new Node(layer.name, curNodeRealIndex, curLayerType,
+          let node = new Node(layer.name, i, curLayerType,
               bias, outputs[i]);
+          
+          // TF uses the (i) index for computation, but the real order should
+          // be (curNodeRealIndex). We will sort the nodes using the real order
+          // after we compute the logits in the output layer.
+          node.realIndex = curNodeRealIndex;
 
           let link = new Link(cnn[curLayerIndex - 1][preNodeIndex],
               node, [preNodeRow, preNodeCol]);
@@ -198,7 +213,7 @@ const constructCNNFromOutputs = (allOutputs, model, inputImageTensor) => {
           curLayerNodes.push(node);
         }
 
-        // Sort flatten layer based on the node real index
+        // Sort flatten layer based on the node TF index
         curLayerNodes.sort((a, b) => a.index - b.index);
         break;
       }
