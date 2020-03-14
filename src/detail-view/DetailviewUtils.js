@@ -75,9 +75,8 @@ export function getDataRange(image) {
   return range;
 }
 
-export function gridData(image) {
+export function gridData(image, constraint=getVisualizationSizeConstraint(image.length)) {
   // Constrain grids based on input image size.
-  let constraint = getVisualizationSizeConstraint(image.length);
   var data = new Array();
   var xpos = 1;
   var ypos = 1;
