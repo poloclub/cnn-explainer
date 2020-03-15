@@ -80,14 +80,14 @@
 
 <div class="column has-text-centered">
   <header>
-    Input
+    Input ({image.length}x{image.length})
   </header>
   <HyperparameterDataview on:message={handleMouseover} data={testImage} highlights={inputHighlights}
       outputLength={output.length} stride={stride} padding={padding}/>
 </div>
 <div class="column has-text-centered">
   <header>
-    Output
+    Output ({output.length}x{output.length})
   </header>
   <HyperparameterDataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights}
       outputLength={output.length} stride={stride} padding={padding} isOutput={true}/>

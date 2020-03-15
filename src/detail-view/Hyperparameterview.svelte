@@ -92,22 +92,22 @@
 
     <div class="columns is-centered">
       <div class="column has-text-centered">
-        <label>
+        <label class="label">
           Input Size:
           <input type=number bind:value={inputSize} min={kernelSize} max={16}>
           <input type=range bind:value={inputSize} min={kernelSize} max={16}>
         </label><br>
-        <label>
+        <label class="label">
           Padding:
           <input type=number bind:value={padding} min={0} max={kernelSize - 1}>
           <input type=range bind:value={padding} min={0} max={kernelSize - 1}>
         </label><br>
-        <label>
+        <label class="label">
           Kernel Size:
-          <input type=number bind:value={kernelSize} min=1 max={inputSize}>
-          <input type=range bind:value={kernelSize} min=1 max={inputSize}>
+          <input type=number bind:value={kernelSize} min={padding + 1} max={inputSize}>
+          <input type=range bind:value={kernelSize} min={padding + 1} max={inputSize}>
         </label><br>
-        <label>
+        <label class="label">
           Stride:
           <input type=number bind:value={stride} min=1 max={inputSize - kernelSize}>
           <input type=range bind:value={stride} min=1 max={inputSize - kernelSize}>
