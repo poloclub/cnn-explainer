@@ -3,7 +3,7 @@
 import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
   nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
-  cnnLayerMinMaxStore, isInSoftmaxStore
+  cnnLayerMinMaxStore, isInSoftmaxStore, softmaxDetailViewStore
 } from '../stores.js';
 import {
   getOutputKnot, getInputKnot, gappedColorScale
@@ -51,6 +51,9 @@ cnnLayerMinMaxStore.subscribe( value => {cnnLayerMinMax = value;} )
 
 let isInSoftmax = undefined;
 isInSoftmaxStore.subscribe( value => {isInSoftmax = value;} )
+
+let softmaxDetailViewInfo = undefined;
+softmaxDetailViewStore.subscribe( value => {softmaxDetailViewInfo = value;} )
 
 let layerIndexDict = {
   'input': 0,
@@ -116,11 +119,12 @@ const logitCircleMouseOverHandler = (i) => {
 
   // Highlight the associated edges
   logitLayerLower.selectAll(`.softmax-abstract-edge-${i}`)
-    .style('stroke', '#E5E5E5');
+    .style('stroke-width', 0.8)
+    .style('stroke', '#E0E0E0');
 
   logitLayerLower.selectAll(`.softmax-edge-${i}`)
     .style('stroke-width', 1)
-    .style('stroke', '#E5E5E5');
+    .style('stroke', '#E0E0E0');
 }
 
 const logitCircleMouseLeaveHandler = (i) => {
@@ -185,7 +189,7 @@ const drawLogitLayer = (arg) => {
   // Construct a color scale for the logit values
   let logitColorScale = d3.scaleLinear()
     .domain(d3.extent(logits))
-    .range([0, 1]);
+    .range([0.2, 1]);
   
   // Draw the current logit circle before animation
   let logitRadius = 8;
@@ -195,7 +199,7 @@ const drawLogitLayer = (arg) => {
     .attr('cx', centerX)
     .attr('cy', nodeCoordinate[curLayerIndex - 1][selectedI].y + nodeLength / 2)
     .attr('r', logitRadius)
-    .style('fill', d3.interpolateOranges(logitColorScale(logits[selectedI])))
+    .style('fill', layerColorScales.logit(logitColorScale(logits[selectedI])))
     .style('stroke', intermediateColor);
 
   // Add the flatten to logit links
@@ -295,7 +299,7 @@ const drawLogitLayer = (arg) => {
     // Draw the outter link using only merged path
     let outputEdgeD1 = linkGen({
       source: {
-        x: intermediateX2 - moveX,
+        x: intermediateX2 - moveX + plusSymbolRadius * 2,
         y: nodeCoordinate[curLayerIndex][curI].y + nodeLength / 2
       },
       target: {
@@ -359,7 +363,7 @@ const drawLogitLayer = (arg) => {
       .attr('cx', centerX)
       .attr('cy', nodeCoordinate[curLayerIndex - 1][curI].y + nodeLength / 2)
       .attr('r', 7)
-      .style('fill', d3.interpolateOranges(logitColorScale(logits[curI])))
+      .style('fill', layerColorScales.logit(logitColorScale(logits[curI])))
       .style('stroke', intermediateColor)
       .style('cursor', 'pointer')
       .on('mouseover', () => logitCircleMouseOverHandler(curI))
@@ -389,7 +393,54 @@ const drawLogitLayer = (arg) => {
 
   drawOneEdgeGroup();
 
-  console.log('logit here');
+  // Show the softmax detail view
+  // TODO: make the position dynamic
+  const detailview = document.getElementById('detailview');
+  detailview.style.top = `${300}px`;
+  detailview.style.left = `${20}px`;
+  detailview.style.position = 'absolute';
+
+  softmaxDetailViewStore.set({
+    show: true,
+    logits: logits,
+    logitColors: logits.map(d => layerColorScales.logit(logitColorScale(d))),
+    selectedI: selectedI,
+    highlightI: -1
+  })
+
+  // Draw logit circle color scale
+  drawIntermediateLayerLegend({
+    legendHeight: 5,
+    curLayerIndex: curLayerIndex,
+    range: d3.extent(logits)[1] - d3.extent(logits)[0],
+    minMax: {min: d3.extent(logits)[0], max: d3.extent(logits)[1]},
+    group: logitLayer,
+    width: softmaxX - (intermediateX2 + plusSymbolRadius * 2 - moveX + 5),
+    gradientAppendingName: 'flatten-logit-gradient',
+    gradientGap: 0.1,
+    colorScale: layerColorScales.logit,
+    x: intermediateX2 + plusSymbolRadius * 2 - moveX + 5,
+    y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
+      nodeLength * 10
+  });
+
+  // Draw logit layer label
+  let logitLabel = logitLayer.append('g')
+    .attr('class', 'layer-label')
+    .attr('transform', () => {
+      let x = centerX;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+      return `translate(${x}, ${y})`;
+    });
+
+  logitLabel.append('text')
+    .style('text-anchor', 'middle')
+    .style('dominant-baseline', 'middle')
+    .style('opacity', 0.8)
+    .text('logit');
+
+  logitLabel.clone('true')
+    .attr('class', 'layer-detailed-label hidden');
 }
 
 const removeLogitLayer = () => {
@@ -402,6 +453,11 @@ const removeLogitLayer = () => {
   svg.select('.underneath')
     .selectAll('.logit-lower')
     .style('opacity', 0);
+
+  softmaxDetailViewStore.set({
+      show: false,
+      logits: [1, 2, 3]
+    })
   console.log('logit gone');
 }
 
@@ -768,8 +824,6 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   
   // Use abstract symbol to represent the flatten nodes in between (between
   // the first and the last nodes)
-
-  
   // Compute the average value of input node and weights
   let meanValues = [];
   for (let n = 1; n < cnn[curLayerIndex - 1].length - 1; n++) {
@@ -970,18 +1024,22 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .text('softmax');
 
   // Draw the layer label
-  intermediateLayer.append('g')
+  let layerLabel = intermediateLayer.append('g')
     .attr('class', 'layer-label')
     .attr('transform', () => {
       let x = leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
         pixelWidth) / 2;
       let y = (svgPaddings.top + vSpaceAroundGap) / 2;
       return `translate(${x}, ${y})`;
-    })
-    .append('text')
+    });
+  
+  layerLabel.append('text')
     .style('dominant-baseline', 'middle')
     .style('opacity', 0.8)
     .text('flatten');
+   
+  layerLabel.clone('true')
+    .attr('class', 'layer-detailed-label hidden');
 
   // Add edges between nodes
   let edgeGroup = flattenLayerLeftPart.append('g')
@@ -1014,7 +1072,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     range: range,
     minMax: cnnLayerMinMax[10],
     group: intermediateLayer,
-    width: intermediateGap * 0.5,
+    width: intermediateGap + nodeLength - 3,
     x: leftX,
     y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
       nodeLength * 10
@@ -1026,12 +1084,11 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     range: flattenRange,
     minMax: {min: flattenExtent[0], max: flattenExtent[1]},
     group: intermediateLayer,
-    width: intermediateGap * 0.5,
+    width: intermediateGap - 3 - 5,
     gradientAppendingName: 'flatten-weight-gradient',
     gradientGap: 0.1,
     colorScale: layerColorScales.weight,
-    x: leftX + intermediateGap * 0.5 + (nodeLength  +
-      intermediateGap) - (2 * 0.5) * intermediateGap,
+    x: leftX + intermediateGap + nodeLength + pixelWidth + 3,
     y: svgPaddings.top + vSpaceAroundGap * (10) + vSpaceAroundGap + 
       nodeLength * 10
   });

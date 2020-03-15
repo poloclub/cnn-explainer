@@ -5,13 +5,14 @@
     cnnStore, svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore,
     nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
     needRedrawStore, cnnLayerMinMaxStore, detailedModeStore,
-    shouldIntermediateAnimateStore, isInSoftmaxStore
+    shouldIntermediateAnimateStore, isInSoftmaxStore, softmaxDetailViewStore
   } from '../stores.js';
 
   // Svelte views
   import ConvolutionView from '../detail-view/Convolutionview.svelte';
   import ActivationView from '../detail-view/Activationview.svelte';
   import PoolView from '../detail-view/Poolview.svelte';
+  import SoftmaxView from '../detail-view/Softmaxview.svelte';
   import Article from '../Article.svelte';
 
   // Overview functions
@@ -92,6 +93,11 @@
 
   let isInSoftmax = undefined;
   isInSoftmaxStore.subscribe( value => {isInSoftmax = value;} )
+
+  let softmaxDetailViewInfo = undefined;
+  softmaxDetailViewStore.subscribe( value => {
+    softmaxDetailViewInfo = value;
+  } )
 
   let width = undefined;
   let height = undefined;
@@ -857,6 +863,8 @@
       */
     }
   }
+  let logits = [-4.28, 2.96, -0.38, 5.24, -7.56, -3.43, 8.63, 2.63, 6.30, 0.68];
+  let selectedI = 4;
 
   onMount(async () => {
     // Create SVG
@@ -974,6 +982,11 @@
       quitActPoolDetailView();
       isExitedFromDetailedView = true;
     }
+  }
+
+  function handleExitFromDetiledSoftmaxView(event) {
+    softmaxDetailViewInfo.show = false;
+    softmaxDetailViewStore.set(softmaxDetailViewInfo);
   }
 </script>
 
@@ -1205,5 +1218,11 @@
               kernelLength={2}
               dataRange={nodeData.colorRange}
               isExited={isExitedFromDetailedView}/>
+  {:else if softmaxDetailViewInfo.show}
+    <SoftmaxView logits={softmaxDetailViewInfo.logits}
+                 logitColors={softmaxDetailViewInfo.logitColors}
+                 selectedI={softmaxDetailViewInfo.selectedI}
+                 highlightI={softmaxDetailViewInfo.highlightI}
+                 on:xClicked={handleExitFromDetiledSoftmaxView}/>
   {/if}
 </div>

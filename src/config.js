@@ -6,7 +6,8 @@ const layerColorScales = {
   relu: d3.interpolateRdBu,
   pool: d3.interpolateRdBu,
   fc: d3.interpolateGreys,
-  weight: d3.interpolateBrBG
+  weight: d3.interpolateBrBG,
+  logit: d3.interpolateOranges
 };
 
 let nodeLength = 40;
