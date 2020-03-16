@@ -28,7 +28,7 @@
   } from './intermediate-utils.js';
 
   import {
-    drawFlatten
+    drawFlatten, softmaxDetailViewMouseOverHandler, softmaxDetailViewMouseLeaveHandler
   } from './flatten-draw.js';
 
   import {
@@ -1223,6 +1223,10 @@
                  logitColors={softmaxDetailViewInfo.logitColors}
                  selectedI={softmaxDetailViewInfo.selectedI}
                  highlightI={softmaxDetailViewInfo.highlightI}
-                 on:xClicked={handleExitFromDetiledSoftmaxView}/>
+                 outputName={softmaxDetailViewInfo.outputName}
+                 outputValue={softmaxDetailViewInfo.outputValue}
+                 on:xClicked={handleExitFromDetiledSoftmaxView}
+                 on:mouseOver={softmaxDetailViewMouseOverHandler}
+                 on:mouseLeave={softmaxDetailViewMouseLeaveHandler}/>
   {/if}
 </div>

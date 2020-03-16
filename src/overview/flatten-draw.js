@@ -22,6 +22,7 @@ const intermediateColor = overviewConfig.intermediateColor;
 const kernelRectLength = overviewConfig.kernelRectLength;
 const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
+const classList = overviewConfig.classLists;
 const isSafari = window.safari !== undefined;
 
 // Shared variables
@@ -100,6 +101,10 @@ const moveLegend = (d, i, g, moveX, duration, restore) => {
 }
 
 const logitCircleMouseOverHandler = (i) => {
+  // Highlight the text in the detail view
+  softmaxDetailViewInfo.highlightI = i;
+  softmaxDetailViewStore.set(softmaxDetailViewInfo);
+
   let logitLayer = svg.select('.logit-layer');
   let logitLayerLower = svg.select('.underneath');
   let intermediateLayer = svg.select('.intermediate-layer');
@@ -125,9 +130,21 @@ const logitCircleMouseOverHandler = (i) => {
   logitLayerLower.selectAll(`.softmax-edge-${i}`)
     .style('stroke-width', 1)
     .style('stroke', '#E0E0E0');
+  
+  logitLayerLower.selectAll(`.logit-output-edge-${i}`)
+    .style('stroke-width', 3)
+    .style('stroke', '#E0E0E0');
+
+  logitLayer.selectAll(`.logit-output-edge-${i}`)
+    .style('stroke-width', 3)
+    .style('stroke', '#E0E0E0');
 }
 
 const logitCircleMouseLeaveHandler = (i) => {
+  // Dehighlight the text in the detail view
+  softmaxDetailViewInfo.highlightI = -1;
+  softmaxDetailViewStore.set(softmaxDetailViewInfo);
+
   let logitLayer = svg.select('.logit-layer');
   let logitLayerLower = svg.select('.underneath');
   let intermediateLayer = svg.select('.intermediate-layer');
@@ -148,6 +165,24 @@ const logitCircleMouseLeaveHandler = (i) => {
   logitLayerLower.selectAll(`.softmax-edge-${i}`)
     .style('stroke-width', 0.2)
     .style('stroke', '#F1F1F1');
+
+  logitLayerLower.selectAll(`.logit-output-edge-${i}`)
+    .style('stroke-width', 1.2)
+    .style('stroke', '#E5E5E5');
+  
+  logitLayer.selectAll(`.logit-output-edge-${i}`)
+    .style('stroke-width', 1.2)
+    .style('stroke', '#E5E5E5');
+}
+
+// This function is binded to the detail view in Overview.svelte
+export const softmaxDetailViewMouseOverHandler = (event) => {
+  logitCircleMouseOverHandler(event.detail.curI);
+}
+
+// This function is binded to the detail view in Overview.svelte
+export const softmaxDetailViewMouseLeaveHandler = (event) => {
+  logitCircleMouseLeaveHandler(event.detail.curI);
 }
 
 const drawLogitLayer = (arg) => {
@@ -170,9 +205,24 @@ const drawLogitLayer = (arg) => {
 
   let logitLayer = svg.select('.intermediate-layer')
     .append('g')
-    .attr('class', 'logit-layer');
+    .attr('class', 'logit-layer')
+    .raise();
   
-  let logitLayerLower = svg.select('.intermediate-layer')
+  // Minotr layer ordering change
+  let tempClone = svg.select('.intermediate-layer')
+    .select('.flatten-layer')
+    .select('.plus-symbol')
+    .clone(true)
+    .attr('class', 'temp-clone-plus-symbol')
+    .attr('transform', `translate(${symbolX - moveX},
+      ${nodeCoordinate[curLayerIndex][selectedI].y + nodeLength / 2})`)
+    .remove();
+
+  let tempPlusSymbol = logitLayer.append(() => tempClone.node());
+  
+  svg.select('.softmax-symbol').raise();
+
+  let logitLayerLower = svg.select('.underneath')
     .append('g')
     .attr('class', 'logit-layer-lower')
     .lower();
@@ -200,7 +250,25 @@ const drawLogitLayer = (arg) => {
     .attr('cy', nodeCoordinate[curLayerIndex - 1][selectedI].y + nodeLength / 2)
     .attr('r', logitRadius)
     .style('fill', layerColorScales.logit(logitColorScale(logits[selectedI])))
-    .style('stroke', intermediateColor);
+    .style('cursor', 'pointer')
+    .style('pointer-events', 'all')
+    .style('stroke', intermediateColor)
+    .on('mouseover', () => logitCircleMouseOverHandler(selectedI))
+    .on('mouseleave', () => logitCircleMouseLeaveHandler(selectedI));
+
+  tempPlusSymbol.raise();
+
+  // Draw another line from plus symbol to softmax symbol
+  logitLayer.append('line')
+    .attr('class', `logit-output-edge-${selectedI}`)
+    .attr('x1', intermediateX2 - moveX + plusSymbolRadius * 2)
+    .attr('x2', softmaxX)
+    .attr('y1', nodeCoordinate[curLayerIndex - 1][selectedI].y + nodeLength / 2)
+    .attr('y2', nodeCoordinate[curLayerIndex - 1][selectedI].y + nodeLength / 2)
+    .style('fill', 'none')
+    .style('stroke', '#EAEAEA')
+    .style('stroke-width', '1.2')
+    .lower();
 
   // Add the flatten to logit links
   let linkData = [];
@@ -405,7 +473,9 @@ const drawLogitLayer = (arg) => {
     logits: logits,
     logitColors: logits.map(d => layerColorScales.logit(logitColorScale(d))),
     selectedI: selectedI,
-    highlightI: -1
+    highlightI: -1,
+    outputName: classList[selectedI],
+    outputValue: cnn[layerIndexDict['output']][selectedI].output
   })
 
   // Draw logit circle color scale
@@ -458,7 +528,6 @@ const removeLogitLayer = () => {
       show: false,
       logits: [1, 2, 3]
     })
-  console.log('logit gone');
 }
 
 const softmaxClicked = (arg) => {
@@ -1239,6 +1308,17 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     dr: 80,
     hFlip: true
   });
+
+  // Add annotation for the output neuron
+  let outputAnnotation = intermediateLayerAnnotation.append('g')
+    .attr('class', 'output-annotation');
+  
+  outputAnnotation.append('text')
+    .attr('x', nodeCoordinate[layerIndexDict['output']][i].x)
+    .attr('y', nodeCoordinate[layerIndexDict['output']][i].y + 10)
+    .attr('class', 'annotation-text')
+    .text(`(${d3.format('.4f')(cnn[layerIndexDict['output']][i].output)})`);
+
 
   /* Prototype of using arc to represent the flatten layer (future)
   let pie = d3.pie()

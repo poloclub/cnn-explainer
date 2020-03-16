@@ -4,27 +4,40 @@
   export let logitColors;
   export let selectedI;
   export let highlightI = -1;
+  export let outputName;
+  export let outputValue;
 
   let softmaxViewComponent;
-  let formater = d3.format(".2f");
   let svg = null;
   const dispatch = createEventDispatcher();
+  const formater = (n, d) => {
+    if (d === undefined) {
+      return d3.format('.2f')(n);
+    } else {
+      return d3.format(`.${d}f`)(n);
+    }
+  }
 
   $: highlightI, (() => {
     if (svg !== null) {
       svg.selectAll(`.formula-term`)
-        .style('text-decoration', 'none');
+        .style('text-decoration', 'none')
+        .style('font-weight', 'normal');
+
       svg.selectAll(`.formula-term-${highlightI}`)
+      .style('font-weight', 'bold')
       .style('text-decoration', 'underline');
     }
   })();
 
-  const mouseoverHandler = (d, i, g, curI) => {
+  const mouseOverHandler = (d, i, g, curI) => {
     highlightI = curI;
+    dispatch('mouseOver', {curI: curI});
   }
 
-  const mouseleaveHandler = (d, i, g, curI) => {
+  const mouseLeaveHandler = (d, i, g, curI) => {
     highlightI = -1;
+    dispatch('mouseLeave', {curI: curI});
   }
 
   const handleClickX = () => {
@@ -67,8 +80,8 @@
         .attr('y', Math.floor(i / numOfRows) * 20)
         .style('cursor', 'pointer')
         .style('pointer-events', 'all')
-        .on('mouseover', (d, n, g) => mouseoverHandler(d, n, g, i))
-        .on('mouseleave', (d, n, g) => mouseleaveHandler(d, n, g, i))
+        .on('mouseover', (d, n, g) => mouseOverHandler(d, n, g, i))
+        .on('mouseleave', (d, n, g) => mouseLeaveHandler(d, n, g, i))
         .text(`exp(`);
       
       curText.append('tspan')
@@ -128,8 +141,8 @@
     let numeratorText = numeratorGroup.append('text')
       .attr('x', denominatorGroupBBox.x + denominatorGroupBBox.width / 2)
       .attr('y', 0)
-      .on('mouseover', (d, n, g) => mouseoverHandler(d, n, g, selectedI))
-      .on('mouseleave', (d, n, g) => mouseleaveHandler(d, n, g, selectedI))
+      .on('mouseover', (d, n, g) => mouseOverHandler(d, n, g, selectedI))
+      .on('mouseleave', (d, n, g) => mouseLeaveHandler(d, n, g, selectedI))
       .style('pointer-events', 'all')
       .style('cursor', 'pointer')
       .style('text-anchor', 'middle')
@@ -152,13 +165,13 @@
     
     let softmaxText = formulaLeftGroup.append('text')
       .attr('dominant-baseline', 'middle')
-      .text('softmax');
+      .text(`${formater(outputValue, 4)}`);
     
     let softmaxTextBBox = softmaxText.node().getBBox();
     
     formulaLeftGroup.append('text')
       .attr('dominant-baseline', 'middle')
-      .attr('x', softmaxTextBBox.width + 5)
+      .attr('x', softmaxTextBBox.width + 10)
       .attr('y', 0)
       .style('fill', 'gray')
       .style('font-weight', 'bold')
@@ -211,10 +224,10 @@
 
 
     <div class="title-text">
-      Softmax Score for {'output'}
+      Softmax Score for <i>"{outputName}"</i>
     </div>
 
-    <svg id="softmax-svg" width="470" height="100"/>
+    <svg id="softmax-svg" width="470" height="105"/>
 
   </div>
 </div>
