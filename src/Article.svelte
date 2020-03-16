@@ -5,61 +5,68 @@
 
 <style>
 	#description {
-      margin-bottom: 60px;
-      margin-left: auto;
-      margin-right: auto;
-      max-width: 900px;
-    }
+    margin-bottom: 60px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 78ch;
+  }
 
-    #description h2 {
-      color: #444;
-      font-size: 40px;
-      font-weight: 450;
-      margin-bottom: 12px;
-      margin-top: 60px;
-    }
+  #description h2 {
+    color: #444;
+    font-size: 40px;
+    font-weight: 450;
+    margin-bottom: 12px;
+    margin-top: 60px;
+  }
 
-    #description h4 {
-      color: #444;
-      font-size: 32px;
-      font-weight: 450;
-      margin-bottom: 8px;
-      margin-top: 44px;
-    }
+  #description h4 {
+    color: #444;
+    font-size: 32px;
+    font-weight: 450;
+    margin-bottom: 8px;
+    margin-top: 44px;
+  }
 
-    #description h6 {
-      color: #444;
-      font-size: 24px;
-      font-weight: 450;
-      margin-bottom: 8px;
-      margin-top: 44px;
-    }
+  #description h6 {
+    color: #444;
+    font-size: 24px;
+    font-weight: 450;
+    margin-bottom: 8px;
+    margin-top: 44px;
+  }
 
-    #description p {
-      margin: 16px 0;
-    }
+  #description p {
+    margin: 16px 0;
+  }
 
-    #description .figure-caption {
-      font-size: 13px;
-      margin-top: 5px;
-    }
+  #description .figure-caption {
+    font-size: 13px;
+    margin-top: 5px;
+  }
 
-    #description ol {
-      margin-left: 40px;
-    }
+  #description ol {
+    margin-left: 40px;
+  }
 
-    #description p, 
-    #description div,
-    #description li {
-      color: #555;
-      font-size: 17px;
-      line-height: 1.6;
-    }
-      
-    #description a:hover, 
-    #description .video-part-link:hover {
-      text-decoration: underline;
-    }
+  #description p, 
+  #description div,
+  #description li {
+    color: #555;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+    
+  #description a:hover, 
+  #description .video-part-link:hover {
+    text-decoration: underline;
+  }
+
+  .figure {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 </style>
 
 <body>
@@ -73,7 +80,7 @@
 	</p>
 	<ol>
 		<li>A <strong>tensor</strong> can be thought of as an n-dimensional matrix.  In the CNN above, tensors will be 3-dimensional with the exception of the output layer.</li>
-		<li>A <strong>neuron</strong> can be thought of as a function that takes in multiple inputs and yields a single output.  The outputs of neurons are represented above as the <span style="color:red;">red</span> &rarr; <span style="color:blue;">blue</span> <strong>activation maps</strong>.</li>
+		<li>A <strong>neuron</strong> can be thought of as a function that takes in multiple inputs and yields a single output.  The outputs of neurons are represented above as the <span style="color:#FF7577;">red</span> &rarr; <span style="color:#60A7D7;">blue</span> <strong>activation maps</strong>.</li>
 		<li>A <strong>layer</strong> is simply a collection of neurons with the same operation, including the same hyperparameters.</li>
 		<li><strong>Kernel weights and biases</strong>, while unique to each neuron, are tuned during the training phase, and allow the classifier to adapt to the problem and dataset provided.  The specific values can be viewed in the <em>Detail View</em> by clicking a neuron.</li>
 		<li>A CNN conveys a <strong>differentiable score function</strong>, which is represented as <strong>class scores</strong> in the visualization on the output layer.</li>
@@ -103,17 +110,22 @@
 	<p>
 		For example, let’s look at the first convolutional layer in the Tiny VGG architecture above.  Notice that there are 10 neurons in this layer, but only 3 neurons in the previous layer.  In the Tiny VGG architecture, convolutional layers are fully-connected, meaning each neuron is connected to every other neuron in the previous layer.  Focusing on the output of the topmost convolutional neuron from the first convolutional layer, we see that there are 3 unique kernels when we hover over the activation map.  
 	</p>
-	<img src="/assets/figures/convlayer_overview_demo.gif" alt="clicking on topmost first conv. layer activation map" width=60% height=60%/>
-	<div class="figure-caption">
-		Figure 1.  As you hover over the activation map of the topmost node from the first convolutional layer, you can see that 3 kernels were applied to yield this activation map.  After clicking this activation map, you can see the convolution operation occuring with each unique kernel.
-	</div>
+  <div class="figure">
+    <img src="/assets/figures/convlayer_overview_demo.gif" alt="clicking on topmost first conv. layer activation map" width=60% height=60% align="middle"/>
+    <div class="figure-caption">
+		  Figure 1.  As you hover over the activation map of the topmost node from the first convolutional layer, you can see that 3 kernels were applied to yield this activation map.  After clicking this activation map, you can see the convolution operation occuring with each unique kernel.
+	  </div>
+  </div>
+
 	<p>
 		The size of these kernels is a hyper-parameter specified by the designers of the network architecture.  In order to produce the output of the convolutional neuron (activation map), we must perform an elementwise dot product with the output of the previous layer and the unique kernel learned by the network.  In TinyVGG, the dot product operation uses a stride of 1, which means that the kernel is shifted over 1 pixel per dot product, but this is a hyperparameter that the network architecture designer can adjust to better fit their dataset.  We must do this for all 3 kernels, which will yield 3 intermediate results.  
 	</p>
-	<img src="/assets/figures/convlayer_detailedview_demo.gif" alt="clicking on topmost first conv. layer activation map" />
-	<div class="figure-caption">
-		Figure 2. The kernel being applied to yield the topmost intermediate result for the discussed activation map.
-	</div>
+  <div class="figure">
+    <img src="/assets/figures/convlayer_detailedview_demo.gif" alt="clicking on topmost first conv. layer activation map" />
+    <div class="figure-caption">
+      Figure 2. The kernel being applied to yield the topmost intermediate result for the discussed activation map.
+    </div>
+  </div>
 	<p>
 		Then, an elementwise sum is performed containing all 3 intermediate results along with the bias the network has learned.  After this, the resulting 2-dimensional tensor will be the activation map viewable on the interface above for the topmost neuron in the first convolutional layer.  This same operation must be applied to produce each neuron’s activation map.
 	</p>
