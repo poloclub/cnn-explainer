@@ -1225,6 +1225,7 @@
                  highlightI={softmaxDetailViewInfo.highlightI}
                  outputName={softmaxDetailViewInfo.outputName}
                  outputValue={softmaxDetailViewInfo.outputValue}
+                 startAnimation={softmaxDetailViewInfo.startAnimation}
                  on:xClicked={handleExitFromDetiledSoftmaxView}
                  on:mouseOver={softmaxDetailViewMouseOverHandler}
                  on:mouseLeave={softmaxDetailViewMouseLeaveHandler}/>

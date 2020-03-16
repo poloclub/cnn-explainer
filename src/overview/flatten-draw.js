@@ -71,6 +71,8 @@ let layerIndexDict = {
   'output': 11
 }
 
+let hasInitialized = false;
+
 const moveLegend = (d, i, g, moveX, duration, restore) => {
   let legend = d3.select(g[i]);
 
@@ -407,7 +409,8 @@ const drawLogitLayer = (arg) => {
     let outputEdgeLength1 = outputEdge1.node().getTotalLength();
     let outputEdgeLength2 = outputEdge2.node().getTotalLength();
     let totalLength = outputEdgeLength1 + outputEdgeLength2;
-    let totalDuration = 800;
+    let totalDuration = hasInitialized ? 0 : 800;
+    let opacityDuration = hasInitialized ? 0 : 600;
 
     outputEdge1.attr('stroke-dasharray', outputEdgeLength1 + ' ' + outputEdgeLength1)
       .attr('stroke-dashoffset', outputEdgeLength1);
@@ -437,13 +440,21 @@ const drawLogitLayer = (arg) => {
       .on('mouseover', () => logitCircleMouseOverHandler(curI))
       .on('mouseleave', () => logitCircleMouseLeaveHandler(curI));
     
+    // Show the element in the detailed view
+    softmaxDetailViewInfo.startAnimation = {
+      i: curI,
+      duration: opacityDuration,
+      hasInitialized: hasInitialized
+    };
+    softmaxDetailViewStore.set(softmaxDetailViewInfo);
+
     // Show the elements with animation    
     curNodeGroup.transition('softmax-edge')
-      .duration(500)
+      .duration(opacityDuration)
       .style('opacity', 1);
 
     curEdgeGroup.transition('softmax-edge')
-      .duration(500)
+      .duration(opacityDuration)
       .style('opacity', 1)
       .on('end', () => {
         // Recursive animaiton
@@ -451,15 +462,17 @@ const drawLogitLayer = (arg) => {
         if (curIIndex < underneathIs.length) {
           linkData = [];
           drawOneEdgeGroup();
+        } else {
+          hasInitialized = true;
+          softmaxDetailViewInfo.hasInitialized = true;
+          softmaxDetailViewStore.set(softmaxDetailViewInfo);
         }
       });
     
     symbolClone.transition('softmax-edge')
-      .duration(500)
+      .duration(opacityDuration)
       .style('opacity', 0.2);
   }
-
-  drawOneEdgeGroup();
 
   // Show the softmax detail view
   // TODO: make the position dynamic
@@ -475,8 +488,11 @@ const drawLogitLayer = (arg) => {
     selectedI: selectedI,
     highlightI: -1,
     outputName: classList[selectedI],
-    outputValue: cnn[layerIndexDict['output']][selectedI].output
+    outputValue: cnn[layerIndexDict['output']][selectedI].output,
+    startAnimation: {i: -1, duration: 0, hasInitialized: hasInitialized}
   })
+
+  drawOneEdgeGroup();
 
   // Draw logit circle color scale
   drawIntermediateLayerLegend({

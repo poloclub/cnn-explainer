@@ -6,6 +6,7 @@
   export let highlightI = -1;
   export let outputName;
   export let outputValue;
+  export let startAnimation;
 
   let softmaxViewComponent;
   let svg = null;
@@ -27,6 +28,15 @@
       svg.selectAll(`.formula-term-${highlightI}`)
       .style('font-weight', 'bold')
       .style('text-decoration', 'underline');
+    }
+  })();
+
+  $: startAnimation, (() => {
+    if (svg !== null) {
+      svg.select(`.formula-term-${startAnimation.i}`)
+        .transition('softmax-edge')
+        .duration(startAnimation.duration)
+        .style('fill-opacity', 1);
     }
   })();
 
@@ -88,6 +98,7 @@
         .attr('class', `formula-term-${i} formula-term`)
         .attr('dx', '1')
         .style('fill', logitColors[i])
+        .style('fill-opacity', (i === selectedI) || startAnimation.hasInitialized ? 1 : 0)
         .text(formater(d));
       
       curText.append('tspan')
@@ -164,6 +175,7 @@
       .attr('transform', `translate(${0}, ${32})`);
     
     let softmaxText = formulaLeftGroup.append('text')
+      .attr('x', 3)
       .attr('dominant-baseline', 'middle')
       .text(`${formater(outputValue, 4)}`);
     
