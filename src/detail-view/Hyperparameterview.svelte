@@ -109,8 +109,8 @@
         </label><br>
         <label class="label">
           Stride:
-          <input type=number bind:value={stride} min=1 max={inputSize - kernelSize}>
-          <input type=range bind:value={stride} min=1 max={inputSize - kernelSize}>
+          <input type=number bind:value={stride} min=1 max={inputSize + padding - kernelSize}>
+          <input type=range bind:value={stride} min=1 max={inputSize + padding - kernelSize}>
         </label>
       </div>
       <HyperparameterAnimator on:message={handlePauseFromInteraction} 
