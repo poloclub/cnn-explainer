@@ -622,15 +622,14 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
   // conv node
   if (i == 0) {
     // Add bias symbol to the plus symbol
-    symbolGroup.append('rect')
-      .attr('x', -kernelRectLength)
-      .attr('y', nodeLength / 2)
-      .attr('width', 2 * kernelRectLength)
-      .attr('height', 2 * kernelRectLength)
-      .style('stroke', intermediateColor)
-      .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
-        d.bias, kernelColorGap));
-    
+    symbolGroup.append('circle')
+        .attr('cx', 0)
+        .attr('cy', nodeLength / 2 + kernelRectLength)
+        .attr('r', 4)
+        .style('stroke', intermediateColor)
+        .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
+          d.bias, kernelColorGap));
+
     // Link from bias to the plus symbol
     linkData.push({
       source: {x: intermediateX2 + plusSymbolRadius,
@@ -641,11 +640,10 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     });
   } else {
     // Add bias symbol to the plus symbol
-    symbolGroup.append('rect')
-      .attr('x', -kernelRectLength)
-      .attr('y', -nodeLength / 2 - 2 * kernelRectLength)
-      .attr('width', 2 * kernelRectLength)
-      .attr('height', 2 * kernelRectLength)
+    symbolGroup.append('circle')
+      .attr('cx', 0)
+      .attr('cy', -nodeLength / 2 - kernelRectLength)
+      .attr('r', 4)
       .style('stroke', intermediateColor)
       .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
         d.bias, kernelColorGap));
@@ -708,7 +706,8 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .y(d => d.y);
   
   let edgeGroup = intermediateLayer.append('g')
-    .attr('class', 'edge-group');
+    .attr('class', 'edge-group')
+    .lower();
   
   let dashoffset = 0;
 
@@ -877,7 +876,7 @@ const drawIntermediateLayerAnnotation = (arg) => {
   // Add annotation for the bias
   let biasTextY = nodeCoordinate[curLayerIndex][i].y;
   if (i === 0) {
-    biasTextY += nodeLength + 2 * kernelRectLength;
+    biasTextY += nodeLength + 3 * kernelRectLength;
   } else {
     biasTextY -= 2 * kernelRectLength + 5;
   }
