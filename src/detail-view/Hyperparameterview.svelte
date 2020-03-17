@@ -2,8 +2,8 @@
 	import HyperparameterAnimator from './HyperparameterAnimator.svelte';
   import { singleConv } from '../utils/cnn.js';
 
-  let inputSize = 8;
-  let kernelSize = 3;
+  let inputSize = 5;
+  let kernelSize = 2;
   
   function generateSquareArray(arrayDim) {
     let arr = [];
@@ -94,8 +94,8 @@
       <div class="column has-text-centered">
         <label class="label">
           Input Size:
-          <input type=number bind:value={inputSize} min={kernelSize} max={16}>
-          <input type=range bind:value={inputSize} min={kernelSize} max={16}>
+          <input type=number bind:value={inputSize} min={kernelSize} max={7}>
+          <input type=range bind:value={inputSize} min={kernelSize} max={7}>
         </label><br>
         <label class="label">
           Padding:

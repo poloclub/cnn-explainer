@@ -1,4 +1,6 @@
 <script>
+	import HyperparameterView from './detail-view/Hyperparameterview.svelte';
+
 	let softmaxEquation = `$$\\text{Softmax}(x_{i}) = \\frac{\\exp(x_i)}{\\sum_j \\exp(x_j)}$$`;
 	let reluEquation = `$$\\text{ReLU}(x) = \\max(0,x)$$`;
 </script>
@@ -132,6 +134,8 @@
 	<p>
 		With some simple math, we are able to deduce that there are 3 x 10 = 30 unique kernels, each of size 3x3, applied in the first convolutional layer.  The connectivity between the convolutional layer and the previous layer is a design decision when building a network architecture, which will affect the number of kernels per convolutional layer.  Click around the visualization to better understand the operations behind the convolutional layer.  See if you can follow the example above!
     </p>
+    <h6>Understanding Hyperparameters</h6>
+    <HyperparameterView/>
     <h4>Activation Functions</h4>
     <h6>ReLU</h6>
     <p>
