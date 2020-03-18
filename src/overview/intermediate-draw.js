@@ -597,10 +597,13 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .attr('class', 'plus-symbol')
     .attr('transform', `translate(${intermediateX2 + plusSymbolRadius}, ${symbolY})`);
   
-  symbolGroup.append('circle')
-    .attr('cx', 0)
-    .attr('cy', 0)
-    .attr('r', plusSymbolRadius)
+  symbolGroup.append('rect')
+    .attr('x', -plusSymbolRadius)
+    .attr('y', -plusSymbolRadius)
+    .attr('width', 2 * plusSymbolRadius)
+    .attr('height', 2 * plusSymbolRadius)
+    .attr('rx', 3)
+    .attr('ry', 3)
     .style('fill', 'none')
     .style('stroke', intermediateColor);
   
