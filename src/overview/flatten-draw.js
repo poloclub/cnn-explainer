@@ -4,7 +4,7 @@ import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
   nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
   cnnLayerMinMaxStore, isInSoftmaxStore, softmaxDetailViewStore,
-  hoverInfoStore
+  hoverInfoStore, allowsSoftmaxAnimationStore
 } from '../stores.js';
 import {
   getOutputKnot, getInputKnot, gappedColorScale
@@ -54,6 +54,9 @@ cnnLayerMinMaxStore.subscribe( value => {cnnLayerMinMax = value;} )
 
 let isInSoftmax = undefined;
 isInSoftmaxStore.subscribe( value => {isInSoftmax = value;} )
+
+let allowsSoftmaxAnimation = undefined;
+allowsSoftmaxAnimationStore.subscribe( value => {allowsSoftmaxAnimation = value;} )
 
 let softmaxDetailViewInfo = undefined;
 softmaxDetailViewStore.subscribe( value => {softmaxDetailViewInfo = value;} )
@@ -302,6 +305,14 @@ const drawLogitLayer = (arg) => {
     .y(d => d.y);
 
   const drawOneEdgeGroup = () => {
+    // Only draw the new group if it is in the softmax mode
+    if (!allowsSoftmaxAnimation) {
+      svg.select('.underneath')
+        .selectAll(`.logit-lower`)
+        .remove();
+      return;
+    }
+
     let curI = underneathIs[curIIndex];
 
     let curEdgeGroup = svg.select('.underneath')
@@ -561,8 +572,8 @@ const removeLogitLayer = () => {
 
   softmaxDetailViewStore.set({
       show: false,
-      logits: [1, 2, 3]
-    })
+      logits: []
+  })
 }
 
 const softmaxClicked = (arg) => {
@@ -587,10 +598,13 @@ const softmaxClicked = (arg) => {
     flattenRange = arg.flattenRange;
 
   let duration = 600;
-  
+
   // Clean up the logit elemends before moving anything
   if (isInSoftmax) {
+    allowsSoftmaxAnimationStore.set(false);
     removeLogitLayer();
+  } else {
+    allowsSoftmaxAnimationStore.set(true);
   }
 
   // Move the overlay gradient

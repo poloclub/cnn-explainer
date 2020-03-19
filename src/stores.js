@@ -20,5 +20,6 @@ export const shouldIntermediateAnimateStore = writable(false);
 
 export const isInSoftmaxStore = writable(false);
 export const softmaxDetailViewStore = writable({});
+export const allowsSoftmaxAnimationStore = writable(false);
 
 export const hoverInfoStore = writable({});

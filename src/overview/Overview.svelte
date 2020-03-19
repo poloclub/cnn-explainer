@@ -6,7 +6,7 @@
     nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
     needRedrawStore, cnnLayerMinMaxStore, detailedModeStore,
     shouldIntermediateAnimateStore, isInSoftmaxStore, softmaxDetailViewStore,
-    hoverInfoStore
+    hoverInfoStore, allowsSoftmaxAnimationStore
   } from '../stores.js';
 
   // Svelte views
@@ -528,6 +528,25 @@
   }
 
   const quitIntermediateView = (curLayerIndex, g, i) => {
+    // If it is the softmax detail view, quit that view first
+    if (isInSoftmax) {
+      svg.select('.logit-layer').remove();
+      svg.select('.logit-layer-lower').remove();
+      svg.selectAll('.plus-symbol-clone').remove();
+
+      // Instead of removing the paths, we hide them, so it is faster to load in
+      // the future
+      svg.select('.underneath')
+        .selectAll('.logit-lower')
+        .style('opacity', 0);
+
+      softmaxDetailViewStore.set({
+          show: false,
+          logits: []
+      })
+
+      allowsSoftmaxAnimationStore.set(false);
+    }
     isInSoftmaxStore.set(false);
     isInIntermediateView = false;
 
