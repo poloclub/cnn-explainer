@@ -19,5 +19,6 @@ export const detailedModeStore = writable(false);
 export const shouldIntermediateAnimateStore = writable(false);
 
 export const isInSoftmaxStore = writable(false);
+export const softmaxDetailViewStore = writable({});
 
-export const softmaxDetailViewStore = writable({show: false, logits: []});
+export const hoverInfoStore = writable({});

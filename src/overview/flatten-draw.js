@@ -3,7 +3,8 @@
 import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
   nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
-  cnnLayerMinMaxStore, isInSoftmaxStore, softmaxDetailViewStore
+  cnnLayerMinMaxStore, isInSoftmaxStore, softmaxDetailViewStore,
+  hoverInfoStore
 } from '../stores.js';
 import {
   getOutputKnot, getInputKnot, gappedColorScale
@@ -24,6 +25,7 @@ const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
 const classList = overviewConfig.classLists;
 const isSafari = window.safari !== undefined;
+const formater = d3.format('.4f');
 
 // Shared variables
 let svg = undefined;
@@ -56,6 +58,9 @@ isInSoftmaxStore.subscribe( value => {isInSoftmax = value;} )
 let softmaxDetailViewInfo = undefined;
 softmaxDetailViewStore.subscribe( value => {softmaxDetailViewInfo = value;} )
 
+let hoverInfo = undefined;
+hoverInfoStore.subscribe( value => {hoverInfo = value;} )
+
 let layerIndexDict = {
   'input': 0,
   'conv_1_1': 1,
@@ -72,6 +77,8 @@ let layerIndexDict = {
 }
 
 let hasInitialized = false;
+let logits = [];
+let flattenFactoredFDict = {};
 
 const moveLegend = (d, i, g, moveX, duration, restore) => {
   let legend = d3.select(g[i]);
@@ -103,6 +110,12 @@ const moveLegend = (d, i, g, moveX, duration, restore) => {
 }
 
 const logitCircleMouseOverHandler = (i) => {
+  // Update the hover info UI
+  hoverInfoStore.set({
+    show: true,
+    text: `Logit: ${formater(logits[i])}`
+  })
+
   // Highlight the text in the detail view
   softmaxDetailViewInfo.highlightI = i;
   softmaxDetailViewStore.set(softmaxDetailViewInfo);
@@ -143,6 +156,12 @@ const logitCircleMouseOverHandler = (i) => {
 }
 
 const logitCircleMouseLeaveHandler = (i) => {
+  // Update the hover info UI
+  hoverInfoStore.set({
+    show: false,
+    text: `Logit: ${formater(logits[i])}`
+  })
+
   // Dehighlight the text in the detail view
   softmaxDetailViewInfo.highlightI = -1;
   softmaxDetailViewStore.set(softmaxDetailViewInfo);
@@ -233,7 +252,7 @@ const drawLogitLayer = (arg) => {
   let centerX = softmaxLeftMid - moveX * 4 / 5;
 
   // Get all logits
-  let logits = [];
+  logits = [];
   for (let i = 0; i < cnn[layerIndexDict['output']].length; i++) {
     logits.push(cnn[layerIndexDict['output']][i].logit);
   }
@@ -808,6 +827,21 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   let flattenMouseOverHandler = (d) => {
     let index = d.index;
+
+    // Update the hover info UI
+    if (d.weight === undefined) {
+      hoverInfo = {
+        show: true,
+        text: `Pixel value: ${formater(flattenFactoredFDict[index])}`
+      };
+    } else {
+      hoverInfo = {
+        show: true,
+        text: `Weight: ${formater(d.weight)}`
+      };
+    }
+    hoverInfoStore.set(hoverInfo);
+
     flattenLayerLeftPart.select(`#edge-flatten-${index}`)
       .raise()
       .style('stroke', intermediateColor)
@@ -826,6 +860,21 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   let flattenMouseLeaveHandler = (d) => {
     let index = d.index;
+
+    // Update the hover info UI
+    if (d.weight === undefined) {
+      hoverInfo = {
+        show: false,
+        text: `Pixel value: ${formater(flattenFactoredFDict[index])}`
+      };
+    } else {
+      hoverInfo = {
+        show: false,
+        text: `Weight: ${formater(d.weight)}`
+      };
+    }
+    hoverInfoStore.set(hoverInfo);
+
     flattenLayerLeftPart.select(`#edge-flatten-${index}`)
       .style('stroke-width', 0.6)
       .style('stroke', '#E5E5E5')
@@ -840,10 +889,12 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
       .style('opacity', 0);
   }
 
+  flattenFactoredFDict = {};
   for (let f = 0; f < flattenLength; f++) {
     let loopFactors = [0, 9];
     loopFactors.forEach(l => {
       let factoredF = f + l * flattenLength;
+      flattenFactoredFDict[factoredF] = cnn.flatten[factoredF].output;
       flattenLayerLeftPart.append('rect')
         .attr('x', intermediateX1)
         .attr('y', l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight)
@@ -1027,7 +1078,13 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('r', kernelRectLength * 1.5)
     .style('stroke', intermediateColor)
     .style('fill', gappedColorScale(layerColorScales.weight,
-        flattenRange, d.bias, 0.35));
+        flattenRange, d.bias, 0.35))
+    .on('mouseover', () => {
+      hoverInfoStore.set( {show: true, text: `Bias: ${formater(d.bias)}`} );
+    })
+    .on('mouseleave', () => {
+      hoverInfoStore.set( {show: false, text: `Bias: ${formater(d.bias)}`} );
+    });
   
   // Link from bias to the plus symbol
   symbolGroup.append('path')

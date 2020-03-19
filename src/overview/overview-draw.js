@@ -3,7 +3,7 @@
 import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
   nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
-  detailedModeStore, cnnLayerMinMaxStore
+  detailedModeStore, cnnLayerMinMaxStore, hoverInfoStore
 } from '../stores.js';
 import {
   getExtent, getLinkData
@@ -20,6 +20,7 @@ const edgeStrokeWidth = overviewConfig.edgeStrokeWidth;
 const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
 const classLists = overviewConfig.classLists;
+const formater = d3.format('.4f');
 
 // Shared variables
 let svg = undefined;
@@ -402,6 +403,18 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
         top += svgPaddings.top;
         nodeCoordinate[l].push({x: left, y: top});
         return `layer-${l}-node-${i}`
+      });
+    
+    // Overwrite the mouseover and mouseleave function for output nodes to show
+    // hover info in the UI
+    layerGroup.selectAll('g.node-output')
+      .on('mouseover', (d, i, g) => {
+        nodeMouseOverHandler(d, i, g);
+        hoverInfoStore.set( {show: true, text: `Output value: ${formater(d.output)}`} );
+      })
+      .on('mouseleave', (d, i, g) => {
+        nodeMouseLeaveHandler(d, i, g);
+        hoverInfoStore.set( {show: false, text: `Output value: ${formater(d.output)}`} );
       });
     
     if (curLayer[0].layerName !== 'output') {

@@ -5,7 +5,8 @@
     cnnStore, svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore,
     nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
     needRedrawStore, cnnLayerMinMaxStore, detailedModeStore,
-    shouldIntermediateAnimateStore, isInSoftmaxStore, softmaxDetailViewStore
+    shouldIntermediateAnimateStore, isInSoftmaxStore, softmaxDetailViewStore,
+    hoverInfoStore
   } from '../stores.js';
 
   // Svelte views
@@ -98,6 +99,9 @@
   softmaxDetailViewStore.subscribe( value => {
     softmaxDetailViewInfo = value;
   } )
+
+  let hoverInfo = undefined;
+  hoverInfoStore.subscribe( value => {hoverInfo = value;} )
 
   let width = undefined;
   let height = undefined;
@@ -1052,6 +1056,12 @@
     color: #b5b5b5;
   }
 
+  #hover-label {
+    margin-left: 10px;
+    transition: opacity 300ms ease-in-out;
+    text-overflow: ellipsis;
+  }
+
   .image-container {
     width: 40px;
     height: 40px;
@@ -1173,6 +1183,17 @@
         on:click={detailedButtonClicked}>
         <span class="icon">
           <i class="fas fa-eye"></i>
+        </span>
+      </button>
+
+      <button class="button is-very-small"
+        id="hover-label"
+        style="opacity:{hoverInfo.show ? 1 : 0}">
+        <span class="icon" style="color:#bbb; margin-right: 5px;">
+          <i class="far fa-hand-pointer"></i>
+        </span>
+        <span id="hover-label-text">
+          {hoverInfo.text}
         </span>
       </button>
     </div>

@@ -3,7 +3,8 @@
 import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
   nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
-  needRedrawStore, cnnLayerMinMaxStore, shouldIntermediateAnimateStore
+  needRedrawStore, cnnLayerMinMaxStore, shouldIntermediateAnimateStore,
+  hoverInfoStore
 } from '../stores.js';
 import {
   getExtent, getOutputKnot, getInputKnot, gappedColorScale
@@ -29,6 +30,7 @@ const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
 const overlayRectOffset = overviewConfig.overlayRectOffset;
 const isSafari = window.safari !== undefined;
+const formater = d3.format('.4f');
 let isEndOfAnimation = false;
 
 // Shared variables
@@ -530,6 +532,8 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('class', `kernel kernel-${ni}`)
       .attr('transform', `translate(${kernelRectX}, ${n.y})`);
 
+    let weightText = 'Kernel weights: [';
+    let f2 = d3.format('.2f');
     for (let r = 0; r < kernelMatrix.length; r++) {
       for (let c = 0; c < kernelMatrix[0].length; c++) {
         kernelGroup.append('rect')
@@ -540,8 +544,11 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
           .attr('height', kernelRectLength)
           .attr('fill', gappedColorScale(layerColorScales.weight, kernelRange,
             kernelMatrix[r][c], kernelColorGap));
+        weightText = weightText.concat((c === 0 && r === 0) ? '' : ', ',
+          `${f2(kernelMatrix[r][c])}`);
       }
     }
+    weightText = weightText.concat(']');
 
     kernelGroup.append('rect')
       .attr('x', 0)
@@ -550,6 +557,14 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('height', kernelRectLength * 3)
       .attr('fill', 'none')
       .attr('stroke', intermediateColor);
+    
+    kernelGroup.style('pointer-events', 'all')
+      .on('mouseover', () => {
+        hoverInfoStore.set( {show: true, text: weightText} );
+      })
+      .on('mouseleave', () => {
+        hoverInfoStore.set( {show: false, text: weightText} );
+      });
 
     // Sliding the kernel on the input channel and result channel at the same
     // time
@@ -631,7 +646,13 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
         .attr('r', 4)
         .style('stroke', intermediateColor)
         .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
-          d.bias, kernelColorGap));
+          d.bias, kernelColorGap))
+        .on('mouseover', () => {
+          hoverInfoStore.set( {show: true, text: `Bias: ${formater(d.bias)}`} );
+        })
+        .on('mouseleave', () => {
+          hoverInfoStore.set( {show: false, text: `Bias: ${formater(d.bias)}`} );
+        });
 
     // Link from bias to the plus symbol
     linkData.push({
@@ -649,7 +670,13 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('r', 4)
       .style('stroke', intermediateColor)
       .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
-        d.bias, kernelColorGap));
+        d.bias, kernelColorGap))
+      .on('mouseover', () => {
+        hoverInfoStore.set( {show: true, text: `Bias: ${formater(d.bias)}`} );
+      })
+      .on('mouseleave', () => {
+        hoverInfoStore.set( {show: false, text: `Bias: ${formater(d.bias)}`} );
+      });
     
     // Link from bias to the plus symbol
     linkData.push({
