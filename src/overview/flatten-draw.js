@@ -594,6 +594,8 @@ const softmaxClicked = (arg) => {
     middleGap = arg.middleGap,
     middleRectHeight = arg.middleRectHeight,
     softmaxX = arg.softmaxX,
+    softmaxTextY = arg.softmaxTextY,
+    softmaxWidth = arg.softmaxWidth,
     symbolGroup = arg.symbolGroup,
     flattenRange = arg.flattenRange;
 
@@ -646,11 +648,44 @@ const softmaxClicked = (arg) => {
     .style('pointer-events', isInSoftmax ? 'all' : 'none');
 
   // Hide the softmax annotation
-  svg.select('.softmax-annotation')
+  let softmaxAnnotation = svg.select('.softmax-annotation')
+    .style('pointer-events', isInSoftmax ? 'all' : 'none');
+
+  // Remove the detailed annoatioan when quitting the detail view
+  if (isInSoftmax) {
+    softmaxAnnotation.select('.softmax-detail-text').remove();
+  }
+
+  softmaxAnnotation.select('.annotation-text')
     .transition('softmax')
     .duration(duration)
     .style('opacity', isInSoftmax ? 1 : 0)
-    .style('pointer-events', isInSoftmax ? 'all' : 'none');
+    .on('end', () => {
+      if (!isInSoftmax) {
+      // Add new annotation for the softmax button
+      let text = softmaxAnnotation.append('text')
+        .attr('x', softmaxX + softmaxWidth / 2)
+        .attr('y', softmaxTextY - 10)
+        .attr('class', 'annotation-text softmax-detail-text')
+        .style('dominant-baseline', 'baseline')
+        .style('text-anchor', 'middle')
+        .text('Normalize ');
+      
+      text.append('tspan') 
+        .attr('dx', 1)
+        .style('fill', '#E56014')
+        .text('logits');
+      
+      text.append('tspan')
+        .attr('dx', 1)
+        .text(' between');
+
+      text.append('tspan')
+        .attr('x', softmaxX + softmaxWidth / 2)
+        .attr('dy', '1em')
+        .text('0 and 1 and sum to 1');
+      }
+    })
 
   // Hide the annotation
   svg.select('.flatten-annotation')
@@ -1129,7 +1164,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   let symbolEndX = intermediateX2 + plusSymbolRadius * 2;
   let softmaxX = emptySpace + symbolEndX;
   let softmaxLeftMid = emptySpace / 2 + symbolEndX;
-
+  let softmaxTextY = nodeCoordinate[curLayerIndex][i].y - 2 * kernelRectLength - 6;
   let moveX = (intermediateX2 - (intermediateX1 + pixelWidth + 3)) * 2 / 3;
 
   let softmaxArg = {
@@ -1150,6 +1185,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     middleGap: middleGap,
     middleRectHeight: middleRectHeight,
     softmaxX: softmaxX,
+    softmaxWidth: softmaxWidth,
+    softmaxTextY: softmaxTextY,
     symbolGroup: symbolGroup,
     flattenRange: flattenRange
   };
@@ -1337,7 +1374,6 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .text('Bias');
   
   // Add annotation for the softmax symbol
-  let softmaxTextY = nodeCoordinate[curLayerIndex][i].y - 2 * kernelRectLength - 6;
   let softmaxAnnotation = intermediateLayerAnnotation.append('g')
     .attr('class', 'softmax-annotation');
   
