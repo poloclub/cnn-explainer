@@ -490,6 +490,14 @@ const drawLogitLayer = (arg) => {
       .duration(opacityDuration)
       .style('opacity', 1);
 
+    if ((selectedI < 3 && curI == 9) || (selectedI >= 3 && curI == 0)) {
+      // Show the hover text
+      softmaxDetailAnnotation.select('.softmax-detail-hover-annotation')
+        .transition('softmax-edge')
+        .duration(opacityDuration)
+        .style('opacity', 1);
+    }
+
     softmaxDetailAnnotation.select(`#logit-text-${curI}`)
       .transition('softmax-edge')
       .duration(opacityDuration)
@@ -653,7 +661,7 @@ const softmaxClicked = (arg) => {
     });
   }
 
-  // Hide the bias annotation
+  // Hide the sum up annotation
   svg.select('.plus-annotation')
     .transition('softmax')
     .duration(duration)
@@ -675,6 +683,11 @@ const softmaxClicked = (arg) => {
     softmaxAnnotation.selectAll('.softmax-detail-annoataion').remove();
   }
 
+  softmaxAnnotation.select('.arrow-group')
+    .transition('softmax')
+    .duration(duration)
+    .style('opacity', isInSoftmax ? 1 : 0);
+
   softmaxAnnotation.select('.annotation-text')
     .transition('softmax')
     .duration(duration)
@@ -682,9 +695,16 @@ const softmaxClicked = (arg) => {
     .on('end', () => {
       if (!isInSoftmax) {
         // Add new annotation for the softmax button
+        let textX = softmaxX + softmaxWidth / 2;
+        let textY = softmaxTextY - 10;
+
+        if (selectedI === 0) {
+          textY = softmaxTextY + 70;
+        }
+
         let text = softmaxDetailAnnotation.append('text')
-          .attr('x', softmaxX + softmaxWidth / 2)
-          .attr('y', softmaxTextY - 10)
+          .attr('x', textX)
+          .attr('y', textY)
           .attr('class', 'annotation-text softmax-detail-text')
           .style('dominant-baseline', 'baseline')
           .style('text-anchor', 'middle')
@@ -700,22 +720,44 @@ const softmaxClicked = (arg) => {
           .text(' between');
 
         text.append('tspan')
-          .attr('x', softmaxX + softmaxWidth / 2)
+          .attr('x', textX)
           .attr('dy', '1em')
           .text('0 and 1 and sum to 1');
 
+        if (selectedI === 0) {
+          drawArrow({
+            group: softmaxDetailAnnotation,
+            sx: softmaxX + softmaxWidth / 2 - 5,
+            sy: softmaxTextY + 44,
+            tx: softmaxX + softmaxWidth / 2,
+            ty: textY - 12,
+            dr: 50,
+            hFlip: true
+          });
+        } else {
+          drawArrow({
+            group: softmaxDetailAnnotation,
+            sx: softmaxX + softmaxWidth / 2 - 5,
+            sy: softmaxTextY + 4,
+            tx: softmaxX + softmaxWidth / 2,
+            ty: symbolY - plusSymbolRadius - 4,
+            dr: 50,
+            hFlip: true
+          });
+        }
+
         // Add annotation for the logit layer label
-        let textX = centerX + 45;
-        let textY = (svgPaddings.top + vSpaceAroundGap) / 2;
+        textX = centerX + 45;
+        textY = (svgPaddings.top + vSpaceAroundGap) / 2;
         let arrowSX = centerX + 18;
         let arrowSY = (svgPaddings.top + vSpaceAroundGap) / 2;
 
-        if (selectedI === 0) {
-          textX = centerX + 40;
-          textY = (svgPaddings.top + vSpaceAroundGap) / 2 + 20;
-          arrowSX = centerX + 2;
-          arrowSY = (svgPaddings.top + vSpaceAroundGap) / 2 + 8;
-        }
+        // if (selectedI === 0) {
+        //   textX = centerX + 40;
+        //   textY = (svgPaddings.top + vSpaceAroundGap) / 2 + 20;
+        //   arrowSX = centerX + 2;
+        //   arrowSY = (svgPaddings.top + vSpaceAroundGap) / 2 + 8;
+        // }
 
         let logitText = softmaxDetailAnnotation.append('text')
           .attr('x', textX)
@@ -752,6 +794,50 @@ const softmaxClicked = (arg) => {
             .style('opacity', 0)
             .text(`${classList[i]}`);
         }
+
+        let hoverTextGroup = softmaxDetailAnnotation.append('g')
+          .attr('class', 'softmax-detail-hover-annotation')
+          .style('opacity', 0);
+
+        textX = centerX + 50;
+        textY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2;
+
+        if (selectedI < 3) {
+          textY = nodeCoordinate[curLayerIndex - 1][9].y + nodeLength / 2;
+        }
+
+        // Add annotation to prompt user to check the logit value
+        let hoverText = hoverTextGroup.append('text')
+          .attr('x', textX)
+          .attr('y', textY)
+          .attr('class', 'annotation-text softmax-detail-text softmax-hover-text')
+          .style('text-anchor', 'start')
+          .style('dominant-baseline', 'baseline')
+          .text(`Hover over to see`);
+        
+        hoverText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '1em')
+          .text('its ');
+
+        hoverText.append('tspan')
+          .attr('dx', 1)
+          .style('fill', '#E56014')
+          .text('logit');
+        
+        hoverText.append('tspan')
+          .attr('dx', 1)
+          .text(' value');
+        
+        drawArrow({
+          group: hoverTextGroup,
+          sx: centerX + 15,
+          sy: textY,
+          tx: textX - 8,
+          ty: textY + 2,
+          dr: 60,
+          hFlip: true
+        });
       }
     })
 
@@ -1433,7 +1519,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   if (isSafari) { biasTextY -= 0.5 * kernelRectLength; }
   biasTextY -= 2 * kernelRectLength + 6;
   
-  plusAnnotation.append('text')
+  flattenLayerLeftPart.append('text')
     .attr('class', 'annotation-text')
     .attr('x', intermediateX2 + plusSymbolRadius)
     .attr('y', biasTextY)
