@@ -4,7 +4,11 @@
 
   let inputSize = 5;
   let kernelSize = 2;
-  
+  let padding = 0;
+  let stride = 1;
+  const dilation = 1;
+  let isPaused = false;
+
   function generateSquareArray(arrayDim) {
     let arr = [];
     for (let i = 0; i < arrayDim; i++) {
@@ -16,10 +20,14 @@
     return arr;
   }
 
-  let padding = 0;
-  let stride = 1;
-  const dilation = 1;
-  let isPaused = false;
+  function handleClickPause() {
+    isPaused = !isPaused;
+    console.log(isPaused)
+  }
+
+  function handlePauseFromInteraction(event) {
+    isPaused = event.detail.text;
+  }
 
   let input = generateSquareArray(inputSize + padding * 2);
   let kernel = generateSquareArray(kernelSize);
@@ -32,15 +40,6 @@
     } catch {
       console.log("Cannot handle stride of " + stride);
     }
-  }
-  
-  function handleClickPause() {
-    isPaused = !isPaused;
-    console.log(isPaused)
-  }
-
-  function handlePauseFromInteraction(event) {
-    isPaused = event.detail.text;
   }
 </script>
 
@@ -75,9 +74,13 @@
 
   label {
     display: inline-block;
-    width: 135px;
-    text-align: middle;
-  } ​{}
+    width: 105px;
+    text-align: right;
+  } 
+
+  input[type=number] {
+    width: 30px;
+  }
 </style>
 
 <div class="container has-text-centered" id="detailview-container">
@@ -90,28 +93,23 @@
       </div>
     </div>
 
-    <div class="columns is-centered">
+    <div class="columns is-centered is-vcentered">
       <div class="column has-text-centered">
-        <label class="label">
-          Input Size:
-          <input type=number bind:value={inputSize} min={kernelSize} max={7}>
-          <input type=range bind:value={inputSize} min={kernelSize} max={7}>
-        </label><br>
-        <label class="label">
-          Padding:
-          <input type=number bind:value={padding} min={0} max={kernelSize - 1}>
-          <input type=range bind:value={padding} min={0} max={kernelSize - 1}>
-        </label><br>
-        <label class="label">
-          Kernel Size:
-          <input type=number bind:value={kernelSize} min={padding + 1} max={inputSize}>
-          <input type=range bind:value={kernelSize} min={padding + 1} max={inputSize}>
-        </label><br>
-        <label class="label">
-          Stride:
-          <input type=number bind:value={stride} min=1 max={inputSize + padding - kernelSize}>
-          <input type=range bind:value={stride} min=1 max={inputSize + padding - kernelSize}>
-        </label>
+        <label class="label">Input Size:</label>
+        <input type=number bind:value={inputSize} min={kernelSize} max={7}>
+        <input type=range bind:value={inputSize} min={kernelSize} max={7}>
+        <br>
+        <label class="label">Padding:</label>
+        <input type=number bind:value={padding} min={0} max={kernelSize - 1}>
+        <input type=range bind:value={padding} min={0} max={kernelSize - 1}>
+        <br>
+        <label class="label">Kernel Size:</label>
+        <input type=number bind:value={kernelSize} min={padding + 1} max={inputSize}>
+        <input type=range bind:value={kernelSize} min={padding + 1} max={inputSize}>
+        <br>
+        <label class="label">Stride:</label>
+        <input type=number bind:value={stride} min=1 max={inputSize + 2 * padding - kernelSize}>
+        <input type=range bind:value={stride} min=1 max={inputSize + 2 * padding - kernelSize}>
       </div>
       <HyperparameterAnimator on:message={handlePauseFromInteraction} 
         kernel={kernel} image={input} output={outputFinal} 

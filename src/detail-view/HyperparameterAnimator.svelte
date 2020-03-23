@@ -59,16 +59,19 @@
     });
   }
 
-  // Fix the cell size for parameter changing.
+  // Fix the total grid size to change hyperparameters without changing the grid
+  // size.  This must be two pixels smaller than the HyperparameterDataview svg
+  // size, so that the stroke on the right side of the grid does not get cut off.
+  const gridSize = 198;
   startConvolution(stride);
-  let testImage = gridData(image, Math.floor(200 / image.length) - 1)
-  let testOutput = gridData(output, Math.floor(200 / output.length) - 1)
-  let testKernel = gridData(kernel, Math.floor(200 / kernel.length) - 1)
+  let testImage = gridData(image, gridSize / image.length)
+  let testOutput = gridData(output, gridSize / output.length)
+  let testKernel = gridData(kernel, gridSize / kernel.length)
   $ : {
     startConvolution(stride);
-    testImage = gridData(image, Math.floor(200 / image.length) - 1)
-    testOutput = gridData(output, Math.floor(200 / output.length) - 1)
-    testKernel = gridData(kernel, Math.floor(200 / kernel.length) - 1)
+    testImage = gridData(image, gridSize / image.length)
+    testOutput = gridData(output, gridSize / output.length)
+    testKernel = gridData(kernel, gridSize / kernel.length)
   }
 </script>
 

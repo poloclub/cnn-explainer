@@ -11,8 +11,8 @@
   import { createEventDispatcher } from 'svelte';
 
   let grid_final;
-  const standardCellColor = "ddd";
-  const paddingCellColor = "aaa";
+  const standardCellColor = "#ddd";
+  const paddingCellColor = "#aaa";
   const dispatch = createEventDispatcher();
 
   let oldHighlight = highlights;
