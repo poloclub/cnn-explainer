@@ -60,7 +60,7 @@
 
     let formulaRightGroup = svg.append('g')
       .attr('class', 'formula-right')
-      .attr('transform', `translate(${90}, ${0})`)
+      .attr('transform', `translate(${10}, ${0})`)
       .style('font-size', '15px');
 
     // Denominator
@@ -172,10 +172,10 @@
     // Draw the left part of the formula
     let formulaLeftGroup = svg.append('g')
       .attr('class', 'formula-left')
-      .attr('transform', `translate(${0}, ${32})`);
+      .attr('transform', `translate(${395}, ${32})`);
     
     let softmaxText = formulaLeftGroup.append('text')
-      .attr('x', 3)
+      .attr('x', 20)
       .attr('dominant-baseline', 'middle')
       .text(`${formater(outputValue, 4)}`);
     
@@ -183,7 +183,7 @@
     
     formulaLeftGroup.append('text')
       .attr('dominant-baseline', 'middle')
-      .attr('x', softmaxTextBBox.width + 10)
+      .attr('x', 0)
       .attr('y', 0)
       .style('fill', 'gray')
       .style('font-weight', 'bold')
