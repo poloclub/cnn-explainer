@@ -279,6 +279,13 @@ const drawLogitLayer = (arg) => {
     .style('stroke', intermediateColor)
     .on('mouseover', () => logitCircleMouseOverHandler(selectedI))
     .on('mouseleave', () => logitCircleMouseLeaveHandler(selectedI));
+  
+  // Show the logit circle corresponding label
+  let softmaxDetailAnnotation = svg.select('.intermediate-layer-annotation')
+    .select('.softmax-detail-annoataion');
+
+  softmaxDetailAnnotation.select(`#logit-text-${selectedI}`)
+    .style('opacity', 1);
 
   tempPlusSymbol.raise();
 
@@ -483,6 +490,11 @@ const drawLogitLayer = (arg) => {
       .duration(opacityDuration)
       .style('opacity', 1);
 
+    softmaxDetailAnnotation.select(`#logit-text-${curI}`)
+      .transition('softmax-edge')
+      .duration(opacityDuration)
+      .style('opacity', 1);
+    
     curEdgeGroup.transition('softmax-edge')
       .duration(opacityDuration)
       .style('opacity', 1)
@@ -600,6 +612,7 @@ const softmaxClicked = (arg) => {
     flattenRange = arg.flattenRange;
 
   let duration = 600;
+  let centerX = softmaxLeftMid - moveX * 4 / 5;
 
   // Clean up the logit elemends before moving anything
   if (isInSoftmax) {
@@ -650,10 +663,16 @@ const softmaxClicked = (arg) => {
   // Hide the softmax annotation
   let softmaxAnnotation = svg.select('.softmax-annotation')
     .style('pointer-events', isInSoftmax ? 'all' : 'none');
+  
+  let softmaxDetailAnnotation = softmaxAnnotation.selectAll('.softmax-detail-annoataion')
+    .data([0])
+    .enter()
+    .append('g')
+    .attr('class', 'softmax-detail-annoataion');
 
   // Remove the detailed annoatioan when quitting the detail view
   if (isInSoftmax) {
-    softmaxAnnotation.select('.softmax-detail-text').remove();
+    softmaxAnnotation.selectAll('.softmax-detail-annoataion').remove();
   }
 
   softmaxAnnotation.select('.annotation-text')
@@ -662,28 +681,77 @@ const softmaxClicked = (arg) => {
     .style('opacity', isInSoftmax ? 1 : 0)
     .on('end', () => {
       if (!isInSoftmax) {
-      // Add new annotation for the softmax button
-      let text = softmaxAnnotation.append('text')
-        .attr('x', softmaxX + softmaxWidth / 2)
-        .attr('y', softmaxTextY - 10)
-        .attr('class', 'annotation-text softmax-detail-text')
-        .style('dominant-baseline', 'baseline')
-        .style('text-anchor', 'middle')
-        .text('Normalize ');
-      
-      text.append('tspan') 
-        .attr('dx', 1)
-        .style('fill', '#E56014')
-        .text('logits');
-      
-      text.append('tspan')
-        .attr('dx', 1)
-        .text(' between');
+        // Add new annotation for the softmax button
+        let text = softmaxDetailAnnotation.append('text')
+          .attr('x', softmaxX + softmaxWidth / 2)
+          .attr('y', softmaxTextY - 10)
+          .attr('class', 'annotation-text softmax-detail-text')
+          .style('dominant-baseline', 'baseline')
+          .style('text-anchor', 'middle')
+          .text('Normalize ');
+        
+        text.append('tspan') 
+          .attr('dx', 1)
+          .style('fill', '#E56014')
+          .text('logits');
+        
+        text.append('tspan')
+          .attr('dx', 1)
+          .text(' between');
 
-      text.append('tspan')
-        .attr('x', softmaxX + softmaxWidth / 2)
-        .attr('dy', '1em')
-        .text('0 and 1 and sum to 1');
+        text.append('tspan')
+          .attr('x', softmaxX + softmaxWidth / 2)
+          .attr('dy', '1em')
+          .text('0 and 1 and sum to 1');
+
+        // Add annotation for the logit layer label
+        let textX = centerX + 45;
+        let textY = (svgPaddings.top + vSpaceAroundGap) / 2;
+        let arrowSX = centerX + 18;
+        let arrowSY = (svgPaddings.top + vSpaceAroundGap) / 2;
+
+        if (selectedI === 0) {
+          textX = centerX + 40;
+          textY = (svgPaddings.top + vSpaceAroundGap) / 2 + 20;
+          arrowSX = centerX + 2;
+          arrowSY = (svgPaddings.top + vSpaceAroundGap) / 2 + 8;
+        }
+
+        let logitText = softmaxDetailAnnotation.append('text')
+          .attr('x', textX)
+          .attr('y', textY)
+          .attr('class', 'annotation-text softmax-detail-text')
+          .style('text-anchor', 'begin')
+          .style('dominant-baseline', 'baseline')
+          .text('Unscaled outputs in');
+        
+        logitText.append('tspan')
+          .attr('x', textX)
+          .attr('dy', '1em')
+          .text('the output layer');
+
+        drawArrow({
+          group: softmaxDetailAnnotation,
+          sx: arrowSX,
+          sy: arrowSY,
+          tx: textX - 8,
+          ty: textY + 2,
+          dr: 60,
+          hFlip: true
+        });
+
+        // Add annotation for the logit circle
+        for (let i = 0; i < 10; i++) {
+          softmaxDetailAnnotation.append('text')
+            .attr('x', centerX)
+            .attr('y', nodeCoordinate[curLayerIndex - 1][i].y + nodeLength / 2 + 8)
+            .attr('class', 'annotation-text softmax-detail-text')
+            .attr('id', `logit-text-${i}`)
+            .style('text-anchor', 'middle')
+            .style('dominant-baseline', 'hanging')
+            .style('opacity', 0)
+            .text(`${classList[i]}`);
+        }
       }
     })
 
