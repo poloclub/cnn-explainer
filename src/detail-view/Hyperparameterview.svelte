@@ -8,6 +8,7 @@
   let stride = 1;
   const dilation = 1;
   let isPaused = false;
+  $: inputSizeWithPadding = inputSize + 2 * padding;
 
   function generateSquareArray(arrayDim) {
     let arr = [];
@@ -29,15 +30,24 @@
     isPaused = event.detail.text;
   }
 
+  // Update input, kernel, and output as user adjusts hyperparameters.
   let input = generateSquareArray(inputSize + padding * 2);
   let kernel = generateSquareArray(kernelSize);
   $: input = generateSquareArray(inputSize + padding * 2);
   $: kernel = generateSquareArray(kernelSize);
   let outputFinal = singleConv(input, kernel, stride);
+  let strideAfterErrorPrevention = stride;
   $: if (stride > 0) {
-    try { 
+    const stepSize = (inputSizeWithPadding - kernelSize) / stride + 1;
+    let strideNumberInput = document.getElementById("strideNumber");
+    if (Number.isInteger(stepSize)) {
       outputFinal = singleConv(input, kernel, stride);
-    } catch {
+      if (strideNumberInput != null) {
+        strideNumberInput.disabled = false;
+      }
+      strideAfterErrorPrevention = stride;
+    } else {
+      strideNumberInput.disabled = true;
       console.log("Cannot handle stride of " + stride);
     }
   }
@@ -79,7 +89,7 @@
   } 
 
   input[type=number] {
-    width: 30px;
+    width: 35px;
   }
 </style>
 
@@ -108,12 +118,12 @@
         <input type=range bind:value={kernelSize} min={padding + 1} max={inputSize}>
         <br>
         <label class="label">Stride:</label>
-        <input type=number bind:value={stride} min=1 max={inputSize + 2 * padding - kernelSize}>
-        <input type=range bind:value={stride} min=1 max={inputSize + 2 * padding - kernelSize}>
+        <input type=number id="strideNumber" bind:value={stride} min=1 max={inputSizeWithPadding - kernelSize}>
+        <input type=range bind:value={stride} min=1 max={inputSizeWithPadding - kernelSize}>
       </div>
       <HyperparameterAnimator on:message={handlePauseFromInteraction} 
         kernel={kernel} image={input} output={outputFinal} 
-        stride={stride} dilation={dilation} padding={padding} isPaused={isPaused}/>
+        stride={strideAfterErrorPrevention} dilation={dilation} padding={padding} isPaused={isPaused}/>
     </div>
 
   </div>

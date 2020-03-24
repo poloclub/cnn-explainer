@@ -64,14 +64,14 @@
   // size, so that the stroke on the right side of the grid does not get cut off.
   const gridSize = 198;
   startConvolution(stride);
-  let testImage = gridData(image, gridSize / image.length)
-  let testOutput = gridData(output, gridSize / output.length)
-  let testKernel = gridData(kernel, gridSize / kernel.length)
+  let testImage = gridData(image, gridSize / image.length);
+  let testOutput = gridData(output, gridSize / output.length);
+  let testKernel = gridData(kernel, gridSize / kernel.length);
   $ : {
     startConvolution(stride);
-    testImage = gridData(image, gridSize / image.length)
-    testOutput = gridData(output, gridSize / output.length)
-    testKernel = gridData(kernel, gridSize / kernel.length)
+    testImage = gridData(image, gridSize / image.length);
+    testOutput = gridData(output, gridSize / output.length);
+    testKernel = gridData(kernel, gridSize / kernel.length);
   }
 </script>
 
