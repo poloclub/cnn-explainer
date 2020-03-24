@@ -454,6 +454,14 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
         .style('fill', 'black')
         .style('opacity', 0.5)
         .text((d, i) => classLists[i]);
+      
+      // Add annotation text to tell readers the exact output probability
+      // nodeGroups.append('text')
+      //   .attr('class', 'annotation-text')
+      //   .attr('id', (d, i) => `output-prob-${i}`)
+      //   .attr('x', left)
+      //   .attr('y', (d, i) => nodeCoordinate[l][i].y + 10)
+      //   .text(d => `(${d3.format('.4f')(d.output)})`);
     }
     leftAccuumulatedSpace += nodeLength;
   }

@@ -710,12 +710,14 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
   intermediateLayer.append('g')
     .attr('class', 'layer-intermediate-label')
     .attr('transform', () => {
-      let x = leftX + nodeLength + (nodeLength + 2 * plusSymbolRadius + 2 *
-        hSpaceAroundGap * gapRatio) / 2;
+      // let x = leftX + nodeLength + (nodeLength + 2 * plusSymbolRadius + 2 *
+      //   hSpaceAroundGap * gapRatio) / 2;
+      let x = intermediateX1 + nodeLength / 2;
       let y = (svgPaddings.top + vSpaceAroundGap) / 2;
       return `translate(${x}, ${y})`;
     })
     .append('text')
+    .style('text-anchor', 'middle')
     .style('dominant-baseline', 'middle')
     .style('opacity', '0.8')
     .text('intermediate');

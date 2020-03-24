@@ -240,6 +240,9 @@ const drawLogitLayer = (arg) => {
     .attr('class', 'temp-clone-plus-symbol')
     .attr('transform', `translate(${symbolX - moveX},
       ${nodeCoordinate[curLayerIndex][selectedI].y + nodeLength / 2})`)
+    // Cool hack -> d3 clone doesnt clone events, make the front object pointer
+    // event transparent so users can trigger the underlying object's event!
+    .style('pointer-events', 'none')
     .remove();
 
   let tempPlusSymbol = logitLayer.append(() => tempClone.node());
