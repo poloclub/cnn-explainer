@@ -88,7 +88,7 @@
       let curText = denominatorGroup.append('text')
         .attr('x', curX)
         .attr('y', Math.floor(i / numOfRows) * 20)
-        .style('cursor', 'pointer')
+        .style('cursor', 'crosshair')
         .style('pointer-events', 'all')
         .on('mouseover', (d, n, g) => mouseOverHandler(d, n, g, i))
         .on('mouseleave', (d, n, g) => mouseLeaveHandler(d, n, g, i))
@@ -155,7 +155,7 @@
       .on('mouseover', (d, n, g) => mouseOverHandler(d, n, g, selectedI))
       .on('mouseleave', (d, n, g) => mouseLeaveHandler(d, n, g, selectedI))
       .style('pointer-events', 'all')
-      .style('cursor', 'pointer')
+      .style('cursor', 'crosshair')
       .style('text-anchor', 'middle')
       .text('exp(');
 

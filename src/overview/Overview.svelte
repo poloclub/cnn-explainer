@@ -1079,6 +1079,7 @@
     margin-left: 10px;
     transition: opacity 300ms ease-in-out;
     text-overflow: ellipsis;
+    pointer-events: none;
   }
 
   .image-container {
@@ -1163,9 +1164,15 @@
   }
 
   :global(.annotation-text) {
+    pointer-events: none;
     font-size: 10px;
     font-style: italic;
     fill: gray;
+  }
+
+  /* Change the cursor style on the detailed view input and output matrices */
+  :global(rect.square) {
+    cursor: crosshair;
   }
 
   :global(.animation-control-button) {
@@ -1209,7 +1216,7 @@
         id="hover-label"
         style="opacity:{hoverInfo.show ? 1 : 0}">
         <span class="icon" style="color:#bbb; margin-right: 5px;">
-          <i class="far fa-hand-pointer"></i>
+          <i class="fas fa-crosshairs "></i>
         </span>
         <span id="hover-label-text">
           {hoverInfo.text}

@@ -559,6 +559,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('stroke', intermediateColor);
     
     kernelGroup.style('pointer-events', 'all')
+      .style('cursor', 'crosshair')
       .on('mouseover', () => {
         hoverInfoStore.set( {show: true, text: weightText} );
       })
@@ -645,6 +646,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
         .attr('cy', nodeLength / 2 + kernelRectLength)
         .attr('r', 4)
         .style('stroke', intermediateColor)
+        .style('cursor', 'crosshair')
         .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
           d.bias, kernelColorGap))
         .on('mouseover', () => {
@@ -669,6 +671,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('cy', -nodeLength / 2 - kernelRectLength)
       .attr('r', 4)
       .style('stroke', intermediateColor)
+      .style('cursor', 'crosshair')
       .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
         d.bias, kernelColorGap))
       .on('mouseover', () => {

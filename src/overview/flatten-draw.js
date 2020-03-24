@@ -277,7 +277,7 @@ const drawLogitLayer = (arg) => {
     .attr('cy', nodeCoordinate[curLayerIndex - 1][selectedI].y + nodeLength / 2)
     .attr('r', logitRadius)
     .style('fill', layerColorScales.logit(logitColorScale(logits[selectedI])))
-    .style('cursor', 'pointer')
+    .style('cursor', 'crosshair')
     .style('pointer-events', 'all')
     .style('stroke', intermediateColor)
     .on('mouseover', () => logitCircleMouseOverHandler(selectedI))
@@ -401,6 +401,7 @@ const drawLogitLayer = (arg) => {
       .select('circle')
       .datum({fill: gappedColorScale(layerColorScales.weight,
         flattenRange, cnn[layerIndexDict['output']][curI].bias, 0.35)})
+      .style('pointer-events', 'none')
       .style('fill', '#E5E5E5');
 
     symbolClone.attr('transform', `translate(${symbolX},
@@ -476,7 +477,7 @@ const drawLogitLayer = (arg) => {
       .attr('r', 7)
       .style('fill', layerColorScales.logit(logitColorScale(logits[curI])))
       .style('stroke', intermediateColor)
-      .style('cursor', 'pointer')
+      .style('cursor', 'crosshair')
       .on('mouseover', () => logitCircleMouseOverHandler(curI))
       .on('mouseleave', () => logitCircleMouseLeaveHandler(curI));
     
@@ -1106,6 +1107,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
         .attr('y', l === 0 ? topY + f * pixelHeight : bottomY + f * pixelHeight)
         .attr('width', pixelWidth)
         .attr('height', pixelHeight)
+        .style('cursor', 'crosshair')
         .style('fill', colorScale((cnn.flatten[factoredF].output + range / 2) / range))
         .on('mouseover', () => flattenMouseOverHandler({index: factoredF}))
         .on('mouseleave', () => flattenMouseLeaveHandler({index: factoredF}));
@@ -1158,6 +1160,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
         .style('stroke', intermediateColor)
         .style('stroke-length', '0.5')
         .style('pointer-events', 'all')
+        .style('cursor', 'crosshair')
         .style('opacity', 0)
         .on('mouseover', () => flattenMouseOverHandler({index: factoredF}))
         .on('mouseleave', () => flattenMouseLeaveHandler({index: factoredF}));
@@ -1283,6 +1286,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('cy', -nodeLength / 2 - 0.5 * kernelRectLength)
     .attr('r', kernelRectLength * 1.5)
     .style('stroke', intermediateColor)
+    .style('cursor', 'crosshair')
     .style('fill', gappedColorScale(layerColorScales.weight,
         flattenRange, d.bias, 0.35))
     .on('mouseover', () => {
@@ -1412,6 +1416,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .lower();
 
   edgeGroup.selectAll('path.flatten,path.flatten-output')
+    .style('cursor', 'crosshair')
+    .style('pointer-events', 'all')
     .on('mouseover', flattenMouseOverHandler)
     .on('mouseleave', flattenMouseLeaveHandler);
   
@@ -1520,7 +1526,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   // Add annotation for the bias
   let biasTextY = nodeCoordinate[curLayerIndex][i].y;
   if (isSafari) { biasTextY -= 0.5 * kernelRectLength; }
-  biasTextY -= 2 * kernelRectLength + 6;
+  biasTextY -= 2 * kernelRectLength + 4;
   
   flattenLayerLeftPart.append('text')
     .attr('class', 'annotation-text')
