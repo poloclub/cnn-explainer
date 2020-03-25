@@ -335,7 +335,8 @@ const drawLogitLayer = (arg) => {
         .attr('id', `logit-lower-${curI}`)
         .style('opacity', 0);
 
-      for (let f = 0; f < flattenLength; f++) {
+      // Hack: now show all edges, only draw 1/3 of the actual edges
+      for (let f = 0; f < flattenLength; f += 3) {
         let loopFactors = [0, 9];
         loopFactors.forEach(l => {
           let factoredF = f + l * flattenLength;
@@ -349,7 +350,7 @@ const drawLogitLayer = (arg) => {
             index: factoredF,
             weight: cnn.flatten[factoredF].outputLinks[curI].weight,
             color: '#F1F1F1',
-            width: 0.2,
+            width: 0.5,
             opacity: 1,
             class: `softmax-edge-${curI}`
           });
@@ -450,8 +451,8 @@ const drawLogitLayer = (arg) => {
     let outputEdgeLength1 = outputEdge1.node().getTotalLength();
     let outputEdgeLength2 = outputEdge2.node().getTotalLength();
     let totalLength = outputEdgeLength1 + outputEdgeLength2;
-    let totalDuration = hasInitialized ? 0 : 800;
-    let opacityDuration = hasInitialized ? 0 : 600;
+    let totalDuration = hasInitialized ? 500 : 800;
+    let opacityDuration = hasInitialized ? 400 : 600;
 
     outputEdge1.attr('stroke-dasharray', outputEdgeLength1 + ' ' + outputEdgeLength1)
       .attr('stroke-dashoffset', outputEdgeLength1);
@@ -485,7 +486,8 @@ const drawLogitLayer = (arg) => {
     softmaxDetailViewInfo.startAnimation = {
       i: curI,
       duration: opacityDuration,
-      hasInitialized: hasInitialized
+      // Always show the animation
+      hasInitialized: false
     };
     softmaxDetailViewStore.set(softmaxDetailViewInfo);
 
