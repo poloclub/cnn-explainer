@@ -920,8 +920,26 @@
       .attr("markerHeight", 6)
       .attr("orient", "auto")
       .append("path")
-      .attr('fill', 'gray')
+      .style('stroke-width', 1.2)
+      .style('fill', 'gray')
+      .style('stroke', 'gray')
       .attr("d", "M0,-5L10,0L0,5");
+
+    // Alternative arrow head style for non-interactive annotation
+    svg.append("defs")
+      .append("marker")
+      .attr("id", 'marker-alt')
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 6)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .style('fill', 'none')
+      .style('stroke', 'gray')
+      .style('stroke-width', 2)
+      .attr("d", "M-5,-10L10,0L-5,10");
     
     console.time('Construct cnn');
     model = await loadTrainedModel('/assets/data/model.json');
@@ -1122,7 +1140,7 @@
     font-size: 12px;
     opacity: 0.8;
     text-anchor: middle;
-    transition: opacity 300ms ease-in-out;
+    transition: opacity 0ms ease-in-out;
   }
 
   :global(.colorLegend) {

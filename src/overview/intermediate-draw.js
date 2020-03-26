@@ -843,11 +843,12 @@ const drawIntermediateLayerAnnotation = (arg) => {
 
   drawArrow({
     group: group,
-    tx: leftX - 5,
+    tx: leftX - 7,
     ty: nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2,
     sx: arrowSX,
     sy: arrowSY,
-    dr: dr
+    dr: dr,
+    marker: 'marker-alt'
   });
 
   // Add annotation for the sum operation
@@ -891,20 +892,22 @@ const drawIntermediateLayerAnnotation = (arg) => {
       group: group,
       sx: intermediateX2 + 50,
       sy: nodeCoordinate[curLayerIndex][i].y - (nodeLength / 2 + kernelRectLength * 2),
-      tx: intermediateX2 + 2 * plusSymbolRadius + 3,
+      tx: intermediateX2 + 2 * plusSymbolRadius + 5,
       ty: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 - plusSymbolRadius,
       dr: 50,
-      hFlip: false
+      hFlip: false,
+      marker: 'marker-alt'
     });
   } else {
     drawArrow({
       group: group,
       sx: intermediateX2 + 35,
       sy: nodeCoordinate[curLayerIndex][i].y + nodeLength + kernelRectLength * 2,
-      tx: intermediateX2 + 2 * plusSymbolRadius + 3,
+      tx: intermediateX2 + 2 * plusSymbolRadius + 5,
       ty: nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 + plusSymbolRadius,
       dr: 30,
-      hFlip: true
+      hFlip: true,
+      marker: 'marker-alt'
     });
   }
 

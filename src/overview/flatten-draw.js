@@ -4,7 +4,7 @@ import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
   nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
   cnnLayerMinMaxStore, isInSoftmaxStore, softmaxDetailViewStore,
-  hoverInfoStore, allowsSoftmaxAnimationStore
+  hoverInfoStore, allowsSoftmaxAnimationStore, detailedModeStore
 } from '../stores.js';
 import {
   getOutputKnot, getInputKnot, gappedColorScale
@@ -64,6 +64,9 @@ softmaxDetailViewStore.subscribe( value => {softmaxDetailViewInfo = value;} )
 let hoverInfo = undefined;
 hoverInfoStore.subscribe( value => {hoverInfo = value;} )
 
+let detailedMode = undefined;
+detailedModeStore.subscribe( value => {detailedMode = value;} )
+
 let layerIndexDict = {
   'input': 0,
   'conv_1_1': 1,
@@ -109,7 +112,6 @@ const moveLegend = (d, i, g, moveX, duration, restore) => {
       .ease(d3.easeCubicInOut)
       .attr('transform', `translate(${previousLegendX}, ${previousLegendY})`);
   }
-
 }
 
 const logitCircleMouseOverHandler = (i) => {
@@ -569,6 +571,7 @@ const drawLogitLayer = (arg) => {
   // Draw logit layer label
   let logitLabel = logitLayer.append('g')
     .attr('class', 'layer-label')
+    .classed('hidden', detailedMode)
     .attr('transform', () => {
       let x = centerX;
       let y = (svgPaddings.top + vSpaceAroundGap) / 2;
@@ -579,10 +582,8 @@ const drawLogitLayer = (arg) => {
     .style('text-anchor', 'middle')
     .style('dominant-baseline', 'middle')
     .style('opacity', 0.8)
+    .style('font-weight', 800)
     .text('logit');
-
-  logitLabel.clone('true')
-    .attr('class', 'layer-detailed-label hidden');
 }
 
 const removeLogitLayer = () => {
@@ -650,6 +651,10 @@ const softmaxClicked = (arg) => {
 
   svg.select('.intermediate-layer')
     .select(`.layer-label`)
+    .each((d, i, g) => moveLegend(d, i, g, moveX, duration, isInSoftmax));
+
+  svg.select('.intermediate-layer')
+    .select(`.layer-detailed-label`)
     .each((d, i, g) => moveLegend(d, i, g, moveX, duration, isInSoftmax));
 
   // Also move all layers on the left
@@ -723,12 +728,12 @@ const softmaxClicked = (arg) => {
         
         text.append('tspan')
           .attr('dx', 1)
-          .text(' between');
+          .text(' into');
 
         text.append('tspan')
           .attr('x', textX)
-          .attr('dy', '1em')
-          .text('0 and 1 and sum to 1');
+          .attr('dy', '1.1em')
+          .text('class probabilities');
 
         if (selectedI === 0) {
           drawArrow({
@@ -738,7 +743,8 @@ const softmaxClicked = (arg) => {
             tx: softmaxX + softmaxWidth / 2,
             ty: textY - 12,
             dr: 50,
-            hFlip: true
+            hFlip: true,
+            marker: 'marker-alt'
           });
         } else {
           drawArrow({
@@ -748,15 +754,16 @@ const softmaxClicked = (arg) => {
             tx: softmaxX + softmaxWidth / 2,
             ty: symbolY - plusSymbolRadius - 4,
             dr: 50,
-            hFlip: true
+            hFlip: true,
+            marker: 'marker-alt'
           });
         }
 
         // Add annotation for the logit layer label
         textX = centerX + 45;
         textY = (svgPaddings.top + vSpaceAroundGap) / 2;
-        let arrowSX = centerX + 18;
-        let arrowSY = (svgPaddings.top + vSpaceAroundGap) / 2;
+        let arrowTX = centerX + 20;
+        let arrowTY = (svgPaddings.top + vSpaceAroundGap) / 2;
 
         // if (selectedI === 0) {
         //   textX = centerX + 40;
@@ -765,27 +772,67 @@ const softmaxClicked = (arg) => {
         //   arrowSY = (svgPaddings.top + vSpaceAroundGap) / 2 + 8;
         // }
 
-        let logitText = softmaxDetailAnnotation.append('text')
+        softmaxDetailAnnotation.append('g')
+          .attr('class', 'layer-detailed-label')
+          .classed('hidden', !detailedMode)
+          .append('text')
+          .attr('x', centerX)
+          .attr('y',  (svgPaddings.top + vSpaceAroundGap) / 2 - 6)
+          .style('opacity', 0.7)
+          .style('dominant-baseline', 'middle')
+          .style('font-size', '12px')
+          .style('font-weight', '800')
+          .text('logit')
+          .append('tspan')
+          .attr('x', centerX)
+          .style('font-size', '8px')
+          .style('font-weight', 'normal')
+          .attr('dy', '1.5em')
+          .text('(10)');
+
+        softmaxDetailAnnotation.append('text')
+          .attr('class', 'annotation-text')
           .attr('x', textX)
-          .attr('y', textY)
-          .attr('class', 'annotation-text softmax-detail-text')
-          .style('text-anchor', 'begin')
-          .style('dominant-baseline', 'baseline')
-          .text('Unscaled outputs in');
-        
-        logitText.append('tspan')
+          .attr('y', (svgPaddings.top + vSpaceAroundGap) / 2 + 3)
+          .style('text-anchor', 'start')
+          .text('Before')
+          .append('tspan')
           .attr('x', textX)
           .attr('dy', '1em')
-          .text('the output layer');
+          .text('normalization')
+
 
         drawArrow({
           group: softmaxDetailAnnotation,
-          sx: arrowSX,
-          sy: arrowSY,
-          tx: textX - 8,
-          ty: textY + 2,
+          tx: arrowTX,
+          ty: arrowTY,
+          sx: textX - 6,
+          sy: textY + 2,
           dr: 60,
-          hFlip: true
+          hFlip: false,
+          marker: 'marker-alt'
+        });
+
+        softmaxDetailAnnotation.append('text')
+          .attr('class', 'annotation-text')
+          .attr('x', nodeCoordinate[layerIndexDict['output']][0].x - 35)
+          .attr('y', (svgPaddings.top + vSpaceAroundGap) / 2 + 3)
+          .style('text-anchor', 'end')
+          .text('After')
+          .append('tspan')
+          .attr('x', nodeCoordinate[layerIndexDict['output']][0].x - 35)
+          .attr('dy', '1em')
+          .text('normalization')
+
+        drawArrow({
+          group: softmaxDetailAnnotation,
+          tx: nodeCoordinate[layerIndexDict['output']][0].x - 8,
+          ty: arrowTY,
+          sx: nodeCoordinate[layerIndexDict['output']][0].x - 27,
+          sy: textY + 2,
+          dr: 60,
+          hFlip: true,
+          marker: 'marker-alt'
         });
 
         // Add annotation for the logit circle
@@ -837,12 +884,12 @@ const softmaxClicked = (arg) => {
         
         drawArrow({
           group: hoverTextGroup,
-          sx: centerX + 15,
-          sy: textY,
-          tx: textX - 8,
-          ty: textY + 2,
+          tx: centerX + 15,
+          ty: textY,
+          sx: textX - 8,
+          sy: textY + 2,
           dr: 60,
-          hFlip: true
+          hFlip: false
         });
       }
     })
@@ -920,7 +967,8 @@ const softmaxClicked = (arg) => {
  */
 export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   // Show the output legend
-  svg.selectAll('.output-legend').classed('hidden', false);
+  svg.selectAll('.output-legend')
+    .classed('hidden', false);
 
   let pixelWidth = nodeLength / 2;
   let pixelHeight = 1.1;
@@ -984,7 +1032,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('class', 'overlay')
     .style('fill', 'url(#overlay-gradient-left)')
     .style('stroke', 'none')
-    .attr('width', leftX + svgPaddings.left - (leftGap * 2))
+    .attr('width', leftX + svgPaddings.left - (leftGap * 2) + 3)
     .attr('height', height + svgPaddings.top + svgPaddings.bottom)
     .attr('x', -svgPaddings.left)
     .attr('y', 0)
@@ -1382,6 +1430,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   // Draw the layer label
   let layerLabel = intermediateLayer.append('g')
     .attr('class', 'layer-label')
+    .classed('hidden', detailedMode)
     .attr('transform', () => {
       let x = leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
         pixelWidth) / 2;
@@ -1392,10 +1441,34 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   layerLabel.append('text')
     .style('dominant-baseline', 'middle')
     .style('opacity', 0.8)
+    .style('font-weight', 800)
     .text('flatten');
-   
-  layerLabel.clone('true')
-    .attr('class', 'layer-detailed-label hidden');
+
+  let detailedLabelText = intermediateLayer.append('g')
+    .attr('transform', 'translate(0, 0)')
+    .attr('class', 'layer-detailed-label')
+    .classed('hidden', !detailedMode)
+    .append('text')
+    .attr('x', leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
+      pixelWidth) / 2)
+    .attr('y',  (svgPaddings.top + vSpaceAroundGap) / 2 - 6)
+    .style('opacity', 0.7)
+    .style('dominant-baseline', 'middle')
+    .style('font-size', '12px')
+    .style('font-weight', '800')
+    .text('flatten');
+  
+  let dimension = cnn[layerIndexDict['max_pool_2']].length * 
+    cnn[layerIndexDict['max_pool_2']][0].output.length *
+    cnn[layerIndexDict['max_pool_2']][0].output[0].length;
+
+  detailedLabelText.append('tspan')
+    .attr('x', leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
+      pixelWidth) / 2)
+    .attr('dy', '1.5em')
+    .style('font-size', '8px')
+    .style('font-weight', 'normal')
+    .text(`(${dimension})`);
 
   // Add edges between nodes
   let edgeGroup = flattenLayerLeftPart.append('g')
@@ -1522,7 +1595,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     tx: intermediateX2 - 5,
     ty: arrowTY,
     dr: 30,
-    hFlip: i === 9
+    hFlip: i === 9,
+    marker: 'marker-alt'
   });
 
   // Add annotation for the bias

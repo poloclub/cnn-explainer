@@ -248,7 +248,8 @@ export const drawArrow = (arg) => {
     tx = arg.tx,
     ty = arg.ty,
     dr = arg.dr,
-    hFlip = arg.hFlip;
+    hFlip = arg.hFlip,
+    marker = arg.marker === undefined ? 'marker' : arg.marker;
 
   /* Cool graphics trick -> merge translate and scale together
   translateX = (1 - scaleX) * tx,
@@ -260,7 +261,7 @@ export const drawArrow = (arg) => {
 
   arrow.append('path')
     .attr("d", `M${sx},${sy}A${dr},${dr} 0 0,${hFlip ? 0 : 1} ${tx},${ty}`)
-    .attr('marker-end', 'url(#marker)')
+    .attr('marker-end', `url(#${marker})`)
     .style('stroke', 'gray')
     .style('fill', 'none');
 }
