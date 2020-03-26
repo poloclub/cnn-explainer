@@ -4,7 +4,7 @@ import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
   nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
   needRedrawStore, cnnLayerMinMaxStore, shouldIntermediateAnimateStore,
-  hoverInfoStore
+  hoverInfoStore, detailedModeStore
 } from '../stores.js';
 import {
   getExtent, getOutputKnot, getInputKnot, gappedColorScale
@@ -65,6 +65,9 @@ let shouldIntermediateAnimate = undefined;
 shouldIntermediateAnimateStore.subscribe(value => {
   shouldIntermediateAnimate = value;
 })
+
+let detailedMode = undefined;
+detailedModeStore.subscribe( value => {detailedMode = value;} )
 
 /**
  * Draw the intermediate layer activation heatmaps
@@ -711,29 +714,59 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
 
   // Draw the layer label
   intermediateLayer.append('g')
-    .attr('class', 'layer-intermediate-label')
+    .attr('class', 'layer-intermediate-label layer-label')
     .attr('transform', () => {
-      // let x = leftX + nodeLength + (nodeLength + 2 * plusSymbolRadius + 2 *
-      //   hSpaceAroundGap * gapRatio) / 2;
+      let x = intermediateX1 + nodeLength / 2;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+      return `translate(${x}, ${y})`;
+    })
+    .classed('hidden', detailedMode)
+    .append('text')
+    .style('text-anchor', 'middle')
+    .style('dominant-baseline', 'middle')
+    .style('font-weight', 800)
+    .style('opacity', '0.8')
+    .text('intermediate');
+  
+  intermediateLayer.append('g')
+    .attr('class', 'animation-control')
+    .attr('transform', () => {
       let x = intermediateX1 + nodeLength / 2;
       let y = (svgPaddings.top + vSpaceAroundGap) / 2;
       return `translate(${x}, ${y})`;
     })
     .append('text')
-    .style('text-anchor', 'middle')
-    .style('dominant-baseline', 'middle')
-    .style('opacity', '0.8')
-    .text('intermediate');
-  
-  intermediateLayer.select('.layer-intermediate-label')
-    // .select('text')
-    .append('text')
+    .style('font-size', '12px')
     .attr('class', 'animation-control-button')
     .style('dominant-baseline', 'middle')
     .attr('x', 50)
     .on('click', () => animationButtonClicked(curLayerIndex))
     .text('\uf050');
   //\uf01e
+
+  // Draw the detailed model layer label
+  intermediateLayer.append('g')
+    .attr('class', 'layer-intermediate-label layer-detailed-label')
+    .attr('transform', () => {
+      let x = intermediateX1 + nodeLength / 2;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 6;
+      return `translate(${x}, ${y})`;
+    })
+    .classed('hidden', !detailedMode)
+    .append('text')
+    .style('text-anchor', 'middle')
+    .style('dominant-baseline', 'middle')
+    .style('opacity', '0.7')
+    .style('font-weight', 800)
+    .text('intermediate')
+    .append('tspan')
+    .style('font-size', '8px')
+    .style('font-weight', 'normal')
+    .attr('x', 0)
+    .attr('dy', '1.5em')
+    .text(`(${cnn[curLayerIndex][0].output.length},
+      ${cnn[curLayerIndex][0].output[0].length},
+      ${cnn[curLayerIndex].length})`);
 
   // Draw the edges
   let linkGen = d3.linkHorizontal()

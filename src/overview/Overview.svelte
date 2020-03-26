@@ -1140,7 +1140,6 @@
     font-size: 12px;
     opacity: 0.8;
     text-anchor: middle;
-    transition: opacity 0ms ease-in-out;
   }
 
   :global(.colorLegend) {
