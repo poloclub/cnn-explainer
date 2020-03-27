@@ -144,9 +144,10 @@
     'output': 11
   }
   
-  let imageOptions = ['espresso_1.jpeg', 'panda_1.jpeg', 'car_1.jpeg',
-    'boat_1.jpeg', 'koala_1.jpeg', 'pizza_1.jpeg', 'pepper_1.jpeg', 'bug_1.jpeg'];
-  let selectedImage = imageOptions[0];
+  let imageOptions = ['boat_1.jpeg', 'bug_1.jpeg', 'pizza_1.jpeg', 'pepper_1.jpeg',
+    'bus_1.jpeg', 'koala_1.jpeg', 'espresso_1.jpeg', 'panda_1.jpeg', 'orange_1.jpeg',
+    'car_1.jpeg'];
+  let selectedImage = imageOptions[6];
 
   let nodeData;
   let selectedNodeIndex = -1;
@@ -1051,12 +1052,18 @@
     width: 100%;
   }
 
-  .left-control {
+  .right-control {
     display: flex;
   }
 
-  .right-control {
+  .left-control {
     display: flex;
+    align-items: center;
+  }
+
+  .control > .select > #level-select {
+    padding-left: 2em;
+    padding-right: 2em;
   }
 
   .cnn {
@@ -1079,7 +1086,7 @@
   }
 
   #detailed-button {
-    margin-left: 10px;
+    margin-right: 10px;
     color: #dbdbdb;
     transition: border-color 300ms ease-in-out, color 200ms ease-in-out;
   }
@@ -1094,7 +1101,6 @@
   }
 
   #hover-label {
-    margin-left: 10px;
     transition: opacity 300ms ease-in-out;
     text-overflow: ellipsis;
     pointer-events: none;
@@ -1105,8 +1111,8 @@
     height: 40px;
     border-radius: 4px;
     display: inline-block;
-    border: 2px solid black;
-    margin-left: 10px;
+    border: 2.5px solid #1E1E1E;
+    margin-right: 10px;
     cursor: pointer;
     pointer-events: all;
     transition: border 300ms ease-in-out;
@@ -1121,15 +1127,20 @@
   }
 
   .image-container.inactive {
-    border: 2px solid rgba(0, 0, 0, 0.05);
+    border: 2.5px solid rgb(220, 220, 220);
   }
 
   .image-container.inactive > img {
     opacity: 0.3;
   }
 
+
+  .image-container.inactive:hover > img {
+    opacity: 0.6;
+  }
+
   .image-container.inactive:hover {
-    border: 2px solid rgba(0, 0, 0, 0.3);
+    border: 2.5px solid #1E1E1E;
   }
 
   :global(canvas) {
@@ -1206,28 +1217,25 @@
   <div class="control-container">
 
     <div class="left-control">
-      <div class="control is-very-small has-icons-left">
-        <span class="icon is-left">
-          <i class="fas fa-palette"></i>
-        </span>
-
-        <div class="select">
-          <select bind:value={selectedScaleLevel}>
-            <option value="local">Unit level</option>
-            <option value="module">Module level</option>
-            <option value="global">Global level</option>
-          </select>
+      {#each imageOptions as image, i}
+        <div class="image-container"
+          on:click={imageOptionClicked}
+          class:inactive={selectedImage !== image}
+          data-imageName={image}>
+          <img src="/assets/img/{image}"
+            alt="image option"
+            data-imageName={image}/>
         </div>
-      </div>
+      {/each}
 
-      <button class="button is-very-small"
-        id="detailed-button"
-        class:is-activated={detailedMode}
-        on:click={detailedButtonClicked}>
-        <span class="icon">
-          <i class="fas fa-eye"></i>
-        </span>
-      </button>
+      <!-- The plus button -->
+        <div class="image-container"
+          class:inactive={selectedImage !== 'custom'}
+          data-imageName={'custom'}>
+          <img src="/assets/img/plus.svg"
+            alt="plus button"
+            data-imageName="custom"/>
+        </div>
 
       <button class="button is-very-small"
         id="hover-label"
@@ -1242,16 +1250,33 @@
     </div>
 
     <div class="right-control">
-      {#each imageOptions as image, i}
-        <div class="image-container"
-          on:click={imageOptionClicked}
-          class:inactive={selectedImage !== image}
-          data-imageName={image}>
-          <img src="/assets/img/{image}"
-            alt="image option"
-            data-imageName={image}/>
+
+      <button class="button is-very-small"
+        id="detailed-button"
+        class:is-activated={detailedMode}
+        on:click={detailedButtonClicked}>
+        <span class="icon">
+          <i class="fas fa-eye"></i>
+        </span>
+        <span id="hover-label-text">
+          Show detail
+        </span>
+      </button>
+
+      <div class="control is-very-small has-icons-left">
+        <span class="icon is-left">
+          <i class="fas fa-palette"></i>
+        </span>
+
+        <div class="select">
+          <select bind:value={selectedScaleLevel} id="level-select">
+            <option value="local">Unit</option>
+            <option value="module">Module</option>
+            <option value="global">Global</option>
+          </select>
         </div>
-      {/each}
+      </div>
+
     </div>
     
   </div>
