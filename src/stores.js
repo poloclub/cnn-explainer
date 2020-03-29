@@ -23,3 +23,5 @@ export const softmaxDetailViewStore = writable({});
 export const allowsSoftmaxAnimationStore = writable(false);
 
 export const hoverInfoStore = writable({});
+
+export const modalStore = writable({});

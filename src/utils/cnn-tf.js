@@ -379,10 +379,13 @@ const getInputImageArray = (imgFile, normalize=true) => {
           resizeCanvas.height);
         canvasImage = context.getImageData(0, 0, resizeCanvas.width,
           resizeCanvas.height);
+
+        // Clean up the temp canvas element
+        resizeCanvas.parentNode.removeChild(resizeCanvas);
       } else {
-        context.drawImage(inputImage, 0, 0,);
+        context.drawImage(inputImage, 0, 0);
         canvasImage = context.getImageData(0, 0, inputImage.width,
-        inputImage.height);
+          inputImage.height);
       }
       // Get image data and convert it to a 3D array
       let imageData = canvasImage.data;

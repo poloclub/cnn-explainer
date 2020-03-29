@@ -6,7 +6,7 @@
     nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
     needRedrawStore, cnnLayerMinMaxStore, detailedModeStore,
     shouldIntermediateAnimateStore, isInSoftmaxStore, softmaxDetailViewStore,
-    hoverInfoStore, allowsSoftmaxAnimationStore
+    hoverInfoStore, allowsSoftmaxAnimationStore, modalStore
   } from '../stores.js';
 
   // Svelte views
@@ -14,6 +14,7 @@
   import ActivationView from '../detail-view/Activationview.svelte';
   import PoolView from '../detail-view/Poolview.svelte';
   import SoftmaxView from '../detail-view/Softmaxview.svelte';
+  import Modal from './Modal.svelte'
   import Article from '../Article.svelte';
 
   // Overview functions
@@ -99,6 +100,9 @@
   softmaxDetailViewStore.subscribe( value => {
     softmaxDetailViewInfo = value;
   } )
+
+  let modalInfo = undefined;
+  modalStore.subscribe( value => {modalInfo = value;} )
 
   let hoverInfo = undefined;
   hoverInfoStore.subscribe( value => {hoverInfo = value;} )
@@ -1003,6 +1007,43 @@
     }
   }
 
+  const customImageClicked = () => {
+    // Show the modal to get user input
+    modalInfo.show = true;
+    modalInfo.preImage = selectedImage;
+    modalStore.set(modalInfo);
+
+    if (selectedImage !== 'custom') {
+      selectedImage = 'custom';
+    }
+
+  }
+
+  const handleModalCanceled = (event) => {
+    // User cancels the modal without a successful image, so we restore the
+    // previous selected image as input
+    selectedImage = event.detail.preImage;
+  }
+
+  const handleCustomImage = async (event) => {
+    // User gives a valid image URL
+    let url = event.detail.url;
+    console.log(url);
+
+    // Re-compute the CNN using the new input image
+    cnn = await constructCNN(url, model);
+
+    // Ignore the flatten layer for now
+    let flatten = cnn[cnn.length - 2];
+    cnn.splice(cnn.length - 2, 1);
+    cnn.flatten = flatten;
+    cnnStore.set(cnn);
+
+    // Update all scales used in the CNN view
+    updateCNNLayerRanges();
+    updateCNN();
+  }
+
   function handleExitFromDetiledConvView(event) {
     if (event.detail.text) {
       detailedViewNum = undefined;
@@ -1231,7 +1272,8 @@
       <!-- The plus button -->
         <div class="image-container"
           class:inactive={selectedImage !== 'custom'}
-          data-imageName={'custom'}>
+          data-imageName={'custom'}
+          on:click={customImageClicked}>
           <img src="/assets/img/plus.svg"
             alt="plus button"
             data-imageName="custom"/>
@@ -1320,3 +1362,6 @@
                  on:mouseLeave={softmaxDetailViewMouseLeaveHandler}/>
   {/if}
 </div>
+
+<Modal on:xClicked={handleModalCanceled}
+  on:urlTyped={handleCustomImage}/>
