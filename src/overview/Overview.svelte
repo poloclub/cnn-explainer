@@ -34,7 +34,7 @@
   } from './flatten-draw.js';
 
   import {
-    drawOutput, drawCNN, updateCNN, updateCNNLayerRanges
+    drawOutput, drawCNN, updateCNN, updateCNNLayerRanges, drawCustomImage
   } from './overview-draw.js';
 
 
@@ -157,6 +157,7 @@
   let selectedNodeIndex = -1;
   let isExitedFromDetailedView = true;
   let isExitedFromCollapse = true;
+  let customImageURL = null;
 
   // Helper functions
   const selectedScaleLevelChanged = () => {
@@ -1008,10 +1009,27 @@
   }
 
   const customImageClicked = () => {
-    // Show the modal to get user input
-    modalInfo.show = true;
-    modalInfo.preImage = selectedImage;
-    modalStore.set(modalInfo);
+
+    // Case 1: there is no custom image -> show the modal to get user input
+    if (customImageURL === null) {
+      modalInfo.show = true;
+      modalInfo.preImage = selectedImage;
+      modalStore.set(modalInfo);
+    }
+
+    // Case 2: there is an existing custom image, not the focus -> switch to this image
+    else if (selectedImage !== 'custom') {
+      let fakeEvent = {detail: {url: customImageURL}};
+      handleCustomImage(fakeEvent);
+    }
+
+    // Case 3: there is an existing custom image, and its the focus -> let user
+    // upload a new image
+    else {
+      modalInfo.show = true;
+      modalInfo.preImage = selectedImage;
+      modalStore.set(modalInfo);
+    }
 
     if (selectedImage !== 'custom') {
       selectedImage = 'custom';
@@ -1027,17 +1045,21 @@
 
   const handleCustomImage = async (event) => {
     // User gives a valid image URL
-    let url = event.detail.url;
-    console.log(url);
+    customImageURL = event.detail.url;
 
     // Re-compute the CNN using the new input image
-    cnn = await constructCNN(url, model);
+    cnn = await constructCNN(customImageURL, model);
 
     // Ignore the flatten layer for now
     let flatten = cnn[cnn.length - 2];
     cnn.splice(cnn.length - 2, 1);
     cnn.flatten = flatten;
     cnnStore.set(cnn);
+
+    // Update the UI
+    let customImageSlot = d3.select(overviewComponent)
+      .select('.custom-image').node();
+    drawCustomImage(customImageSlot, cnn[0]);
 
     // Update all scales used in the CNN view
     updateCNNLayerRanges();
@@ -1152,6 +1174,7 @@
     height: 40px;
     border-radius: 4px;
     display: inline-block;
+    position: relative;
     border: 2.5px solid #1E1E1E;
     margin-right: 10px;
     cursor: pointer;
@@ -1175,13 +1198,29 @@
     opacity: 0.3;
   }
 
-
   .image-container.inactive:hover > img {
     opacity: 0.6;
   }
 
+  .image-container.inactive > .edit-icon {
+    color: #BABABA;
+  }
+
+  .image-container.inactive:hover > .edit-icon {
+    color: #777777;
+  }
+
   .image-container.inactive:hover {
     border: 2.5px solid #1E1E1E;
+  }
+
+  .edit-icon {
+    position: absolute;
+    bottom: -6px;
+    right: -7px;
+    font-size: 7px;
+    color: #1E1E1E;
+    transition: color 300ms ease-in-out;
   }
 
   :global(canvas) {
@@ -1274,9 +1313,18 @@
           class:inactive={selectedImage !== 'custom'}
           data-imageName={'custom'}
           on:click={customImageClicked}>
-          <img src="/assets/img/plus.svg"
+
+          <img class="custom-image"
+            src="/assets/img/plus.svg"
             alt="plus button"
             data-imageName="custom"/>
+
+          <span class="fa-stack edit-icon"
+            class:hidden={customImageURL === null}>
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fas fa-pen fa-stack-1x fa-inverse"></i>
+          </span>
+
         </div>
 
       <button class="button is-very-small"

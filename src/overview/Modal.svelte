@@ -23,7 +23,6 @@
   modalStore.subscribe(value => {modalInfo = value});
 
   const errorCallback = () => {
-    console.log('error');
     // The URL is invalid, show an error message on the UI
     showLoading = false;
     errorInfo.show = true;
@@ -32,7 +31,6 @@
   }
 
   const loadCallback = () => {
-    console.log('load');
     // The URL is valid, but we are not sure if loading it to canvas would be
     // blocked by crossOrigin setting. Try it here before dispatch to parent.
 

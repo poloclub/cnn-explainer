@@ -135,6 +135,57 @@ const drawOutputScore = (d, i, g, scale) => {
     .attr('width', scale(d.output))
 }
 
+export const drawCustomImage = (image, inputLayer) => {
+
+  let imageWidth = image.width;
+  // Set up a second convas in order to resize image
+  let imageLength = inputLayer[0].output.length;
+  let bufferCanvas = document.createElement("canvas");
+  let bufferContext = bufferCanvas.getContext("2d");
+  bufferCanvas.width = imageLength;
+  bufferCanvas.height = imageLength;
+
+  // Fill image pixel array
+  let imageSingle = bufferContext.getImageData(0, 0, imageLength, imageLength);
+  let imageSingleArray = imageSingle.data;
+
+  for (let i = 0; i < imageSingleArray.length; i+=4) {
+    let pixeIndex = Math.floor(i / 4);
+    let row = Math.floor(pixeIndex / imageLength);
+    let column = pixeIndex % imageLength;
+
+    let red = inputLayer[0].output[row][column];
+    let green = inputLayer[1].output[row][column];
+    let blue = inputLayer[2].output[row][column];
+
+    imageSingleArray[i] = red * 255;
+    imageSingleArray[i + 1] = green * 255;
+    imageSingleArray[i + 2] = blue * 255;
+    imageSingleArray[i + 3] = 255;
+  }
+
+  // canvas.toDataURL() only exports image in 96 DPI, so we can hack it to have
+  // higher DPI by rescaling the image using canvas magic
+  let largeCanvas = document.createElement('canvas');
+  largeCanvas.width = imageWidth * 3;
+  largeCanvas.height = imageWidth * 3;
+  let largeCanvasContext = largeCanvas.getContext('2d');
+
+  // Use drawImage to resize the original pixel array, and put the new image
+  // (canvas) into corresponding canvas
+  bufferContext.putImageData(imageSingle, 0, 0);
+  largeCanvasContext.drawImage(bufferCanvas, 0, 0, imageLength, imageLength,
+    0, 0, imageWidth * 3, imageWidth * 3);
+  
+  let imageDataURL = largeCanvas.toDataURL();
+  // d3.select(image).attr('xlink:href', imageDataURL);
+  image.src = imageDataURL;
+
+  // Destory the buffer canvas
+  bufferCanvas.remove();
+  largeCanvas.remove();
+}
+
 /**
  * Create color gradient for the legend
  * @param {[object]} g d3 group
