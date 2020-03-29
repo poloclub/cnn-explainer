@@ -380,8 +380,6 @@ const getInputImageArray = (imgFile, normalize=true) => {
         canvasImage = context.getImageData(0, 0, resizeCanvas.width,
           resizeCanvas.height);
 
-        // Clean up the temp canvas element
-        resizeCanvas.parentNode.removeChild(resizeCanvas);
       } else {
         context.drawImage(inputImage, 0, 0);
         canvasImage = context.getImageData(0, 0, inputImage.width,

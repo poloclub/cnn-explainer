@@ -6,8 +6,10 @@
 
   let modalComponent;
   let valiImg;
-  let inputValue;
+  let inputValue = '';
   let showLoading = false;
+  let files;
+  let usingURL = true;
   let errorInfo = {
     show: false,
     error: ''
@@ -21,34 +23,36 @@
   modalStore.subscribe(value => {modalInfo = value});
 
   const errorCallback = () => {
+    console.log('error');
     // The URL is invalid, show an error message on the UI
     showLoading = false;
     errorInfo.show = true;
-    errorInfo.error = "We can't find the image at that URL.";
+    errorInfo.error = usingURL ? "We can't find the image at that URL." :
+      "Not a valid image file.";
   }
 
   const loadCallback = () => {
+    console.log('load');
     // The URL is valid, but we are not sure if loading it to canvas would be
     // blocked by crossOrigin setting. Try it here before dispatch to parent.
 
     // https://stackoverflow.com/questions/13674835/canvas-tainted-by-cross-origin-data
-    let testImage = document.getElementById('vali-image');
     let canvas = document.createElement("canvas");
     let context = canvas.getContext("2d");
 
-    canvas.width = testImage.width;
-    canvas.height = testImage.height;
+    canvas.width = valiImg.width;
+    canvas.height = valiImg.height;
 
-    context.drawImage(testImage, 0, 0);
+    context.drawImage(valiImg, 0, 0);
 
     try {
-      context.getImageData(0, 0, testImage.width, testImage.height);
+      context.getImageData(0, 0, valiImg.width, valiImg.height);
       // If the foreign image does support CORS -> use this image
       // dispatch to parent component to use the input image
       showLoading = false;
       modalInfo.show = false;
       modalStore.set(modalInfo);
-      dispatch('urlTyped', {url: inputValue});
+      dispatch('urlTyped', {url: valiImg.src});
       inputValue = null;
     } catch(err) {
       // If the foreign image does not support CORS -> use this image
@@ -56,6 +60,15 @@
       errorInfo.show = true;
       errorInfo.error = "No permission to load this image."
     }
+  }
+
+  const imageUpload = () => {
+    usingURL = false;
+    let reader = new FileReader();
+    reader.onload = (event) => {
+      valiImg.src = event.target.result;
+    }
+    reader.readAsDataURL(files[0]);
   }
 
   const crossClicked = () => {
@@ -119,8 +132,13 @@
 
   .or-label {
     font-size: 15px;
+    margin: 0 10px;
     padding: 0.5em 0;
-    color: #F22B61;
+  }
+
+  .field {
+    display: flex;
+    justify-content: space-between;
   }
 
 </style>
@@ -158,15 +176,24 @@
 
           <div class="or-label">or</div>
 
-          <button class="button">
-            <span class="icon">
-              <i class="fab fa-github"></i>
-            </span>
-            <span>Upload</span>
-          </button>
+          <div class="file">
+            <label class="file-label">
+              <input class="file-input" type="file" name="image"
+                accept=".png,.jpeg,.tiff,.jpg,.png"
+                on:change={imageUpload}
+                bind:files={files}>
+              <span class="file-cta small-font">
+                <span class="file-icon">
+                  <i class="fas fa-upload"></i>
+                </span>
+                <span class="file-label">
+                  Upload
+                </span>
+              </span>
+            </label>
+          </div>
+
         </div>
-
-
 
       </section>
 
