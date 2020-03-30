@@ -39,13 +39,37 @@
 	}
 
 	#logo-tagline {
-		font-size: 23px;
-		color: rgb(170, 170, 170);
+		font-size: 25px;
+		color: rgb(190, 190, 190);
 		font-family: 'Coffee and Tea';
+	}
+
+	.icons {
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+	}
+
+	.icon {
+		width: 30px;
+		height: 30px;
+		margin-left: 16px;
+	}
+
+	.icon a{
+		width: 100%;
+		height: 100%;
+	}
+
+	.icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 	}
 </style>
 
 <div id="header">
+
   <div id="logo">
     <div id="logo-text">
       CNN Explainer
@@ -54,4 +78,26 @@
       Learn Convolutional Neural Network (CNN) in your browser!
     </div>
   </div>
+
+	<div class="icons">
+	
+		<div class="icon">
+			<a target="_blank" href="https://www.google.com">
+				<img src="/assets/img/pdf.png" alt="pdf icon"/>
+			</a>
+		</div>
+
+		<div class="icon">
+			<a target="_blank" href="https://www.google.com">
+				<img src="/assets/img/youtube.png" alt="youtube icon"/>
+			</a>
+		</div>
+
+		<div class="icon">
+			<a target="_blank" href="https://www.google.com">
+				<img src="/assets/img/github.png" alt="github icon"/>
+			</a>
+		</div>
+
+	</div>
 </div>
