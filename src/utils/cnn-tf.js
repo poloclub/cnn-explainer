@@ -368,15 +368,27 @@ const getInputImageArray = (imgFile, normalize=true) => {
         let resizeCanvas = document.createElement('canvas'),
             resizeContext = resizeCanvas.getContext('2d');
         let smallerDimension = Math.min(inputImage.width, inputImage.height);
-        let resizeFactor = (networkInputSize + 1) / smallerDimension;
+        const resizeFactor = (networkInputSize + 1) / smallerDimension;
         resizeCanvas.width = inputImage.width * resizeFactor;
         resizeCanvas.height = inputImage.height * resizeFactor;
         resizeContext.drawImage(inputImage, 0, 0, resizeCanvas.width,
           resizeCanvas.height);
 
-        // Step 2 - Draw resized image on original canvas.
-        context.drawImage(resizeCanvas, 0, 0, resizeCanvas.width,
-          resizeCanvas.height);
+        // Step 2 - Flip non-square images horizontally and rotate them 90deg since
+        // non-square images are not stored upright.
+        if (inputImage.width != inputImage.height) {
+          context.translate(resizeCanvas.width, 0);
+          context.scale(-1, 1);
+          context.translate(resizeCanvas.width / 2, resizeCanvas.height / 2);
+          context.rotate(90 * Math.PI / 180);
+        }
+
+        // Step 3 - Draw resized image on original canvas.
+        if (inputImage.width != inputImage.height) {
+          context.drawImage(resizeCanvas, -resizeCanvas.width / 2, -resizeCanvas.height / 2);
+        } else {
+          context.drawImage(resizeCanvas, 0, 0);
+        }
         canvasImage = context.getImageData(0, 0, resizeCanvas.width,
           resizeCanvas.height);
 
