@@ -222,6 +222,7 @@
   }
 
   const intermediateNodeClicked = (d, i, g, selectedI, curLayerIndex) => {
+    d3.event.stopPropagation();
     isExitedFromCollapse = false;
     // Use this event to trigger the detailed view
     if (detailedViewNum === d.index) {
@@ -269,6 +270,10 @@
     }
   }
 
+  const emptySpaceClicked = (d, i, g) => {
+    console.log('empty space clicked');
+  }
+
   const prepareToEnterIntermediateView = (d, g, i, curLayerIndex) => {
     isInIntermediateView = true;
     // Hide all legends
@@ -295,6 +300,11 @@
       g#layer-label-${curLayerIndex},
       g#layer-detailed-label-${curLayerIndex}`)
       .style('font-weight', '800');
+    
+    // Register a handler on the svg element so user can click empty space to quit
+    // the intermediate view
+    d3.select('#cnn-svg')
+      .on('click', emptySpaceClicked);
   }
 
   const quitActPoolDetailView = () => {
@@ -655,6 +665,7 @@
   }
 
   const nodeClickHandler = (d, i, g) => {
+    d3.event.stopPropagation();
     let nodeIndex = d.index;
 
     // Record the current clicked node

@@ -717,7 +717,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .attr('class', 'layer-intermediate-label layer-label')
     .attr('transform', () => {
       let x = intermediateX1 + nodeLength / 2;
-      let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
       return `translate(${x}, ${y})`;
     })
     .classed('hidden', detailedMode)
@@ -732,7 +732,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .attr('class', 'animation-control')
     .attr('transform', () => {
       let x = intermediateX1 + nodeLength / 2;
-      let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
       return `translate(${x}, ${y})`;
     })
     .append('text')

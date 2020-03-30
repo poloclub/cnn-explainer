@@ -587,7 +587,7 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     .classed('hidden', detailedMode)
     .attr('transform', (d, i) => {
       let x = nodeCoordinate[i][0].x + nodeLength / 2;
-      let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
       return `translate(${x}, ${y})`;
     })
     .append('text')

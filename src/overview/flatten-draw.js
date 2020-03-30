@@ -574,7 +574,7 @@ const drawLogitLayer = (arg) => {
     .classed('hidden', detailedMode)
     .attr('transform', () => {
       let x = centerX;
-      let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
       return `translate(${x}, ${y})`;
     });
 
@@ -761,16 +761,9 @@ const softmaxClicked = (arg) => {
 
         // Add annotation for the logit layer label
         textX = centerX + 45;
-        textY = (svgPaddings.top + vSpaceAroundGap) / 2;
+        textY = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
         let arrowTX = centerX + 20;
-        let arrowTY = (svgPaddings.top + vSpaceAroundGap) / 2;
-
-        // if (selectedI === 0) {
-        //   textX = centerX + 40;
-        //   textY = (svgPaddings.top + vSpaceAroundGap) / 2 + 20;
-        //   arrowSX = centerX + 2;
-        //   arrowSY = (svgPaddings.top + vSpaceAroundGap) / 2 + 8;
-        // }
+        let arrowTY = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
 
         softmaxDetailAnnotation.append('g')
           .attr('class', 'layer-detailed-label')
@@ -1434,7 +1427,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('transform', () => {
       let x = leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
         pixelWidth) / 2;
-      let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
       return `translate(${x}, ${y})`;
     });
   

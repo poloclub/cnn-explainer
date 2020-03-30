@@ -19,16 +19,11 @@
 		align-items: center;
 		background: rgb(30, 30, 30);
     justify-content: space-between;
-		/*
-		background-image: url('/assets/img/chalkboard.jpg');
-		background-size: cover;
-		background-repeat: no-repeat;
-		*/
 	}
 
 	#logo {
 		display: flex;
-		align-items: baseline;
+		align-items: center;
 	}
 
 	#logo-text {
@@ -38,10 +33,11 @@
 		margin-right: 10px;
 	}
 
-	#logo-tagline {
-		font-size: 25px;
-		color: rgb(190, 190, 190);
-		font-family: 'Coffee and Tea';
+	#svg-logo-tagline {
+		font-size: 23px;
+		fill: rgb(255, 255, 255);
+		dominant-baseline: baseline;
+		font-family: 'Neucha';
 	}
 
 	.icons {
@@ -51,9 +47,9 @@
 	}
 
 	.icon {
-		width: 30px;
-		height: 30px;
-		margin-left: 16px;
+		width: 27px;
+		height: 27px;
+		margin-left: 15px;
 	}
 
 	.icon a{
@@ -74,9 +70,25 @@
     <div id="logo-text">
       CNN Explainer
     </div>
-    <div id="logo-tagline">
-      Learn Convolutional Neural Network (CNN) in your browser!
-    </div>
+
+		<svg width="500px" height="50px">
+			<defs>
+				<filter x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox" id="chalk-texture">
+					<feTurbulence type="fractalNoise" baseFrequency="2" numOctaves="5" stitchTiles="stitch" result="f1">
+					</feTurbulence>
+					<feColorMatrix type="matrix" values="0 0 0 0 0, 0 0 0 0 0, 0 0 0 0 0, 0 0 0 -1.5 1.5" result="f2">
+					</feColorMatrix>
+					<feComposite operator="in" in2="f2" in="SourceGraphic" result="f3">
+					</feComposite>
+				</filter>
+			</defs>
+
+			<g filter="url(#chalk-texture)" transform="translate(0, 35)">
+				<text id="svg-logo-tagline">
+					Learn Convolutional Neural Network (CNN) in your browser! 
+				</text>
+			</g>
+		</svg>
   </div>
 
 	<div class="icons">

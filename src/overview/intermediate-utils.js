@@ -76,7 +76,7 @@ export const moveLayerX = (arg) => {
     .duration(duration)
     .attr('transform', () => {
       let x = targetX + nodeLength / 2;
-      let y = (svgPaddings.top + vSpaceAroundGap) / 2;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
       return `translate(${x}, ${y})`;
     })
     .on('end', onEndFunc);
