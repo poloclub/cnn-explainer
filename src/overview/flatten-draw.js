@@ -628,6 +628,7 @@ const softmaxClicked = (arg) => {
 
   let duration = 600;
   let centerX = softmaxLeftMid - moveX * 4 / 5;
+  d3.event.stopPropagation();
 
   // Clean up the logit elemends before moving anything
   if (isInSoftmax) {

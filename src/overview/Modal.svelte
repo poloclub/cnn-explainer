@@ -149,7 +149,7 @@
     id="input-modal"
     class:is-active={modalInfo.show}>
 
-    <div class="modal-background"></div>
+    <div class="modal-background" on:click={crossClicked}></div>
 
     <div class="modal-card">
       <header class="modal-card-head">

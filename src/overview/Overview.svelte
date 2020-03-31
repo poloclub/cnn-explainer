@@ -270,8 +270,38 @@
     }
   }
 
-  const emptySpaceClicked = (d, i, g) => {
-    console.log('empty space clicked');
+  // The order of the if/else statements in this function is very critical
+  const emptySpaceClicked = () => {
+    console.log('empty');
+
+    // If detail view -> rewind to intermediate view
+    if (detailedViewNum !== undefined) {
+          // Setting this for testing purposes currently.
+      selectedNodeIndex = -1; 
+      // User clicks this node again -> rewind
+      svg.select(`rect#underneath-gateway-${detailedViewNum}`)
+        .style('opacity', 0);
+      detailedViewNum = undefined;
+    }
+
+    // If softmax view -> rewind to flatten layer view
+    else if (isInSoftmax) {
+      svg.select('.softmax-symbol')
+        .dispatch('click');
+    }
+
+    // If intermediate view -> rewind to overview
+    else if (isInIntermediateView) {
+      let curLayerIndex = layerIndexDict[selectedNode.layerName];
+      quitIntermediateView(curLayerIndex, selectedNode.domG, selectedNode.domI);
+      d3.select(selectedNode.domG[selectedNode.domI])
+        .dispatch('mouseleave');
+    }
+
+    // If pool/act detail view -> rewind to overview
+    else if (isInActPoolDetailView) {
+      quitActPoolDetailView();
+    }
   }
 
   const prepareToEnterIntermediateView = (d, g, i, curLayerIndex) => {
@@ -672,6 +702,8 @@
     selectedNode.layerName = d.layerName;
     selectedNode.index = d.index;
     selectedNode.data = d;
+    selectedNode.domI = i;
+    selectedNode.domG = g;
 
     // Record data for detailed view.
     if (d.type === 'conv' || d.type === 'relu' || d.type === 'pool') {
