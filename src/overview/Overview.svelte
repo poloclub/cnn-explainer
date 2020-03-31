@@ -272,8 +272,6 @@
 
   // The order of the if/else statements in this function is very critical
   const emptySpaceClicked = () => {
-    console.log('empty');
-
     // If detail view -> rewind to intermediate view
     if (detailedViewNum !== undefined) {
           // Setting this for testing purposes currently.

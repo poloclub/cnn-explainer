@@ -290,6 +290,10 @@ const startIntermediateAnimation = (kernelGroupInput, kernelGroupResult,
 }
 
 const animationButtonClicked = (curLayerIndex) => {
+  if (d3.event !== null) {
+    d3.event.stopPropagation();
+  }
+  
   let delay = 200;
   let tickTime1D = nodeLength / (kernelRectLength * 3);
   let stride = kernelRectLength * 3; 
@@ -328,7 +332,7 @@ const animationButtonClicked = (curLayerIndex) => {
 
     // Change button icon
     svg.select('.animation-control-button')
-      .text('\uf050');
+      .attr('xlink:href', '/assets/img/fast_forward.svg');
     
     isEndOfAnimation = false;
 
@@ -362,7 +366,7 @@ const animationButtonClicked = (curLayerIndex) => {
     
     // Change button icon
     svg.select('.animation-control-button')
-      .text('\uf01e');
+      .attr('xlink:href', '/assets/img/redo.svg');
     
     isEndOfAnimation = true;
   }
@@ -732,24 +736,24 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .attr('class', 'animation-control')
     .attr('transform', () => {
       let x = intermediateX1 + nodeLength / 2;
-      let y = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 4;
       return `translate(${x}, ${y})`;
     })
-    .append('text')
-    .style('font-size', '12px')
-    .attr('class', 'animation-control-button')
-    .style('dominant-baseline', 'middle')
-    .attr('x', 50)
     .on('click', () => animationButtonClicked(curLayerIndex))
-    .text('\uf050');
-  //\uf01e
+    .append('image')
+    .attr('class', 'animation-control-button')
+    .attr('xlink:href', '/assets/img/fast_forward.svg')
+    .attr('x', 50)
+    .attr('y', 0)
+    .attr('height', 13)
+    .attr('width', 13);
 
   // Draw the detailed model layer label
   intermediateLayer.append('g')
     .attr('class', 'layer-intermediate-label layer-detailed-label')
     .attr('transform', () => {
       let x = intermediateX1 + nodeLength / 2;
-      let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 6;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 5;
       return `translate(${x}, ${y})`;
     })
     .classed('hidden', !detailedMode)
