@@ -80,6 +80,7 @@
     // Validate the input URL
     showLoading = true;
     errorInfo.show = false;
+    valiImg.crossOrigin = "Anonymous";
     valiImg.src = inputValue;
   }
 

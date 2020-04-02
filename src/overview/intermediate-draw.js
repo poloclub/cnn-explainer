@@ -577,6 +577,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     // Sliding the kernel on the input channel and result channel at the same
     // time
     let kernelGroupInput = kernelGroup.clone(true)
+      .style('cursor', 'pointer')
       .classed('kernel-clone', true)
       .classed(`kernel-input-${ni}`, true);
 
@@ -584,13 +585,13 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .selectAll('rect.kernel')
       .style('opacity', 0.7);
 
-    kernelGroupInput.attr('transform',
-      `translate(${leftX}, ${n.y})`)
+    kernelGroupInput.attr('transform', `translate(${leftX}, ${n.y})`)
       .attr('data-tick', 0)
       .attr('data-origin-x', leftX)
       .attr('data-origin-y', n.y);
 
     let kernelGroupResult = kernelGroup.clone(true)
+      .style('cursor', 'pointer')
       .classed('kernel-clone', true)
       .classed(`kernel-result-${ni}`, true);
 

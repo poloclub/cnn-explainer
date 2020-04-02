@@ -310,6 +310,10 @@
     svg.selectAll('.input-legend').classed('hidden', true);
     svg.selectAll('.output-legend').classed('hidden', true);
 
+    // Hide the input annotation
+    svg.select('.input-annotation')
+      .classed('hidden', true);
+
     // Highlight the previous layer and this node
     svg.select(`g#cnn-layer-group-${curLayerIndex - 1}`)
       .selectAll('rect.bounding')
@@ -689,6 +693,10 @@
         // Show all edges on the last moving animation end
         svg.select('g.edge-group')
           .style('visibility', 'visible');
+
+        // Recover the input annotation
+        svg.select('.input-annotation')
+          .classed('hidden', false);
       }});
   }
 
@@ -1304,7 +1312,7 @@
   }
 
   :global(.bounding, .edge, .edge-group, foreignObject, .bounding-flatten,
-    .underneath-gateway) {
+    .underneath-gateway, .input-annotation) {
     transition: opacity 300ms ease-in-out;
   }
 

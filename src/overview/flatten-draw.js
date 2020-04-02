@@ -283,7 +283,8 @@ const drawLogitLayer = (arg) => {
     .style('pointer-events', 'all')
     .style('stroke', intermediateColor)
     .on('mouseover', () => logitCircleMouseOverHandler(selectedI))
-    .on('mouseleave', () => logitCircleMouseLeaveHandler(selectedI));
+    .on('mouseleave', () => logitCircleMouseLeaveHandler(selectedI))
+    .on('click', () => { d3.event.stopPropagation() });
   
   // Show the logit circle corresponding label
   let softmaxDetailAnnotation = svg.select('.intermediate-layer-annotation')
@@ -482,7 +483,8 @@ const drawLogitLayer = (arg) => {
       .style('stroke', intermediateColor)
       .style('cursor', 'crosshair')
       .on('mouseover', () => logitCircleMouseOverHandler(curI))
-      .on('mouseleave', () => logitCircleMouseLeaveHandler(curI));
+      .on('mouseleave', () => logitCircleMouseLeaveHandler(curI))
+      .on('click', () => { d3.event.stopPropagation() });
     
     // Show the element in the detailed view
     softmaxDetailViewInfo.startAnimation = {
@@ -1154,7 +1156,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
         .style('cursor', 'crosshair')
         .style('fill', colorScale((cnn.flatten[factoredF].output + range / 2) / range))
         .on('mouseover', () => flattenMouseOverHandler({index: factoredF}))
-        .on('mouseleave', () => flattenMouseLeaveHandler({index: factoredF}));
+        .on('mouseleave', () => flattenMouseLeaveHandler({index: factoredF}))
+        .on('click', () => { d3.event.stopPropagation() });
 
       // Flatten -> output
       linkData.push({
@@ -1207,7 +1210,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
         .style('cursor', 'crosshair')
         .style('opacity', 0)
         .on('mouseover', () => flattenMouseOverHandler({index: factoredF}))
-        .on('mouseleave', () => flattenMouseLeaveHandler({index: factoredF}));
+        .on('mouseleave', () => flattenMouseLeaveHandler({index: factoredF}))
+        .on('click', () => {d3.event.stopPropagation()});
     }) 
   }
   
@@ -1338,7 +1342,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     })
     .on('mouseleave', () => {
       hoverInfoStore.set( {show: false, text: `Bias: ${formater(d.bias)}`} );
-    });
+    })
+    .on('click', () => { d3.event.stopPropagation(); });
   
   // Link from bias to the plus symbol
   symbolGroup.append('path')
@@ -1488,7 +1493,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('cursor', 'crosshair')
     .style('pointer-events', 'all')
     .on('mouseover', flattenMouseOverHandler)
-    .on('mouseleave', flattenMouseLeaveHandler);
+    .on('mouseleave', flattenMouseLeaveHandler)
+    .on('click', () => { d3.event.stopPropagation() });
   
   // Add legend
   drawIntermediateLayerLegend({
