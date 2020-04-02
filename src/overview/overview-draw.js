@@ -650,10 +650,12 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     .style('text-anchor', 'middle');
   
   redChannel.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .style('fill', '#C95E67')
     .text('Red');
   
   redChannel.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .text(' channel');
 
   inputAnnotation.append('text')

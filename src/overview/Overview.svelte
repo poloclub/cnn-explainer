@@ -389,6 +389,7 @@
       .on('end', (d, i, g) => {
         svg.selectAll('g.intermediate-layer-overlay, g.intermediate-layer-annotation').remove();
         svg.selectAll('defs.overlay-gradient').remove();
+        svg.select('.input-annotation').classed('hidden', false);
       });
 
     // Turn the fade out nodes back
@@ -506,6 +507,10 @@
         return d.targetLayerIndex !== curLayerIndex;
       })
       .style('visibility', 'hidden');
+    
+    // Hide input annotaitons
+    svg.select('.input-annotation')
+      .classed('hidden', true);
 
     // Add overlay rects
     let leftX = nodeCoordinate[curLayerIndex - 1][i].x;
@@ -1216,6 +1221,7 @@
     transition: opacity 300ms ease-in-out;
     text-overflow: ellipsis;
     pointer-events: none;
+    margin-left: 5px;
   }
 
   .image-container {
