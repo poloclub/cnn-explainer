@@ -120,7 +120,7 @@
   // Wait to load
   let cnn = undefined;
 
-  let detailedViewAbsCoords = {
+  const detailedViewAbsCoords = {
     1 : [600, 270, 490, 290],
     2: [500, 270, 490, 290], // added
     3 : [700, 270, 490, 290],
@@ -133,7 +133,7 @@
     10 : [300, 270, 490, 290], // added
   }
 
-  let layerIndexDict = {
+  const layerIndexDict = {
     'input': 0,
     'conv_1_1': 1,
     'relu_1_1': 2,
@@ -147,7 +147,22 @@
     'max_pool_2': 10,
     'output': 11
   }
-  
+
+  const layerLegendDict = {
+    0: {local: 'input-legend', module: 'input-legend', global: 'input-legend'},
+    1: {local: 'local-legend-0-1', module: 'module-legend-0', global: 'global-legend'},
+    2: {local: 'local-legend-0-1', module: 'module-legend-0', global: 'global-legend'},
+    3: {local: 'local-legend-0-2', module: 'module-legend-0', global: 'global-legend'},
+    4: {local: 'local-legend-0-2', module: 'module-legend-0', global: 'global-legend'},
+    5: {local: 'local-legend-0-2', module: 'module-legend-0', global: 'global-legend'},
+    6: {local: 'local-legend-1-1', module: 'module-legend-1', global: 'global-legend'},
+    7: {local: 'local-legend-1-1', module: 'module-legend-1', global: 'global-legend'},
+    8: {local: 'local-legend-1-2', module: 'module-legend-1', global: 'global-legend'},
+    9: {local: 'local-legend-1-2', module: 'module-legend-1', global: 'global-legend'},
+    10: {local: 'local-legend-1-2', module: 'module-legend-1', global: 'global-legend'},
+    11: {local: 'output-legend', module: 'output-legend', global: 'output-legend'}
+  }
+
   let imageOptions = ['boat_1.jpeg', 'bug_1.jpeg', 'pizza_1.jpeg', 'pepper_1.jpeg',
     'bus_1.jpeg', 'koala_1.jpeg', 'espresso_1.jpeg', 'panda_1.jpeg', 'orange_1.jpeg',
     'car_1.jpeg'];
@@ -370,6 +385,12 @@
       })
       .style('visibility', null);
 
+    // Show legends if in detailed mode
+    svg.selectAll(`.${selectedScaleLevel}-legend`)
+      .classed('hidden', !detailedMode);
+    svg.selectAll('.input-legend').classed('hidden', !detailedMode);
+    svg.selectAll('.output-legend').classed('hidden', !detailedMode);
+
     // Also dehighlight the edge
     let edgeGroup = svg.select('g.cnn-group').select('g.edge-group');
     edgeGroup.selectAll(`path.edge-${layerIndex}-${nodeIndex}`)
@@ -512,9 +533,18 @@
     svg.select('.input-annotation')
       .classed('hidden', true);
 
+    // Hide legends
+    svg.selectAll(`.${selectedScaleLevel}-legend`)
+      .classed('hidden', true);
+    svg.selectAll('.input-legend').classed('hidden', true);
+    svg.selectAll('.output-legend').classed('hidden', true);
+    svg.select(`#${layerLegendDict[curLayerIndex][selectedScaleLevel]}`)
+      .classed('hidden', false);
+
     // Add overlay rects
     let leftX = nodeCoordinate[curLayerIndex - 1][i].x;
-    let rightStart = nodeCoordinate[curLayerIndex][i].x + nodeLength;
+    // +5 to cover the detailed mode long label
+    let rightStart = nodeCoordinate[curLayerIndex][i].x + nodeLength + 5;
 
     // Compute the left and right overlay rect width
     let rightWidth = width - rightStart - overlayRectOffset / 2;
@@ -543,12 +573,16 @@
       addOverlayGradient('overlay-gradient-right', stops);
     }
     
-    addOverlayRect('overlay-gradient-right', rightStart + overlayRectOffset / 2,
-      0, rightWidth, height + svgPaddings.top + svgPaddings.bottom);
+    addOverlayRect('overlay-gradient-right',
+      rightStart + overlayRectOffset / 2,
+      0, rightWidth, height + svgPaddings.top);
     
     addOverlayRect('overlay-gradient-left',
       nodeCoordinate[0][0].x - overlayRectOffset / 2,
-      0, leftWidth, height + svgPaddings.top + svgPaddings.bottom);
+      0, leftWidth, height + svgPaddings.top);
+
+    svg.selectAll('rect.overlay')
+      .on('click', emptySpaceClicked);
     
     // Add underneath rectangles
     let underGroup = svg.select('g.underneath');
