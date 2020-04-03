@@ -385,9 +385,12 @@ const drawLegends = (legends, legendHeight) => {
     .call(inputLegendAxis);
 
   inputLegend.append('rect')
-    .attr('width', nodeLength)
+    .attr('x', 0.3)
+    .attr('width', nodeLength - 0.3)
     .attr('height', legendHeight)
     .attr('transform', `rotate(180, ${nodeLength/2}, ${legendHeight/2})`)
+    .style('stroke', 'rgb(20, 20, 20)')
+    .style('stroke-width', 0.3)
     .style('fill', 'url(#inputGradient)');
 }
 
@@ -753,7 +756,8 @@ export const updateCNN = () => {
     let range = cnnLayerRanges.local[start];
 
     let moduleLegendScale = d3.scaleLinear()
-      .range([0, 5 * nodeLength + 4 * hSpaceAroundGap])
+      .range([0, 5 * nodeLength + 3 * hSpaceAroundGap +
+        1 * hSpaceAroundGap * gapRatio - 1.2])
       .domain([-range, range]);
 
     let moduleLegendAxis = d3.axisBottom()
@@ -769,7 +773,8 @@ export const updateCNN = () => {
   let range = cnnLayerRanges.global[start];
 
   let globalLegendScale = d3.scaleLinear()
-    .range([0, 10 * nodeLength + 9 * hSpaceAroundGap])
+    .range([0, 10 * nodeLength + 6 * hSpaceAroundGap +
+      3 * hSpaceAroundGap * gapRatio - 1.2])
     .domain([-range, range]);
 
   let globalLegendAxis = d3.axisBottom()
