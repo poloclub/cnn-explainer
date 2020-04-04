@@ -40,7 +40,6 @@
 
     canvas.width = valiImg.width;
     canvas.height = valiImg.height;
-
     context.drawImage(valiImg, 0, 0);
 
     try {

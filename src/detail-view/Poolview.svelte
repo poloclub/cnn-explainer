@@ -41,7 +41,16 @@
 <style>
   .control-pannel {
     display: flex;
-    justify-content: flex-end;
+    position: relative;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .buttons {
+    cursor: pointer;
+    position: absolute;
+    top: 0px;
+    right: 0px;
   }
 
   .play-button {
@@ -61,6 +70,13 @@
 
   .box {
     padding: 5px 15px 10px 15px;
+  }
+
+  .title-text {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: #4a4a4a;
+    margin-bottom: 5px;
   }
 </style>
 
@@ -85,14 +101,23 @@
     <div class="box">
 
       <div class="control-pannel">
-        <div class="play-button control-button" on:click={handleClickPause}>
-          {@html isPaused ?
-            '<i class="fas fa-play-circle play-icon"></i>' :
-            '<i class="fas fa-pause-circle"></i>'}
+
+        <div class="title-text">
+          Max Pooling
         </div>
-        <div class="delete-button control-button" on:click={handleClickX}>
-            <i class="fas control-icon fa-times-circle"></i>
+
+        <div class="buttons">
+          <div class="play-button control-button" on:click={handleClickPause}>
+            {@html isPaused ?
+              '<i class="fas fa-play-circle play-icon"></i>' :
+              '<i class="fas fa-pause-circle"></i>'}
+          </div>
+
+          <div class="delete-button control-button" on:click={handleClickX}>
+              <i class="fas control-icon fa-times-circle"></i>
+          </div>
         </div>
+
       </div>
 
       <div class="columns is-centered is-vcentered">

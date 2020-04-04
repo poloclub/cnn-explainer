@@ -94,12 +94,14 @@
   .column {
     padding: 5px 10px 10px 10px;
   }
+
 </style>
 
 <div class="column has-text-centered">
-  <header>
-    Input
-  </header>
+  <div class="header-text">
+    Input ({testImage.length}, {testImage[0].length})
+  </div>
+
   <Dataview on:message={handleMouseover} data={testImage} highlights={inputHighlights} outputLength={output.length}
       isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={dataRange} stride={stride}/>  
 </div>
@@ -115,9 +117,9 @@
   </span> 
 </div>
 <div class="column has-text-centered">
-  <header>
-    Output
-  </header>
+  <div class="header-text">
+    Output ({testOutput.length}, {testOutput[0].length})
+  </div>
   <Dataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights} isKernelMath={false} 
       outputLength={output.length} constraint={getVisualizationSizeConstraint(output.length)} dataRange={dataRange} stride={stride}/>
 </div>

@@ -79,9 +79,9 @@
 
 
 <div class="column has-text-centered">
-  <header>
-    Input
-  </header>
+  <div class="header-text">
+    Input ({image.length}, {image[0].length})
+  </div>
   <Dataview on:message={handleMouseover} data={gridImage} highlights={inputHighlights} outputLength={output.length}
       isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={dataRange} stride={1}/>  
 </div>
@@ -100,9 +100,9 @@
   </span> 
 </div>
 <div class="column has-text-centered">
-  <header>
-    Output
-  </header>
+  <div class="header-text">
+    Output ({output.length}, {output[0].length})
+  </div>
   <Dataview on:message={handleMouseover} data={gridOutput} highlights={outputHighlights} isKernelMath={false} 
       outputLength={output.length} constraint={getVisualizationSizeConstraint(output.length)} dataRange={dataRange} stride={1}/>
 </div>

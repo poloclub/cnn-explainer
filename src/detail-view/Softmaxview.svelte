@@ -230,10 +230,9 @@
 <div class="container" bind:this={softmaxViewComponent}>
   <div class="box">
 
-      <div class="delete-button control-button" on:click={handleClickX}>
-        <i class="fas control-icon fa-times-circle"></i>
-      </div>
-
+    <div class="delete-button control-button" on:click={handleClickX}>
+      <i class="fas control-icon fa-times-circle"></i>
+    </div>
 
     <div class="title-text">
       Softmax Score for <i>"{outputName}"</i>
