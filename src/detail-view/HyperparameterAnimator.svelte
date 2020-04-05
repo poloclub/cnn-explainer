@@ -84,16 +84,16 @@
 </style>
 
 <div class="column has-text-centered">
-  <header>
-    Input ({image.length}x{image.length})
-  </header>
+  <div class="header-text">
+    Input ({image.length}, {image.length})
+  </div>
   <HyperparameterDataview on:message={handleMouseover} data={testImage} highlights={inputHighlights}
       outputLength={output.length} stride={stride} padding={padding} isStrideValid={isStrideValid}/>
 </div>
 <div class="column has-text-centered">
-  <header>
-    Output ({output.length}x{output.length})
-  </header>
+  <div class="header-text">
+    Output ({output.length}, {output.length})
+  </div>
   <HyperparameterDataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights}
       outputLength={output.length} stride={stride} padding={padding} isOutput={true} isStrideValid={isStrideValid}/>
 </div>
