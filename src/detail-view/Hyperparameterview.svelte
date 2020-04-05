@@ -8,6 +8,7 @@
   let stride = 1;
   const dilation = 1;
   let isPaused = false;
+  let isStrideValid = true;
   $: inputSizeWithPadding = inputSize + 2 * padding;
 
   function generateSquareArray(arrayDim) {
@@ -36,7 +37,6 @@
   $: input = generateSquareArray(inputSize + padding * 2);
   $: kernel = generateSquareArray(kernelSize);
   let outputFinal = singleConv(input, kernel, stride);
-  let strideAfterErrorPrevention = stride;
   $: if (stride > 0) {
     const stepSize = (inputSizeWithPadding - kernelSize) / stride + 1;
     let strideNumberInput = document.getElementById("strideNumber");
@@ -45,9 +45,10 @@
       if (strideNumberInput != null) {
         strideNumberInput.disabled = false;
       }
-      strideAfterErrorPrevention = stride;
+      isStrideValid = true;
     } else {
       strideNumberInput.disabled = true;
+      isStrideValid = false;
       console.log("Cannot handle stride of " + stride);
     }
   }
@@ -118,12 +119,12 @@
         <input type=range bind:value={kernelSize} min={padding + 1} max={inputSize}>
         <br>
         <label class="label">Stride:</label>
-        <input type=number id="strideNumber" bind:value={stride} min=1 max={inputSizeWithPadding - kernelSize}>
-        <input type=range bind:value={stride} min=1 max={inputSizeWithPadding - kernelSize}>
+        <input type=number id="strideNumber" bind:value={stride} min=1 max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
+        <input type=range bind:value={stride} min=1 max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
       </div>
       <HyperparameterAnimator on:message={handlePauseFromInteraction} 
-        kernel={kernel} image={input} output={outputFinal} 
-        stride={strideAfterErrorPrevention} dilation={dilation} padding={padding} isPaused={isPaused}/>
+        kernel={kernel} image={input} output={outputFinal} isStrideValid={isStrideValid}
+        stride={stride} dilation={dilation} padding={padding} isPaused={isPaused}/>
     </div>
 
   </div>

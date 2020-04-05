@@ -15,6 +15,7 @@
   export let output;
   export let isPaused;
   export let padding;
+  export let isStrideValid;
 
   const dispatch = createEventDispatcher();
 
@@ -42,6 +43,7 @@
       const animatedW = flat_animated % output.length;
       outputHighlights[animatedH * output.length + animatedW] = true;
       inputHighlights = compute_input_multiplies_with_weight(animatedH, animatedW, image.length, kernel.length, outputMappings, kernel.length)
+      if (!isStrideValid) return;
       counter++;
     }, 1000)
   }
@@ -86,12 +88,12 @@
     Input ({image.length}x{image.length})
   </header>
   <HyperparameterDataview on:message={handleMouseover} data={testImage} highlights={inputHighlights}
-      outputLength={output.length} stride={stride} padding={padding}/>
+      outputLength={output.length} stride={stride} padding={padding} isStrideValid={isStrideValid}/>
 </div>
 <div class="column has-text-centered">
   <header>
     Output ({output.length}x{output.length})
   </header>
   <HyperparameterDataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights}
-      outputLength={output.length} stride={stride} padding={padding} isOutput={true}/>
+      outputLength={output.length} stride={stride} padding={padding} isOutput={true} isStrideValid={isStrideValid}/>
 </div>

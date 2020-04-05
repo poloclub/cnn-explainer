@@ -5,6 +5,7 @@
   export let stride;
   export let padding;
   export let isOutput = false;
+  export let isStrideValid;
 
   import { onMount } from 'svelte';
   import { afterUpdate } from 'svelte';
@@ -49,6 +50,7 @@
         return standardCellColor;
       })
       .on('mouseover', function(d) {
+        if (!isStrideValid) return;
         if (data.length != outputLength) {
           dispatch('message', {
             hoverH: Math.min(Math.floor(d.row / stride), outputLength - 1),
@@ -74,7 +76,7 @@
       grid.selectAll(".square")
         .style("fill", function(d) {
           if (highlights.length && highlights[d.row * data.length + d.col]) {
-            return "red";
+            return (isStrideValid) ? "green" : "red";
           } else {
             // Colors cells appropriately that represent padding.
             if (!isOutput && (d.row < padding || d.row > data.length - padding - 1
