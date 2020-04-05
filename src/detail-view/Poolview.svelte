@@ -14,6 +14,9 @@
   const dilation = 1;
   var isPaused = false;
   var outputFinal = singleMaxPooling(input);
+  // let dragging = false;
+  // let dragInfo = {x1: 0, x2: 0, y1: 0, y2: 0};
+  // let detailView = d3.select('#detailview').node();
   $: if (stride > 0) {
     try { 
       outputFinal = singleMaxPooling(input);
@@ -36,6 +39,33 @@
       text: true
     });
   }
+
+  // Test dragging detail view, need more work
+  // const detailViewDragStart = (e) => {
+  //   // Record the starting pos
+  //   dragInfo.x1 = 0;
+  //   dragInfo.y1 = 0;
+  //   dragInfo.x2 = e.clientX;
+  //   dragInfo.y2 = e.clientY;
+  
+  //   dragging = true;
+  // }
+
+  // const detailViewDragEnd = (e) => {
+  //   dragging = false;
+  // }
+
+  // const detailViewDragMove = (e) => {
+  //   // Add up move to the starting pos
+  //   dragInfo.x1 = dragInfo.x2 - e.clientX;
+  //   dragInfo.y1 = dragInfo.y2 - e.clientY;
+  //   dragInfo.x2 = e.clientX;
+  //   dragInfo.y2 = e.clientY;
+
+  //   // Move detail view
+  //   detailView.style.top = (detailView.offsetTop - dragInfo.y1) + 'px';
+  //   detailView.style.left = (detailView.offsetLeft - dragInfo.x1) + 'px';
+  // }
 </script>
 
 <style>
@@ -101,7 +131,7 @@
     <div class="box">
 
       <div class="control-pannel">
-
+      
         <div class="title-text">
           Max Pooling
         </div>
