@@ -44,10 +44,12 @@
       outputFinal = singleConv(input, kernel, stride);
       if (strideNumberInput != null) {
         strideNumberInput.disabled = false;
+        strideNumberInput.className = strideNumberInput.className.replace("is-danger", "");
       }
       isStrideValid = true;
     } else {
       strideNumberInput.disabled = true;
+      strideNumberInput.className += " is-danger";
       isStrideValid = false;
       console.log("Cannot handle stride of " + stride);
     }
@@ -83,6 +85,10 @@
     align-items: flex-end;
   }
 
+  .field {
+    padding-top: 5px;
+  }
+
   label {
     display: inline-block;
     width: 105px;
@@ -90,7 +96,7 @@
   } 
 
   input[type=number] {
-    width: 35px;
+    width: 60px;
   }
 </style>
 
@@ -106,21 +112,42 @@
 
     <div class="columns is-centered is-vcentered">
       <div class="column has-text-centered">
-        <label class="label">Input Size:</label>
-        <input type=number bind:value={inputSize} min={kernelSize} max={7}>
-        <input type=range bind:value={inputSize} min={kernelSize} max={7}>
-        <br>
-        <label class="label">Padding:</label>
-        <input type=number bind:value={padding} min={0} max={kernelSize - 1}>
-        <input type=range bind:value={padding} min={0} max={kernelSize - 1}>
-        <br>
-        <label class="label">Kernel Size:</label>
-        <input type=number bind:value={kernelSize} min={padding + 1} max={inputSize}>
-        <input type=range bind:value={kernelSize} min={padding + 1} max={inputSize}>
-        <br>
-        <label class="label">Stride:</label>
-        <input type=number id="strideNumber" bind:value={stride} min=1 max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
-        <input type=range bind:value={stride} min=1 max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
+        <div class="field is-horizontal">
+          <div class="field-label is-normal">
+            <label class="label">Input Size:</label>
+          </div>
+          <input class="input" type="number" bind:value={inputSize}
+            min={kernelSize} max={7}>
+        </div>
+        <input class= "input" type="range" bind:value={inputSize}
+          min={kernelSize} max={7}>
+        <div class="field is-horizontal">
+          <div class="field-label is-normal">
+            <label class="label">Padding:</label>
+          </div>
+          <input class="input" type="number" bind:value={padding} min={0}
+            max={kernelSize - 1}>
+        </div>
+        <input class="input" type="range" bind:value={padding} min={0}
+          max={kernelSize - 1}>
+        <div class="field is-horizontal">
+          <div class="field-label is-normal">
+            <label class="label">Kernel Size:</label>
+          </div>
+          <input class="input" type="number" bind:value={kernelSize} min={padding + 1}
+            max={inputSizeWithPadding}>
+        </div>
+        <input class="input" type="range" bind:value={kernelSize} min={padding + 1}
+          max={inputSizeWithPadding}>
+        <div class="field is-horizontal">
+          <div class="field-label is-normal">
+            <label class="label">Stride:</label>
+          </div>
+          <input class="input" type=number id="strideNumber" bind:value={stride} min=1
+            max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
+        </div>
+        <input class="input" type="range" bind:value={stride} min=1
+          max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
       </div>
       <HyperparameterAnimator on:message={handlePauseFromInteraction} 
         kernel={kernel} image={input} output={outputFinal} isStrideValid={isStrideValid}
