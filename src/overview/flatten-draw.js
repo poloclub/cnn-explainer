@@ -703,6 +703,15 @@ const softmaxClicked = (arg) => {
     .style('opacity', isInSoftmax ? 1 : 0);
 
   softmaxAnnotation.select('.annotation-text')
+    .style('cursor', 'help')
+    .style('pointer-events', 'all')
+    .on('click', () => {
+      d3.event.stopPropagation();
+      // Scroll to the article element
+      document.querySelector(`#article-softmax`).scrollIntoView({ 
+        behavior: 'smooth' 
+      });
+    })
     .transition('softmax')
     .duration(duration)
     .style('opacity', isInSoftmax ? 1 : 0)
@@ -1435,6 +1444,14 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
         pixelWidth) / 2;
       let y = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
       return `translate(${x}, ${y})`;
+    })
+    .style('cursor', 'help')
+    .on('click', () => {
+      d3.event.stopPropagation();
+      // Scroll to the article element
+      document.querySelector(`#article-flatten`).scrollIntoView({ 
+        behavior: 'smooth' 
+      });
     });
   
   layerLabel.append('text')
@@ -1447,6 +1464,14 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('transform', 'translate(0, 0)')
     .attr('class', 'layer-detailed-label')
     .classed('hidden', !detailedMode)
+    .style('cursor', 'help')
+    .on('click', () => {
+      d3.event.stopPropagation();
+      // Scroll to the article element
+      document.querySelector(`#article-flatten`).scrollIntoView({ 
+        behavior: 'smooth' 
+      });
+    })
     .append('text')
     .attr('x', leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
       pixelWidth) / 2)

@@ -597,7 +597,7 @@
     }
     
     addOverlayRect('overlay-gradient-right',
-      rightStart + overlayRectOffset / 2,
+      rightStart + overlayRectOffset / 2 + 5,
       0, rightWidth, height + svgPaddings.top);
     
     addOverlayRect('overlay-gradient-left',
