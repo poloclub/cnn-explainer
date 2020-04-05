@@ -48,8 +48,10 @@
       }
       isStrideValid = true;
     } else {
-      strideNumberInput.disabled = true;
-      strideNumberInput.className += " is-danger";
+      if (strideNumberInput.disabled != true) {
+        strideNumberInput.disabled = true;
+        strideNumberInput.className += " is-danger";
+      }
       isStrideValid = false;
       console.log("Cannot handle stride of " + stride);
     }
