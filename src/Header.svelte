@@ -93,19 +93,19 @@
 
 	<div class="icons">
 	
-		<div class="icon">
+		<div class="icon" title="Research paper">
 			<a target="_blank" href="https://www.google.com">
 				<img src="/assets/img/pdf.png" alt="pdf icon"/>
 			</a>
 		</div>
 
-		<div class="icon">
+		<div class="icon" title="Demo video">
 			<a target="_blank" href="https://www.google.com">
 				<img src="/assets/img/youtube.png" alt="youtube icon"/>
 			</a>
 		</div>
 
-		<div class="icon">
+		<div class="icon" title="Open-source code">
 			<a target="_blank" href="https://www.google.com">
 				<img src="/assets/img/github.png" alt="github icon"/>
 			</a>

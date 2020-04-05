@@ -568,6 +568,21 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
       let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 6;
       return `translate(${x}, ${y})`;
     })
+    .style('cursor', d => d.name.includes('output') ? 'default' : 'help')
+    .on('click', (d) => {
+      let target = '';
+      if (d.name.includes('conv')) { target = 'convolution' }
+      if (d.name.includes('relu')) { target = 'relu' }
+      if (d.name.includes('max_pool')) { target = 'pooling'}
+      if (d.name.includes('input')) { target = 'input'}
+
+      // Scroll to a article element
+      if (!d.name.includes('output')) {
+        document.querySelector(`#article-${target}`).scrollIntoView({ 
+          behavior: 'smooth' 
+        });
+      }
+    })
     .append('text')
     .style('opacity', 0.7)
     .style('dominant-baseline', 'middle')
@@ -592,6 +607,21 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
       let x = nodeCoordinate[i][0].x + nodeLength / 2;
       let y = (svgPaddings.top + vSpaceAroundGap) / 2 + 5;
       return `translate(${x}, ${y})`;
+    })
+    .style('cursor', d => d.name.includes('output') ? 'default' : 'help')
+    .on('click', (d) => {
+      let target = '';
+      if (d.name.includes('conv')) { target = 'convolution' }
+      if (d.name.includes('relu')) { target = 'relu' }
+      if (d.name.includes('max_pool')) { target = 'pooling'}
+      if (d.name.includes('input')) { target = 'input'}
+
+      // Scroll to a article element
+      if (!d.name.includes('output')) {
+        document.querySelector(`#article-${target}`).scrollIntoView({ 
+          behavior: 'smooth' 
+        });
+      }
     })
     .append('text')
     .style('dominant-baseline', 'middle')

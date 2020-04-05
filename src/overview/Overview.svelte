@@ -116,6 +116,7 @@
   let actPoolDetailViewNodeIndex = -1;
   let actPoolDetailViewLayerIndex = -1;
   let detailedViewNum = undefined;
+  let disableControl = false;
 
   // Wait to load
   let cnn = undefined;
@@ -163,10 +164,19 @@
     11: {local: 'output-legend', module: 'output-legend', global: 'output-legend'}
   }
 
-  let imageOptions = ['boat_1.jpeg', 'bug_1.jpeg', 'pizza_1.jpeg', 'pepper_1.jpeg',
-    'bus_1.jpeg', 'koala_1.jpeg', 'espresso_1.jpeg', 'panda_1.jpeg', 'orange_1.jpeg',
-    'car_1.jpeg'];
-  let selectedImage = imageOptions[6];
+  let imageOptions = [
+    {file: 'boat_1.jpeg', class: 'lifeboat'},
+    {file: 'bug_1.jpeg', class: 'ladybug'},
+    {file: 'pizza_1.jpeg', class: 'pizza'},
+    {file: 'pepper_1.jpeg', class: 'bell pepper'},
+    {file: 'bus_1.jpeg', class: 'bus'},
+    {file: 'koala_1.jpeg', class: 'koala'},
+    {file: 'espresso_1.jpeg', class: 'espresso'},
+    {file: 'panda_1.jpeg', class: 'red panda'},
+    {file: 'orange_1.jpeg', class: 'orange'},
+    {file: 'car_1.jpeg', class: 'sport car'}
+  ];
+  let selectedImage = imageOptions[6].file;
 
   let nodeData;
   let selectedNodeIndex = -1;
@@ -338,6 +348,13 @@
       .select('rect.bounding')
       .style('stroke-width', 2);
     
+    // Disable control panel UI
+    // d3.select('#level-select').property('disabled', true);
+    // d3.selectAll('.image-container')
+    //   .style('cursor', 'not-allowed')
+    //   .on('mouseclick', () => {});
+    disableControl = true;
+    
     // Allow infinite animation loop
     shouldIntermediateAnimateStore.set(true);
 
@@ -384,6 +401,9 @@
         return d.targetLayerIndex !== actPoolDetailViewLayerIndex;
       })
       .style('visibility', null);
+    
+    // Recover control UI
+    disableControl = false;
 
     // Show legends if in detailed mode
     svg.selectAll(`.${selectedScaleLevel}-legend`)
@@ -529,6 +549,9 @@
       })
       .style('visibility', 'hidden');
     
+    // Disable UI
+    disableControl = true;
+    
     // Hide input annotaitons
     svg.select('.input-annotation')
       .classed('hidden', true);
@@ -574,7 +597,7 @@
     }
     
     addOverlayRect('overlay-gradient-right',
-      rightStart + overlayRectOffset / 2,
+      rightStart + overlayRectOffset / 2 + 5,
       0, rightWidth, height + svgPaddings.top);
     
     addOverlayRect('overlay-gradient-left',
@@ -637,11 +660,14 @@
     isInSoftmaxStore.set(false);
     isInIntermediateView = false;
 
-    // Hide the legend
+    // Show the legend
     svg.selectAll(`.${selectedScaleLevel}-legend`)
       .classed('hidden', !detailedMode);
     svg.selectAll('.input-legend').classed('hidden', !detailedMode);
     svg.selectAll('.output-legend').classed('hidden', !detailedMode);
+
+    // Recover control panel UI
+    disableControl = false;
 
     // Recover the input layer node's event
     for (let n = 0; n < cnn[curLayerIndex - 1].length; n++) {
@@ -1181,6 +1207,7 @@
     softmaxDetailViewInfo.show = false;
     softmaxDetailViewStore.set(softmaxDetailViewInfo);
   }
+
 </script>
 
 <style>
@@ -1303,6 +1330,11 @@
     border: 2.5px solid #1E1E1E;
   }
 
+  :global(.image-container.disabled) {
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+
   .edit-icon {
     position: absolute;
     bottom: -6px;
@@ -1389,23 +1421,27 @@
       {#each imageOptions as image, i}
         <div class="image-container"
           on:click={imageOptionClicked}
-          class:inactive={selectedImage !== image}
-          data-imageName={image}>
-          <img src="/assets/img/{image}"
+          class:inactive={selectedImage !== image.file}
+          class:disabled={disableControl}
+          data-imageName={image.file}>
+          <img src="/assets/img/{image.file}"
             alt="image option"
-            data-imageName={image}/>
+            title="{image.class}"
+            data-imageName={image.file}/>
         </div>
       {/each}
 
       <!-- The plus button -->
         <div class="image-container"
           class:inactive={selectedImage !== 'custom'}
+          class:disabled={disableControl}
           data-imageName={'custom'}
           on:click={customImageClicked}>
 
           <img class="custom-image"
             src="/assets/img/plus.svg"
             alt="plus button"
+            title="Add new input image"
             data-imageName="custom"/>
 
           <span class="fa-stack edit-icon"
@@ -1416,10 +1452,10 @@
 
         </div>
 
-      <button class="button is-very-small"
+      <button class="button is-very-small is-link is-light"
         id="hover-label"
         style="opacity:{hoverInfo.show ? 1 : 0}">
-        <span class="icon" style="color:#bbb; margin-right: 5px;">
+        <span class="icon" style="margin-right: 5px;">
           <i class="fas fa-crosshairs "></i>
         </span>
         <span id="hover-label-text">
@@ -1432,6 +1468,7 @@
 
       <button class="button is-very-small"
         id="detailed-button"
+        disabled={disableControl}
         class:is-activated={detailedMode}
         on:click={detailedButtonClicked}>
         <span class="icon">
@@ -1442,13 +1479,15 @@
         </span>
       </button>
 
-      <div class="control is-very-small has-icons-left">
+      <div class="control is-very-small has-icons-left"
+        title="Change color scale range">
         <span class="icon is-left">
           <i class="fas fa-palette"></i>
         </span>
 
         <div class="select">
-          <select bind:value={selectedScaleLevel} id="level-select">
+          <select bind:value={selectedScaleLevel} id="level-select"
+            disabled={disableControl}>
             <option value="local">Unit</option>
             <option value="module">Module</option>
             <option value="global">Global</option>
