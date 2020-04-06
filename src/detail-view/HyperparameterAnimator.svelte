@@ -32,6 +32,10 @@
   // lots of replication between mouseover and start-conv. TODO: fix this.
   function startConvolution(stride) {
     counter = 0;
+    isPaused = false;
+    dispatch('message', {
+      text: isPaused
+    });
     let outputMappings = generateOutputMappings(stride, output, kernel.length, image.length, dilation);
     if (stride <= 0) return;
     if (interval) clearInterval(interval);
