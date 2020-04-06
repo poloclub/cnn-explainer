@@ -36,14 +36,13 @@
     if (stride <= 0) return;
     if (interval) clearInterval(interval);
     interval = setInterval(() => {
-      if (isPaused) return;
+      if (isPaused || !isStrideValid) return;
       const flat_animated = counter % (output.length * output.length);
       outputHighlights = array1d(output.length * output.length, (i) => false);
       const animatedH = Math.floor(flat_animated / output.length);
       const animatedW = flat_animated % output.length;
       outputHighlights[animatedH * output.length + animatedW] = true;
       inputHighlights = compute_input_multiplies_with_weight(animatedH, animatedW, image.length, kernel.length, outputMappings, kernel.length)
-      if (!isStrideValid) return;
       counter++;
     }, 1000)
   }
