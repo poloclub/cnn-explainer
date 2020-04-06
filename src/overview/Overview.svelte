@@ -121,17 +121,17 @@
   // Wait to load
   let cnn = undefined;
 
-  const detailedViewAbsCoords = {
+  let detailedViewAbsCoords = {
     1 : [600, 270, 490, 290],
-    2: [500, 270, 490, 290], // added
+    2: [500, 270, 490, 290],
     3 : [700, 270, 490, 290],
-    4: [600, 270, 490, 290], // added
-    5: [650, 270, 490, 290], // added 
+    4: [600, 270, 490, 290],
+    5: [650, 270, 490, 290],
     6 : [775, 270, 490, 290],
-    7 : [100, 270, 490, 290], // added
+    7 : [100, 270, 490, 290],
     8 : [60, 270, 490, 290],
-    9 : [200, 270, 490, 290], // added
-    10 : [300, 270, 490, 290], // added
+    9 : [200, 270, 490, 290],
+    10 : [300, 270, 490, 290],
   }
 
   const layerIndexDict = {
@@ -282,6 +282,26 @@
           .style('opacity', 1);
       }
       
+      // Dynamically position the detail view
+      // let wholeSvg = d3.select('#cnn-svg');
+      // let svgYMid = +wholeSvg.style('height').replace('px', '') / 2;
+      // let svgWidth = +wholeSvg.style('width').replace('px', '');
+      // let detailViewTop = 100 + svgYMid - 220 / 2;
+
+      // let posX = 0;
+      // if (curLayerIndex > 5) {
+      //   posX = (svgWidth - rightX - nodeLength) / 2;
+      //   posX = rightX + nodeLength + posX - 492 / 2;
+      // } else {
+      //   posX = (svgWidth - nodeCoordinate[curLayerIndex][0].x - nodeLength) / 2;
+      //   posX = nodeCoordinate[curLayerIndex][0].x + nodeLength + posX - 492 / 2;
+      // }
+
+      // const detailview = document.getElementById('detailview');
+      // detailview.style.top = `${detailViewTop}px`;
+      // detailview.style.left = `${rightX}px`;
+      // detailview.style.position = 'absolute';
+
       const detailview = document.getElementById('detailview');
       detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
       detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
@@ -536,9 +556,25 @@
     actPoolDetailViewNodeIndex = i;
     actPoolDetailViewLayerIndex = curLayerIndex;
 
+    // Dynamically position the detail view
+    let wholeSvg = d3.select('#cnn-svg');
+    let svgYMid = +wholeSvg.style('height').replace('px', '') / 2;
+    let svgWidth = +wholeSvg.style('width').replace('px', '');
+    let detailViewTop = 100 + svgYMid - 220 / 2;
+
+    let posX = 0;
+    if (curLayerIndex > 5) {
+      posX = nodeCoordinate[curLayerIndex - 1][0].x + 50;
+      posX = posX / 2 - 500 / 2;
+    } else {
+      posX = (svgWidth - nodeCoordinate[curLayerIndex][0].x - nodeLength) / 2;
+      posX = nodeCoordinate[curLayerIndex][0].x + nodeLength + posX - 500 / 2;
+
+    }
+
     const detailview = document.getElementById('detailview');
-    detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
-    detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
+    detailview.style.top = `${detailViewTop}px`;
+    detailview.style.left = `${posX}px`;
     detailview.style.position = 'absolute';
 
     // Hide all edges
@@ -597,7 +633,7 @@
     }
     
     addOverlayRect('overlay-gradient-right',
-      rightStart + overlayRectOffset / 2 + 5,
+      rightStart + overlayRectOffset / 2 + 0.5,
       0, rightWidth, height + svgPaddings.top);
     
     addOverlayRect('overlay-gradient-left',
@@ -1028,6 +1064,20 @@
     
     let underGroup = svg.append('g')
       .attr('class', 'underneath');
+
+    let svgYMid = +wholeSvg.style('height').replace('px', '') / 2;
+    detailedViewAbsCoords = {
+      1 : [600, 100 + svgYMid - 220 / 2, 490, 290],
+      2: [500, 100 + svgYMid - 220 / 2, 490, 290],
+      3 : [700, 100 + svgYMid - 220 / 2, 490, 290],
+      4: [600, 100 + svgYMid - 220 / 2, 490, 290],
+      5: [650, 100 + svgYMid - 220 / 2, 490, 290],
+      6 : [775, 100 + svgYMid - 220 / 2, 490, 290],
+      7 : [100, 100 + svgYMid - 220 / 2, 490, 290],
+      8 : [60, 100 + svgYMid - 220 / 2, 490, 290],
+      9 : [200, 100 + svgYMid - 220 / 2, 490, 290],
+      10 : [300, 100 + svgYMid - 220 / 2, 490, 290],
+    }
     
     // Define global arrow marker end
     svg.append("defs")

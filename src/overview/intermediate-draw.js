@@ -69,6 +69,8 @@ shouldIntermediateAnimateStore.subscribe(value => {
 let detailedMode = undefined;
 detailedModeStore.subscribe( value => {detailedMode = value;} )
 
+// let curRightX = 0;
+
 /**
  * Draw the intermediate layer activation heatmaps
  * @param {element} image Neuron heatmap image
@@ -147,7 +149,8 @@ const createIntermediateNode = (curLayerIndex, selectedI, groupLayer, x, y,
     .attr('node-index', nodeIndex)
     .on('mouseover', intermediateNodeMouseOverHandler)
     .on('mouseleave', intermediateNodeMouseLeaveHandler)
-    .on('click', (d, g, i) => intermediateNodeClicked(d, g, i, selectedI, curLayerIndex));
+    .on('click', (d, g, i) => intermediateNodeClicked(d, g, i, selectedI,
+      curLayerIndex));
   
   newNode.append('image')
     .attr('width', nodeLength)
@@ -401,6 +404,9 @@ const animateEdge = (d, i, g, dashoffset) => {
 const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
   intermediateGap, d, i, intermediateNodeMouseOverHandler,
   intermediateNodeMouseLeaveHandler, intermediateNodeClicked) => {
+  
+  // curRightX = rightStart;
+
   // Add the intermediate layer
   let intermediateLayer = svg.append('g')
     .attr('class', 'intermediate-layer')

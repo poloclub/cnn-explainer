@@ -7,7 +7,7 @@ import {
   hoverInfoStore, allowsSoftmaxAnimationStore, detailedModeStore
 } from '../stores.js';
 import {
-  getOutputKnot, getInputKnot, gappedColorScale
+  getOutputKnot, getInputKnot, gappedColorScale, getMidCoords
 } from './draw-utils.js';
 import {
   drawIntermediateLayerLegend, moveLayerX, addOverlayGradient,
@@ -535,10 +535,16 @@ const drawLogitLayer = (arg) => {
   }
 
   // Show the softmax detail view
-  // TODO: make the position dynamic
+  let anchorElement = svg.select('.intermediate-layer')
+    .select('.layer-label').node();
+  let pos = getMidCoords(svg, anchorElement);
+  let wholeSvg = d3.select('#cnn-svg');
+  let svgYMid = +wholeSvg.style('height').replace('px', '') / 2;
+  let detailViewTop = 100 + svgYMid - 168 / 2;
+
   const detailview = document.getElementById('detailview');
-  detailview.style.top = `${300}px`;
-  detailview.style.left = `${20}px`;
+  detailview.style.top = `${detailViewTop}px`;
+  detailview.style.left = `${pos.left - 490 - 50}px`;
   detailview.style.position = 'absolute';
 
   softmaxDetailViewStore.set({

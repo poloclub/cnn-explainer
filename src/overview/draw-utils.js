@@ -42,6 +42,34 @@ export  const getExtent = (array) => {
 }
 
 /**
+ * Convert the svg element center coord to document absolute value
+ * // Inspired by https://github.com/caged/d3-tip/blob/master/index.js#L286
+ * @param {elem} elem 
+ */
+export const getMidCoords = (svg, elem) => {
+  if (svg !== undefined) {
+    let targetel = elem;
+    while (targetel.getScreenCTM == null && targetel.parentNode != null) {
+      targetel = targetel.parentNode;
+    }
+    // Get the absolute coordinate of the E point of element bbox
+    let point = svg.node().ownerSVGElement.createSVGPoint();
+    let matrix = targetel.getScreenCTM();
+    let tbbox = targetel.getBBox();
+    // let width = tbbox.width;
+    let height = tbbox.height;
+
+    point.x += 0;
+    point.y -= height / 2;
+    let bbox = point.matrixTransform(matrix);
+    return {
+      top: bbox.y,
+      left: bbox.x
+    };
+  }
+}
+
+/**
  * Return the output knot (right boundary center)
  * @param {object} point {x: x, y:y}
  */
