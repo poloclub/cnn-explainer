@@ -65,7 +65,7 @@
       const outputMatrixSlice = getMatrixSliceFromOutputHighlights(output, outputHighlights);
       testOutputMatrixSlice = gridData(outputMatrixSlice);
       counter++;
-    }, 1000)
+    }, 250)
   }
 
   function handleMouseover(event) {
