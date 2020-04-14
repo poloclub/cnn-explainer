@@ -71,7 +71,7 @@
       CNN Explainer
     </div>
 
-		<svg width="500px" height="50px">
+		<svg width="510px" height="50px">
 			<defs>
 				<filter x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox" id="chalk-texture">
 					<feTurbulence type="fractalNoise" baseFrequency="2" numOctaves="5" stitchTiles="stitch" result="f1">

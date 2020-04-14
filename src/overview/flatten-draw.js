@@ -24,7 +24,6 @@ const kernelRectLength = overviewConfig.kernelRectLength;
 const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
 const classList = overviewConfig.classLists;
-const isSafari = window.safari !== undefined;
 const formater = d3.format('.4f');
 
 // Shared variables
@@ -785,17 +784,24 @@ const softmaxClicked = (arg) => {
 
         softmaxDetailAnnotation.append('g')
           .attr('class', 'layer-detailed-label')
+          .attr('transform', () => {
+            let x = centerX;
+            let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 5;
+            return `translate(${x}, ${y})`;
+          })
           .classed('hidden', !detailedMode)
           .append('text')
-          .attr('x', centerX)
-          .attr('y',  (svgPaddings.top + vSpaceAroundGap) / 2 - 6)
+          // .attr('x', centerX)
+          // .attr('y',  (svgPaddings.top + vSpaceAroundGap) / 2 - 6)
           .style('opacity', 0.7)
           .style('dominant-baseline', 'middle')
           .style('font-size', '12px')
           .style('font-weight', '800')
+          .append('tspan')
+          .attr('x', 0)
           .text('logit')
           .append('tspan')
-          .attr('x', centerX)
+          .attr('x', 0)
           .style('font-size', '8px')
           .style('font-weight', 'normal')
           .attr('dy', '1.5em')
@@ -1467,7 +1473,11 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .text('flatten');
 
   let detailedLabelText = intermediateLayer.append('g')
-    .attr('transform', 'translate(0, 0)')
+    .attr('transform', () => {
+      let x = leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio + pixelWidth) / 2;
+      let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 5;
+      return `translate(${x}, ${y})`;
+    })
     .attr('class', 'layer-detailed-label')
     .classed('hidden', !detailedMode)
     .style('cursor', 'help')
@@ -1479,13 +1489,11 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
       });
     })
     .append('text')
-    .attr('x', leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
-      pixelWidth) / 2)
-    .attr('y',  (svgPaddings.top + vSpaceAroundGap) / 2 - 6)
-    .style('opacity', 0.7)
+    .style('text-anchor', 'middle')
     .style('dominant-baseline', 'middle')
-    .style('font-size', '12px')
-    .style('font-weight', '800')
+    .style('opacity', '0.7')
+    .style('font-weight', 800)
+    .append('tspan')
     .text('flatten');
   
   let dimension = cnn[layerIndexDict['max_pool_2']].length * 
@@ -1493,8 +1501,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     cnn[layerIndexDict['max_pool_2']][0].output[0].length;
 
   detailedLabelText.append('tspan')
-    .attr('x', leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio +
-      pixelWidth) / 2)
+    .attr('x', 0)
     .attr('dy', '1.5em')
     .style('font-size', '8px')
     .style('font-weight', 'normal')
@@ -1573,8 +1580,6 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   let arrowTY = nodeCoordinate[curLayerIndex][i].y + nodeLength / 2 +
     plusSymbolRadius;
 
-  if (isSafari) { textY += 3 * kernelRectLength; }
-
   if (i == 9) {
     textY -= 110;
     arrowSY -= 70;
@@ -1589,33 +1594,41 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('text-anchor', 'middle');
   
   plusText.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .text('Add up all products');
   
   plusText.append('tspan')
     .attr('x', textX)
     .attr('dy', '1em')
+    .style('dominant-baseline', 'hanging')
     .text('(');
 
   plusText.append('tspan')
     .style('fill', '#66a3c8')
+    .style('dominant-baseline', 'hanging')
     .text('element');
 
   plusText.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .text(' × ');
 
   plusText.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .style('fill', '#b58946')
     .text('weight');
 
   plusText.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .text(')');
 
   plusText.append('tspan')
     .attr('x', textX)
     .attr('dy', '1em')
+    .style('dominant-baseline', 'hanging')
     .text('and then ');
 
   plusText.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .style('fill', '#479d94')
     .text('bias');
   
@@ -1632,7 +1645,6 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   // Add annotation for the bias
   let biasTextY = nodeCoordinate[curLayerIndex][i].y;
-  if (isSafari) { biasTextY -= 0.5 * kernelRectLength; }
   biasTextY -= 2 * kernelRectLength + 4;
   
   flattenLayerLeftPart.append('text')
@@ -1653,7 +1665,12 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('class', 'annotation-text')
     .style('dominant-baseline', 'baseline')
     .style('text-anchor', 'middle')
-    .text('Click to learn more');
+    .style('font-weight', 700)
+    .text('Click ')
+    .append('tspan')
+    .attr('dx', 1)
+    .style('font-weight', 400)
+    .text('to learn more');
 
   drawArrow({
     group: softmaxAnnotation,
@@ -1679,15 +1696,25 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('dominant-baseline', 'hanging')
     .style('text-anchor', 'middle');
 
-  flattenText.append('tspan')
-    .text('Hover over matrix to');
+  let tempTspan = flattenText.append('tspan')
+    .style('dominant-baseline', 'hanging')
+    .style('font-weight', 700)
+    .text('Hover over ');
+  
+  tempTspan.append('tspan')
+    .attr('dx', 1)
+    .style('font-weight', 400)
+    .style('dominant-baseline', 'hanging')
+    .text('matrix to');
   
   flattenText.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .attr('x', textX)
     .attr('dy', '1em')
     .text('see how it is flattened');
   
   flattenText.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .attr('x', textX)
     .attr('dy', '1em')
     .text('into a 1D array!');
@@ -1701,6 +1728,44 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     dr: 80,
     hFlip: true
   });
+
+  // Add annotation to explain the middle images
+  textY = nodeCoordinate[curLayerIndex - 1][1].y;
+
+  let middleText = flattenAnnotation.append('text')
+    .attr('x', textX)
+    .attr('y', textY)
+    .attr('class', 'annotation-text')
+    .style('dominant-baseline', 'hanging')
+    .style('text-anchor', 'middle');
+
+  middleText.append('tspan')
+    .style('dominant-baseline', 'hanging')
+    .text('Same flattening');
+  
+  middleText.append('tspan')
+    .style('dominant-baseline', 'hanging')
+    .attr('x', textX)
+    .attr('dy', '1em')
+    .text('operation for');
+
+  middleText.append('tspan')
+    .style('dominant-baseline', 'hanging')
+    .attr('x', textX)
+    .attr('dy', '1em')
+    .text('each neuron');
+
+  drawArrow({
+    group: flattenAnnotation,
+    sx: textX + 45,
+    sy: textY + 15,
+    tx: leftX - 10,
+    ty: textY + nodeLength / 2,
+    dr: 80,
+    hFlip: false,
+    marker: 'marker-alt'
+  });
+
 
   // Add annotation for the output neuron
   let outputAnnotation = intermediateLayerAnnotation.append('g')

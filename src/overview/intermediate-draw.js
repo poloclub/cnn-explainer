@@ -769,6 +769,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .style('dominant-baseline', 'middle')
     .style('opacity', '0.7')
     .style('font-weight', 800)
+    .append('tspan')
     .text('intermediate')
     .append('tspan')
     .style('font-size', '8px')
@@ -863,8 +864,6 @@ const drawIntermediateLayerAnnotation = (arg) => {
     dr = 40;
   }
 
-  if (isSafari) { sliderY += 2 * kernelRectLength; }
-
   let slideText = kernelAnnotation.append('text')
     .attr('x', sliderX)
     .attr('y', sliderY)
@@ -873,16 +872,19 @@ const drawIntermediateLayerAnnotation = (arg) => {
     .style('text-anchor', isFirstConv ? 'start' : 'end');
   
   slideText.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .text('Slide kernel over');
 
   slideText.append('tspan')
     .attr('x', sliderX)
     .attr('dy', '1em')
+    .style('dominant-baseline', 'hanging')
     .text('input channel to get');
 
   slideText.append('tspan')
     .attr('x', sliderX)
     .attr('dy', '1em')
+    .style('dominant-baseline', 'hanging')
     .text('intermediate result');
 
   drawArrow({
@@ -904,13 +906,10 @@ const drawIntermediateLayerAnnotation = (arg) => {
   let textY = nodeCoordinate[curLayerIndex][i].y + nodeLength +
       kernelRectLength * 3;
   
-  // Safari special position
-  if (isSafari) { textY += 2 * kernelRectLength; }
-
   // Special case 1: first node
   if (i === 0) { textX += 30; }
 
-  // Special case 2: last node
+  // Special case 2: last node 
   if (i === 9) {
     textX = intermediateX2 + plusSymbolRadius - 10;
     textY -= 2.5 * nodeLength;
@@ -924,11 +923,13 @@ const drawIntermediateLayerAnnotation = (arg) => {
     .style('text-anchor', 'start');
   
   plusText.append('tspan')
+    .style('dominant-baseline', 'hanging')
     .text('Add up all intermediate');
   
   plusText.append('tspan')
     .attr('x', textX)
     .attr('dy', '1em')
+    .style('dominant-baseline', 'hanging')
     .text('results and then add bias');
   
   if (i === 9) {
