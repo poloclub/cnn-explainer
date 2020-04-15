@@ -875,10 +875,10 @@ const drawIntermediateLayerAnnotation = (arg) => {
     dr2 = 35;
   } else {
     sliderX = leftX - 3 * kernelRectLength * 3;
-    sliderY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2;
-    arrowSX = leftX - 2 * kernelRectLength * 3 - 2;
+    sliderY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 3;
+    arrowSX = leftX - 2 * kernelRectLength * 3 - 5;
     arrowSY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength - 10;
-    dr = 40;
+    dr = 50;
 
     sliderX2 = leftX - 3 * kernelRectLength * 3;
     sliderY2 = nodeCoordinate[curLayerIndex - 1][2].y - 3;
@@ -898,19 +898,31 @@ const drawIntermediateLayerAnnotation = (arg) => {
   
   slideText.append('tspan')
     .style('dominant-baseline', 'hanging')
-    .text('Slide kernel over');
+    .text('Slide kernel over input channel');
 
   slideText.append('tspan')
     .attr('x', sliderX)
     .attr('dy', '1em')
     .style('dominant-baseline', 'hanging')
-    .text('input channel to get');
+    .text('to get intermediate result');
+
+  // slideText.append('tspan')
+  //   .attr('x', sliderX)
+  //   .attr('dy', '1em')
+  //   .style('dominant-baseline', 'hanging')
+  //   .text('');
 
   slideText.append('tspan')
     .attr('x', sliderX)
-    .attr('dy', '1em')
+    .attr('dy', '1.2em')
     .style('dominant-baseline', 'hanging')
-    .text('intermediate result');
+    .style('font-weight', 700)
+    .text('Click ');
+  
+  slideText.append('tspan')
+    .style('dominant-baseline', 'hanging')
+    .style('font-weight', 400)
+    .text('to learn more')
 
   drawArrow({
     group: group,
@@ -920,7 +932,7 @@ const drawIntermediateLayerAnnotation = (arg) => {
     sy: arrowSY,
     hFlip: !isFirstConv,
     dr: dr,
-    marker: 'marker-alt'
+    marker: 'marker'
   });
 
   // Add kernel annotation
@@ -943,11 +955,12 @@ const drawIntermediateLayerAnnotation = (arg) => {
 
   slideText2.append('tspan')
     .attr('x', sliderX)
-    .attr('dy', '1.2em')
+    .attr('dy', '1.3em')
     .style('font-weight', 700)
     .style('dominant-baseline', 'hanging')
-    .text('Hover over ')
-    .append('tspan')
+    .text('Hover over ');
+
+  slideText2.append('tspan')
     .style('font-weight', 400)
     .style('dominant-baseline', 'hanging')
     .text('to see value!')
