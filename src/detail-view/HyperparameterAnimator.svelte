@@ -81,22 +81,29 @@
 </script>
 
 <style>
+  .wrapper {
+    display: flex;
+    flex-direction: row;
+  }
+
   .column {
     padding: 5px 10px 10px 10px;
   }
 </style>
 
-<div class="column has-text-centered">
-  <div class="header-text">
-    Input ({image.length}, {image.length})
+<div class="wrapper">
+  <div class="column has-text-centered">
+    <div class="header-text">
+      Input ({image.length}, {image.length})
+    </div>
+    <HyperparameterDataview on:message={handleMouseover} data={testImage} highlights={inputHighlights}
+        outputLength={output.length} stride={stride} padding={padding} isStrideValid={isStrideValid}/>
   </div>
-  <HyperparameterDataview on:message={handleMouseover} data={testImage} highlights={inputHighlights}
-      outputLength={output.length} stride={stride} padding={padding} isStrideValid={isStrideValid}/>
-</div>
-<div class="column has-text-centered">
-  <div class="header-text">
-    Output ({output.length}, {output.length})
+  <div class="column has-text-centered">
+    <div class="header-text">
+      Output ({output.length}, {output.length})
+    </div>
+    <HyperparameterDataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights}
+        outputLength={output.length} stride={stride} padding={padding} isOutput={true} isStrideValid={isStrideValid}/>
   </div>
-  <HyperparameterDataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights}
-      outputLength={output.length} stride={stride} padding={padding} isOutput={true} isStrideValid={isStrideValid}/>
 </div>

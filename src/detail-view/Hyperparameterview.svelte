@@ -24,7 +24,6 @@
 
   function handleClickPause() {
     isPaused = !isPaused;
-    console.log(isPaused)
   }
 
   function handlePauseFromInteraction(event) {
@@ -57,18 +56,12 @@
 </script>
 
 <style>
-  .control-pannel {
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .play-button {
-    margin-right: 3px;
-  }
-
   .control-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
     color: gray;
-    font-size: 15px;
+    font-size: 24px;
     opacity: 0.4;
     cursor: pointer;
   }
@@ -78,15 +71,40 @@
   }
 
   .box {
-    padding: 5px 15px 10px 15px;
+    padding: 20px 15px 10px 15px;
+    position: relative;
   }
 
-  .columns {
-    align-items: flex-end;
+  .left-part {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .right-part {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .content-container {
+    display: flex;
+    justify-content: space-around;
   }
 
   .field {
     padding-top: 5px;
+  }
+
+  .annotation {
+    display: flex;
+    align-items: center;
+    padding-left : 10px;
+    font-size: 12px;
+  }
+
+  .annotation > img {
+    width: 20px;
+    margin-right: 5px;
   }
 
   label {
@@ -96,63 +114,93 @@
   } 
 
   input[type=number] {
-    width: 60px;
+    width: 50px;
+  }
+
+  input[type=range] {
+    width: 160px;
   }
 </style>
 
 <div class="container has-text-centered" id="detailview-container">
   <div class="box">
-    <div class="control-pannel">
-      <div class="play-button control-button" on:click={handleClickPause}>
+
+      <div class="control-button" on:click={handleClickPause}>
         {@html isPaused ?
           '<i class="fas fa-play-circle play-icon"></i>' :
           '<i class="fas fa-pause-circle"></i>'}
       </div>
-    </div>
 
-    <div class="columns is-centered is-vcentered">
-      <div class="column has-text-centered">
-        <div class="field is-horizontal">
-          <div class="field-label is-normal">
-            <label class="label">Input Size:</label>
+    <div class="content-container">
+      <div class="left-part">
+
+        <div class="input-row">
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Input Size:</label>
+            </div>
+            <input class="input" type="number" bind:value={inputSize}
+              min={kernelSize} max={7}>
           </div>
-          <input class="input" type="number" bind:value={inputSize}
+
+          <input type="range" bind:value={inputSize}
             min={kernelSize} max={7}>
         </div>
-        <input type="range" bind:value={inputSize}
-          min={kernelSize} max={7}>
-        <div class="field is-horizontal">
-          <div class="field-label is-normal">
-            <label class="label">Padding:</label>
+
+        <div class="input-row">
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Padding:</label>
+            </div>
+            <input class="input" type="number" bind:value={padding} min={0}
+              max={kernelSize - 1}>
           </div>
-          <input class="input" type="number" bind:value={padding} min={0}
+
+          <input type="range" bind:value={padding} min={0}
             max={kernelSize - 1}>
         </div>
-        <input type="range" bind:value={padding} min={0}
-          max={kernelSize - 1}>
-        <div class="field is-horizontal">
-          <div class="field-label is-normal">
-            <label class="label">Kernel Size:</label>
+
+        <div class="input-row">
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Kernel Size:</label>
+            </div>
+            <input class="input" type="number" bind:value={kernelSize} min={padding + 1}
+              max={inputSizeWithPadding}>
           </div>
-          <input class="input" type="number" bind:value={kernelSize} min={padding + 1}
+
+          <input type="range" bind:value={kernelSize} min={padding + 1}
             max={inputSizeWithPadding}>
         </div>
-        <input type="range" bind:value={kernelSize} min={padding + 1}
-          max={inputSizeWithPadding}>
-        <div class="field is-horizontal">
-          <div class="field-label is-normal">
-            <label class="label">Stride:</label>
+
+        <div class="input-row">
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Stride:</label>
+            </div>
+            <input class="input" type=number id="strideNumber" bind:value={stride} min=1
+              max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
           </div>
-          <input class="input" type=number id="strideNumber" bind:value={stride} min=1
+
+          <input type="range" bind:value={stride} min=1
             max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
         </div>
-        <input type="range" bind:value={stride} min=1
-          max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
       </div>
-      <HyperparameterAnimator on:message={handlePauseFromInteraction} 
-        kernel={kernel} image={input} output={outputFinal} isStrideValid={isStrideValid}
-        stride={stride} dilation={dilation} padding={padding} isPaused={isPaused}/>
+
+        <div class="right-part">
+          <HyperparameterAnimator on:message={handlePauseFromInteraction} 
+            kernel={kernel} image={input} output={outputFinal} isStrideValid={isStrideValid}
+            stride={stride} dilation={dilation} padding={padding} isPaused={isPaused}/>
+
+          <div class="annotation">
+            <img src='assets/img/pointer.svg' alt='pointer icon' width="25px">
+            <div>Hover over the matrices to change kernel position.</div>
+          </div>
+          
+        </div>
+
     </div>
+
 
   </div>
 </div>

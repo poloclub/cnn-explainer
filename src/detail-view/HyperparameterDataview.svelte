@@ -76,7 +76,7 @@
       grid.selectAll(".square")
         .style("fill", function(d) {
           if (highlights.length && highlights[d.row * data.length + d.col]) {
-            return "red";
+            return "#007AFF";
           } else {
             // Colors cells appropriately that represent padding.
             if (!isOutput && (d.row < padding || d.row > data.length - padding - 1
