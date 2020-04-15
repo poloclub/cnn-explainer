@@ -560,7 +560,7 @@
     let wholeSvg = d3.select('#cnn-svg');
     let svgYMid = +wholeSvg.style('height').replace('px', '') / 2;
     let svgWidth = +wholeSvg.style('width').replace('px', '');
-    let detailViewTop = 100 + svgYMid - 220 / 2;
+    let detailViewTop = 100 + svgYMid - 260 / 2;
 
     let posX = 0;
     if (curLayerIndex > 5) {

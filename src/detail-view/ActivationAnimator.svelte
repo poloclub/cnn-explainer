@@ -76,7 +76,11 @@
   }
 </script>
 
-
+<style>
+  .column {
+    padding: 5px;
+  }
+</style>
 
 <div class="column has-text-centered">
   <div class="header-text">

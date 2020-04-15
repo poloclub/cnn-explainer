@@ -26,7 +26,13 @@
   
   function handleClickPause() {
     isPaused = !isPaused;
-    console.log(isPaused)
+  }
+
+  function handleScroll() {
+    let svgHeight = Number(d3.select('#cnn-svg').style('height').replace('px', '')) + 150;
+    let scroll = new SmoothScroll('a[href*="#"]', {offset: -svgHeight});
+    let anchor = document.querySelector(`#article-convolution`);
+    scroll.animateScroll(anchor);
   }
 
   function handlePauseFromInteraction(event) {
@@ -56,15 +62,28 @@
     right: 0px;
   }
 
-  .play-button {
-    margin-right: 3px;
-  }
-
   .control-button {
     color: gray;
     font-size: 15px;
     opacity: 0.4;
     cursor: pointer;
+  }
+
+  .control-button:not(:first-child) {
+    margin-left: 3px;
+  }
+
+  .annotation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left : 10px;
+    font-size: 12px;
+  }
+
+  .annotation > img {
+    width: 17px;
+    margin-right: 5px;
   }
 
   .control-button:hover {
@@ -75,7 +94,9 @@
     padding: 5px 15px 10px 15px;
   }
 
-  .columns {
+  .container {
+    display: flex;
+    justify-content: space-between;
     align-items: flex-end;
   }
 
@@ -83,7 +104,6 @@
     font-size: 1.2em;
     font-weight: 500;
     color: #4a4a4a;
-    margin-bottom: 5px;
   }
 </style>
 
@@ -115,23 +135,31 @@
         </div>
 
         <div class="buttons">
-          <div class="play-button control-button" on:click={handleClickPause}>
+          <div class="play-button control-button" on:click={handleClickPause} title="Play animation">
             {@html isPaused ?
               '<i class="fas fa-play-circle play-icon"></i>' :
               '<i class="fas fa-pause-circle"></i>'}
           </div>
-          <div class="delete-button control-button" on:click={handleClickX}>
+          <div class="control-button" on:click={handleScroll} title="Jump to article section">
+            <i class="fas fa-chevron-circle-down"></i>
+          </div>
+          <div class="delete-button control-button" on:click={handleClickX} title="Close">
               <i class="fas control-icon fa-times-circle"></i>
           </div>
         </div>
       </div>
 
-      <div class="columns is-centered">
+      <div class="container is-centered">
         <ConvolutionAnimator on:message={handlePauseFromInteraction} 
           kernel={kernel} image={input} output={outputFinal} 
           stride={stride} dilation={dilation} isPaused={isPaused}
           dataRange={dataRange} colorScale={colorScale}
           isInputInputLayer={isInputInputLayer} />
+      </div>
+
+      <div class="annotation">
+        <img src='assets/img/pointer.svg' alt='pointer icon'>
+        <div>Hover over the matrices to change kernel position.</div>
       </div>
 
     </div>

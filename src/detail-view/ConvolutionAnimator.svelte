@@ -99,7 +99,7 @@
 
 <style>
   .column {
-    padding: 5px 10px 10px 10px;
+    padding: 5px;
   }
 </style>
 

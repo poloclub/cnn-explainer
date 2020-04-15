@@ -40,6 +40,13 @@
     });
   }
 
+  function handleScroll() {
+    let svgHeight = Number(d3.select('#cnn-svg').style('height').replace('px', '')) + 150;
+    let scroll = new SmoothScroll('a[href*="#"]', {offset: -svgHeight});
+    let anchor = document.querySelector(`#article-pooling`);
+    scroll.animateScroll(anchor);
+  }
+
   // Test dragging detail view, need more work
   // const detailViewDragStart = (e) => {
   //   // Record the starting pos
@@ -83,16 +90,30 @@
     right: 0px;
   }
 
-  .play-button {
-    margin-right: 3px;
-  }
-
   .control-button {
     color: gray;
     font-size: 15px;
     opacity: 0.4;
     cursor: pointer;
   }
+
+  .control-button:not(:first-child) {
+    margin-left: 3px;
+  }
+
+  .annotation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left : 10px;
+    font-size: 12px;
+  }
+
+  .annotation > img {
+    width: 17px;
+    margin-right: 5px;
+  }
+
 
   .control-button:hover {
     opacity: 0.8;
@@ -102,11 +123,16 @@
     padding: 5px 15px 10px 15px;
   }
 
+  .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .title-text {
     font-size: 1.2em;
     font-weight: 500;
     color: #4a4a4a;
-    margin-bottom: 5px;
   }
 </style>
 
@@ -143,19 +169,29 @@
               '<i class="fas fa-pause-circle"></i>'}
           </div>
 
+          <div class="control-button" on:click={handleScroll} title="Jump to article section">
+            <i class="fas fa-chevron-circle-down"></i>
+          </div>
+
           <div class="delete-button control-button" on:click={handleClickX}>
-              <i class="fas control-icon fa-times-circle"></i>
+            <i class="fas control-icon fa-times-circle"></i>
           </div>
         </div>
 
       </div>
 
-      <div class="columns is-centered is-vcentered">
+      <div class="container is-centered is-vcentered">
         <PoolAnimator on:message={handlePauseFromInteraction} 
           kernelLength={kernelLength} image={input} output={outputFinal} 
           stride={stride} dilation={dilation} isPaused={isPaused}
           dataRange={dataRange} />
       </div>
+
+      <div class="annotation">
+        <img src='assets/img/pointer.svg' alt='pointer icon'>
+        <div>Hover over the matrices to change kernel position.</div>
+      </div>
+
     </div>
   </div>
 {/if}
