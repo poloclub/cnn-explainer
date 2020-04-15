@@ -1368,6 +1368,26 @@
     opacity: 0.6;
   }
 
+  .image-container.inactive.disabled {
+    border: 2.5px solid rgb(220, 220, 220);
+    cursor: not-allowed;
+  }
+
+  .image-container.inactive.disabled:hover {
+    border: 2.5px solid rgb(220, 220, 220);
+    cursor: not-allowed;
+  }
+
+  .image-container.inactive.disabled > img {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .image-container.inactive.disabled:hover > img {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
   .image-container.inactive > .edit-icon {
     color: #BABABA;
   }
@@ -1378,11 +1398,6 @@
 
   .image-container.inactive:hover {
     border: 2.5px solid #1E1E1E;
-  }
-
-  :global(.image-container.disabled) {
-    pointer-events: none;
-    cursor: not-allowed;
   }
 
   .edit-icon {
@@ -1470,7 +1485,7 @@
     <div class="left-control">
       {#each imageOptions as image, i}
         <div class="image-container"
-          on:click={imageOptionClicked}
+          on:click={disableControl ? () => {} : imageOptionClicked}
           class:inactive={selectedImage !== image.file}
           class:disabled={disableControl}
           data-imageName={image.file}>
@@ -1486,7 +1501,7 @@
           class:inactive={selectedImage !== 'custom'}
           class:disabled={disableControl}
           data-imageName={'custom'}
-          on:click={customImageClicked}>
+          on:click={disableControl ? () => {} : customImageClicked}>
 
           <img class="custom-image"
             src="/assets/img/plus.svg"

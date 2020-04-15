@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, SmoothScroll */
 
 import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
@@ -1472,7 +1472,10 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('font-weight', 800)
     .text('flatten');
 
-  let detailedLabelText = intermediateLayer.append('g')
+  let svgHeight = Number(d3.select('#cnn-svg').style('height').replace('px', '')) + 150;
+  let scroll = new SmoothScroll('a[href*="#"]', {offset: -svgHeight});
+    
+  let detailedLabelGroup = intermediateLayer.append('g')
     .attr('transform', () => {
       let x = leftX + nodeLength + (4 * hSpaceAroundGap * gapRatio + pixelWidth) / 2;
       let y = (svgPaddings.top + vSpaceAroundGap) / 2 - 5;
@@ -1484,11 +1487,14 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .on('click', () => {
       d3.event.stopPropagation();
       // Scroll to the article element
-      document.querySelector(`#article-flatten`).scrollIntoView({ 
-        behavior: 'smooth' 
-      });
-    })
-    .append('text')
+      let anchor = document.querySelector(`#article-flatten`);
+      scroll.animateScroll(anchor);
+    });
+  
+  detailedLabelGroup.append('title')
+    .text('Move to article section');
+
+  let detailedLabelText = detailedLabelGroup.append('text')
     .style('text-anchor', 'middle')
     .style('dominant-baseline', 'middle')
     .style('opacity', '0.7')
@@ -1757,12 +1763,12 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   drawArrow({
     group: flattenAnnotation,
-    sx: textX + 45,
-    sy: textY + 15,
+    sx: textX + 39,
+    sy: textY + 25,
     tx: leftX - 10,
-    ty: textY + nodeLength / 2,
+    ty: textY + nodeLength / 2 - 2,
     dr: 80,
-    hFlip: false,
+    hFlip: true,
     marker: 'marker-alt'
   });
 

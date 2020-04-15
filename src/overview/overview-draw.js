@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, SmoothScroll */
 
 import {
   svgStore, vSpaceAroundGapStore, hSpaceAroundGapStore, cnnStore,
@@ -556,7 +556,10 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     }
   });
 
-  svg.selectAll('g.layer-detailed-label')
+  let svgHeight = Number(d3.select('#cnn-svg').style('height').replace('px', '')) + 150;
+  let scroll = new SmoothScroll('a[href*="#"]', {offset: -svgHeight});
+  
+  let detailedLabels = svg.selectAll('g.layer-detailed-label')
     .data(layerNames)
     .enter()
     .append('g')
@@ -577,13 +580,14 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
       if (d.name.includes('input')) { target = 'input'}
 
       // Scroll to a article element
-      if (!d.name.includes('output')) {
-        document.querySelector(`#article-${target}`).scrollIntoView({ 
-          behavior: 'smooth' 
-        });
-      }
-    })
-    .append('text')
+      let anchor = document.querySelector(`#article-${target}`);
+      scroll.animateScroll(anchor);
+    });
+  
+  detailedLabels.append('title')
+    .text('Move to article section');
+    
+  detailedLabels.append('text')
     .style('opacity', 0.7)
     .style('dominant-baseline', 'middle')
     .append('tspan')
@@ -596,7 +600,7 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     .attr('dy', '1.5em')
     .text(d => d.dimension);
   
-  svg.selectAll('g.layer-label')
+  let labels = svg.selectAll('g.layer-label')
     .data(layerNames)
     .enter()
     .append('g')
@@ -617,13 +621,14 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
       if (d.name.includes('input')) { target = 'input'}
 
       // Scroll to a article element
-      if (!d.name.includes('output')) {
-        document.querySelector(`#article-${target}`).scrollIntoView({ 
-          behavior: 'smooth' 
-        });
-      }
-    })
-    .append('text')
+      let anchor = document.querySelector(`#article-${target}`);
+      scroll.animateScroll(anchor);
+    });
+  
+  labels.append('title')
+    .text('Move to article section');
+  
+  labels.append('text')
     .style('dominant-baseline', 'middle')
     .style('opacity', 0.8)
     .text(d => {

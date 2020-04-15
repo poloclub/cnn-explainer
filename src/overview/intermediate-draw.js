@@ -588,7 +588,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     // Sliding the kernel on the input channel and result channel at the same
     // time
     let kernelGroupInput = kernelGroup.clone(true)
-      .on('click', () => {d3.event.stopPropagation()})
+      .style('pointer-events', 'none')
       .style('cursor', 'pointer')
       .classed('kernel-clone', true)
       .classed(`kernel-input-${ni}`, true);
@@ -603,7 +603,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('data-origin-y', n.y);
 
     let kernelGroupResult = kernelGroup.clone(true)
-      .on('click', () => {d3.event.stopPropagation()})
+      .style('pointer-events', 'none')
       .style('cursor', 'pointer')
       .classed('kernel-clone', true)
       .classed(`kernel-result-${ni}`, true);
@@ -874,17 +874,17 @@ const drawIntermediateLayerAnnotation = (arg) => {
     arrowTY2 =  nodeCoordinate[curLayerIndex - 1][1].y + 15;
     dr2 = 35;
   } else {
-    sliderX = leftX - 2.5 * kernelRectLength * 3;
+    sliderX = leftX - 3 * kernelRectLength * 3;
     sliderY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2;
     arrowSX = leftX - 2 * kernelRectLength * 3 - 2;
     arrowSY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength - 10;
     dr = 40;
 
-    sliderX2 = leftX - 2.5 * kernelRectLength * 3;
+    sliderX2 = leftX - 3 * kernelRectLength * 3;
     sliderY2 = nodeCoordinate[curLayerIndex - 1][2].y - 3;
-    arrowTX2 = leftX - kernelRectLength * 3 - 3;
+    arrowTX2 = leftX - kernelRectLength * 3 - 4;
     arrowTY2 = nodeCoordinate[curLayerIndex - 1][2].y + kernelRectLength * 3 + 6;
-    arrowSX2 = leftX - kernelRectLength * 3 - 10;
+    arrowSX2 = leftX - kernelRectLength * 3 - 13;
     arrowSY2 = nodeCoordinate[curLayerIndex - 1][2].y + 26;
     dr2 = 20;
   }
@@ -918,6 +918,7 @@ const drawIntermediateLayerAnnotation = (arg) => {
     ty: nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2,
     sx: arrowSX,
     sy: arrowSY,
+    hFlip: !isFirstConv,
     dr: dr,
     marker: 'marker-alt'
   });
@@ -932,13 +933,13 @@ const drawIntermediateLayerAnnotation = (arg) => {
 
   slideText2.append('tspan')
     .style('dominant-baseline', 'hanging')
-    .text('Each input chanel gets');
+    .text('Each input chanel');
 
   slideText2.append('tspan')
     .attr('x', sliderX)
     .attr('dy', '1em')
     .style('dominant-baseline', 'hanging')
-    .text('a different kernel');
+    .text('gets a different kernel');
 
   slideText2.append('tspan')
     .attr('x', sliderX)
