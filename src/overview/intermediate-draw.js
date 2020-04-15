@@ -557,8 +557,12 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
           .attr('height', kernelRectLength)
           .attr('fill', gappedColorScale(layerColorScales.weight, kernelRange,
             kernelMatrix[r][c], kernelColorGap));
-        weightText = weightText.concat((c === 0 && r === 0) ? '' : ', ',
-          `${f2(kernelMatrix[r][c])}`);
+
+        let sep = '';
+        if (c === 0 && r == 0) { sep = ''; }
+        else if (c === 0) { sep = '; '; }
+        else { sep = ', '; }
+        weightText = weightText.concat(sep, `${f2(kernelMatrix[r][c])}`);
       }
     }
     weightText = weightText.concat(']');
@@ -578,11 +582,13 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       })
       .on('mouseleave', () => {
         hoverInfoStore.set( {show: false, text: weightText} );
-      });
+      })
+      .on('click', () => {d3.event.stopPropagation()});
 
     // Sliding the kernel on the input channel and result channel at the same
     // time
     let kernelGroupInput = kernelGroup.clone(true)
+      .on('click', () => {d3.event.stopPropagation()})
       .style('cursor', 'pointer')
       .classed('kernel-clone', true)
       .classed(`kernel-input-${ni}`, true);
@@ -597,6 +603,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('data-origin-y', n.y);
 
     let kernelGroupResult = kernelGroup.clone(true)
+      .on('click', () => {d3.event.stopPropagation()})
       .style('cursor', 'pointer')
       .classed('kernel-clone', true)
       .classed(`kernel-result-${ni}`, true);
@@ -847,6 +854,7 @@ const drawIntermediateLayerAnnotation = (arg) => {
     .style('text-anchor', 'end');
 
   let sliderX, sliderY, arrowSX, arrowSY, dr;
+  let sliderX2, sliderY2, arrowSX2, arrowSY2, dr2, arrowTX2, arrowTY2;
   
   if (isFirstConv) {
     sliderX = leftX;
@@ -856,12 +864,29 @@ const drawIntermediateLayerAnnotation = (arg) => {
     arrowSY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength +
       kernelRectLength * 3 + 5;
     dr = 20;
+
+    sliderX2 = leftX;
+      sliderY2 = nodeCoordinate[curLayerIndex - 1][1].y + nodeLength +
+    kernelRectLength * 3;
+    arrowSX2 = leftX - kernelRectLength * 3;
+    arrowSY2 = nodeCoordinate[curLayerIndex - 1][1].y + nodeLength + 15;
+    arrowTX2 = leftX - 13;
+    arrowTY2 =  nodeCoordinate[curLayerIndex - 1][1].y + 15;
+    dr2 = 35;
   } else {
     sliderX = leftX - 2.5 * kernelRectLength * 3;
     sliderY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength / 2;
     arrowSX = leftX - 2 * kernelRectLength * 3 - 2;
     arrowSY = nodeCoordinate[curLayerIndex - 1][0].y + nodeLength - 10;
     dr = 40;
+
+    sliderX2 = leftX - 2.5 * kernelRectLength * 3;
+    sliderY2 = nodeCoordinate[curLayerIndex - 1][2].y - 3;
+    arrowTX2 = leftX - kernelRectLength * 3 - 3;
+    arrowTY2 = nodeCoordinate[curLayerIndex - 1][2].y + kernelRectLength * 3 + 6;
+    arrowSX2 = leftX - kernelRectLength * 3 - 10;
+    arrowSY2 = nodeCoordinate[curLayerIndex - 1][2].y + 26;
+    dr2 = 20;
   }
 
   let slideText = kernelAnnotation.append('text')
@@ -896,6 +921,47 @@ const drawIntermediateLayerAnnotation = (arg) => {
     dr: dr,
     marker: 'marker-alt'
   });
+
+  // Add kernel annotation
+  let slideText2 = kernelAnnotation.append('text')
+    .attr('x', sliderX2)
+    .attr('y', sliderY2)
+    .attr('class', 'annotation-text')
+    .style('dominant-baseline', 'hanging')
+    .style('text-anchor', isFirstConv ? 'start' : 'end');
+
+  slideText2.append('tspan')
+    .style('dominant-baseline', 'hanging')
+    .text('Each input chanel gets');
+
+  slideText2.append('tspan')
+    .attr('x', sliderX)
+    .attr('dy', '1em')
+    .style('dominant-baseline', 'hanging')
+    .text('a different kernel');
+
+  slideText2.append('tspan')
+    .attr('x', sliderX)
+    .attr('dy', '1.2em')
+    .style('font-weight', 700)
+    .style('dominant-baseline', 'hanging')
+    .text('Hover over ')
+    .append('tspan')
+    .style('font-weight', 400)
+    .style('dominant-baseline', 'hanging')
+    .text('to see value!')
+
+  drawArrow({
+    group: group,
+    tx: arrowTX2,
+    ty: arrowTY2,
+    sx: arrowSX2,
+    sy: arrowSY2,
+    dr: dr2,
+    hFlip: !isFirstConv,
+    marker: 'marker'
+  });
+
 
   // Add annotation for the sum operation
   let plusAnnotation = group.append('g')
