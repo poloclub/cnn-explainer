@@ -29,7 +29,6 @@ const kernelRectLength = overviewConfig.kernelRectLength;
 const svgPaddings = overviewConfig.svgPaddings;
 const gapRatio = overviewConfig.gapRatio;
 const overlayRectOffset = overviewConfig.overlayRectOffset;
-const isSafari = window.safari !== undefined;
 const formater = d3.format('.4f');
 let isEndOfAnimation = false;
 

@@ -70,7 +70,7 @@
   }
 
   .control-button:not(:first-child) {
-    margin-left: 3px;
+    margin-left: 5px;
   }
 
   .annotation {
@@ -135,16 +135,18 @@
         </div>
 
         <div class="buttons">
+          <div class="control-button" on:click={handleScroll} title="Jump to article section">
+            <i class="fas fa-info-circle"></i>
+          </div>
+
           <div class="play-button control-button" on:click={handleClickPause} title="Play animation">
             {@html isPaused ?
               '<i class="fas fa-play-circle play-icon"></i>' :
               '<i class="fas fa-pause-circle"></i>'}
           </div>
-          <div class="control-button" on:click={handleScroll} title="Jump to article section">
-            <i class="fas fa-chevron-circle-down"></i>
-          </div>
+
           <div class="delete-button control-button" on:click={handleClickX} title="Close">
-              <i class="fas control-icon fa-times-circle"></i>
+            <i class="fas control-icon fa-times-circle"></i>
           </div>
         </div>
       </div>

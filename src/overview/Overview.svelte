@@ -550,7 +550,6 @@
       .dispatchEvent(new Event('click'));
   }
 
-
   const enterDetailView = (curLayerIndex, i) => {
     isInActPoolDetailView = true;
     actPoolDetailViewNodeIndex = i;
