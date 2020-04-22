@@ -94,13 +94,14 @@
 <div class="wrapper">
   <div class="column has-text-centered">
     <div class="header-text">
-      Input ({image.length}, {image.length})
+      Input ({image.length - 2 * padding}, {image.length - 2 * padding}) <br/>
+      After-padding ({image.length}, {image.length})
     </div>
     <HyperparameterDataview on:message={handleMouseover} data={testImage} highlights={inputHighlights}
         outputLength={output.length} stride={stride} padding={padding} isStrideValid={isStrideValid}/>
   </div>
   <div class="column has-text-centered">
-    <div class="header-text">
+    <div class="header-text" style="padding-top: 27px;">
       Output ({output.length}, {output.length})
     </div>
     <HyperparameterDataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights}
