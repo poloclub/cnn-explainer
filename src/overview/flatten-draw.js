@@ -160,6 +160,9 @@ const logitCircleMouseOverHandler = (i) => {
 }
 
 const logitCircleMouseLeaveHandler = (i) => {
+  // screenshot
+  // return;
+
   // Update the hover info UI
   hoverInfoStore.set({
     show: false,
@@ -1101,6 +1104,8 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   let flattenMouseOverHandler = (d) => {
     let index = d.index;
+    // Screenshot
+    // console.log(index);
 
     // Update the hover info UI
     if (d.weight === undefined) {
@@ -1134,6 +1139,9 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   let flattenMouseLeaveHandler = (d) => {
     let index = d.index;
+
+    // screenshot
+    // if (index === 70) {return;}
 
     // Update the hover info UI
     if (d.weight === undefined) {

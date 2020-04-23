@@ -43,7 +43,7 @@
       .attr("y", function(d) { return d.y; })
       .attr("width", function(d) { return d.width; })
       .attr("height", function(d) { return d.height; })
-      .style("opacity", 0.5)
+      .style("opacity", 0.8)
       .style("fill", function(d) { 
         let normalizedValue = d.text;
         if (isInputLayer){

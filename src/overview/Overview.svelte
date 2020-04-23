@@ -985,7 +985,9 @@
   }
 
   const nodeMouseLeaveHandler = (d, i, g) => {
-    // if (isInIntermediateView || isInActPoolDetailView) { return; }
+    // Screenshot
+    // return;
+
     if (isInIntermediateView) { return; }
     
     // Keep the highlight if user has clicked
