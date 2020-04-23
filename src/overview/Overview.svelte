@@ -1113,8 +1113,8 @@
       .attr("d", "M-5,-10L10,0L-5,10");
     
     console.time('Construct cnn');
-    model = await loadTrainedModel('/assets/data/model.json');
-    cnn = await constructCNN(`/assets/img/${selectedImage}`, model);
+    model = await loadTrainedModel('PUBLIC_URL/assets/data/model.json');
+    cnn = await constructCNN(`PUBLIC_URL/assets/img/${selectedImage}`, model);
     console.timeEnd('Construct cnn');
     cnnStore.set(cnn);
 
@@ -1159,7 +1159,7 @@
       selectedImage = newImageName;
 
       // Re-compute the CNN using the new input image
-      cnn = await constructCNN(`/assets/img/${selectedImage}`, model);
+      cnn = await constructCNN(`PUBLIC_URL/assets/img/${selectedImage}`, model);
 
       // Ignore the flatten layer for now
       let flatten = cnn[cnn.length - 2];
@@ -1490,7 +1490,7 @@
           class:inactive={selectedImage !== image.file}
           class:disabled={disableControl}
           data-imageName={image.file}>
-          <img src="/assets/img/{image.file}"
+          <img src="PUBLIC_URL/assets/img/{image.file}"
             alt="image option"
             title="{image.class}"
             data-imageName={image.file}/>
@@ -1505,7 +1505,7 @@
           on:click={disableControl ? () => {} : customImageClicked}>
 
           <img class="custom-image"
-            src="/assets/img/plus.svg"
+            src="PUBLIC_URL/assets/img/plus.svg"
             alt="plus button"
             title="Add new input image"
             data-imageName="custom"/>

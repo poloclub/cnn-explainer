@@ -4,6 +4,7 @@ import commonjs from 'rollup-plugin-commonjs';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
 import rollup_start_dev from './rollup_start_dev';
+import replace from '@rollup/plugin-replace';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -25,6 +26,8 @@ export default {
 				css.write('public/assets/css/bundle.css');
 			}
 		}),
+
+        replace({PUBLIC_URL: production ? '/cnn-explainer' : ''}),
 
 		// If you have external dependencies installed from
 		// npm, you'll most likely need these plugins. In

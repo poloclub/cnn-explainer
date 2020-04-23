@@ -160,7 +160,7 @@
       </div>
 
       <div class="annotation">
-        <img src='assets/img/pointer.svg' alt='pointer icon'>
+        <img src='PUBLIC_URL/assets/img/pointer.svg' alt='pointer icon'>
         <div class="annotation-text">
           <span style="font-weight:600">Hover over</span> the matrices to change kernel position.
         </div>

@@ -136,7 +136,7 @@ const constructNNFromJSON = (nnJSON, inputImageArray) => {
 export const constructNN = (inputImageFile) => {
   // Load the saved model file
   return new Promise((resolve, reject) => {
-    fetch('/assets/data/nn_10.json')
+    fetch('PUBLIC_URL/assets/data/nn_10.json')
       .then(response => {
         response.json().then(nnJSON => {
           getInputImageArray(inputImageFile)
@@ -466,7 +466,7 @@ const fullyConnect = (curLayer) => {
 }
 
 export const tempMain = async () => {
-  let nn = await constructNN('/assets/img/koala.jpeg');
+  let nn = await constructNN('PUBLIC_URL/assets/img/koala.jpeg');
   convolute(nn[1]);
   relu(nn[2])
   convolute(nn[3]);

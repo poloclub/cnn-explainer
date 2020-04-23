@@ -217,7 +217,7 @@
             stride={stride} dilation={dilation} padding={padding} isPaused={isPaused}/>
 
           <div class="annotation">
-            <img src='assets/img/pointer.svg' alt='pointer icon' width="25px">
+            <img src='PUBLIC_URL/assets/img/pointer.svg' alt='pointer icon' width="25px">
             <div class="annotation-text-hyper">
               <span style="font-weight:600">Hover over</span> the matrices to change kernel position.
             </div>
