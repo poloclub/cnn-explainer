@@ -61,7 +61,7 @@
     top: 5px;
     right: 15px;
     color: gray;
-    font-size: 24px;
+    font-size: 22px;
     opacity: 0.4;
     cursor: pointer;
   }
@@ -71,7 +71,7 @@
   }
 
   .box {
-    padding: 5px 15px 15px 15px;
+    padding: 5px 30px 20px 30px;
     position: relative;
   }
 
