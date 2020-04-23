@@ -58,7 +58,7 @@
 <style>
   .control-button {
     position: absolute;
-    top: 10px;
+    top: 5px;
     right: 15px;
     color: gray;
     font-size: 24px;
@@ -71,19 +71,21 @@
   }
 
   .box {
-    padding: 20px 15px 10px 15px;
+    padding: 5px 15px 15px 15px;
     position: relative;
   }
 
   .left-part {
     display: flex;
     flex-direction: column;
+    margin-top: 30px;
   }
 
   .right-part {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
   }
 
   .content-container {
@@ -99,7 +101,11 @@
     display: flex;
     align-items: center;
     padding-left : 10px;
-    font-size: 12px;
+  }
+
+  .annotation-text-hyper {
+    font-size: 15px;
+    font-style: italic;
   }
 
   .annotation > img {
@@ -107,10 +113,28 @@
     margin-right: 5px;
   }
 
+  .is-very-small {
+    font-size: 12px; 
+  }
+
+  .field {
+    align-items: center;
+  }
+
+  .field-label.is-normal {
+    padding-top: 0;
+  }
+
+  .field:not(:last-child) {
+    margin-bottom: 7px;
+  }
+
   label {
     display: inline-block;
     width: 105px;
     text-align: right;
+    font-weight: 500;
+    color: #4a4a4a;
   } 
 
   input[type=number] {
@@ -139,7 +163,7 @@
             <div class="field-label is-normal">
               <label class="label">Input Size:</label>
             </div>
-            <input class="input" type="number" bind:value={inputSize}
+            <input class="input is-very-small" type="number" bind:value={inputSize}
               min={kernelSize} max={7}>
           </div>
 
@@ -152,7 +176,7 @@
             <div class="field-label is-normal">
               <label class="label">Padding:</label>
             </div>
-            <input class="input" type="number" bind:value={padding} min={0}
+            <input class="input is-very-small" type="number" bind:value={padding} min={0}
               max={kernelSize - 1}>
           </div>
 
@@ -165,7 +189,7 @@
             <div class="field-label is-normal">
               <label class="label">Kernel Size:</label>
             </div>
-            <input class="input" type="number" bind:value={kernelSize} min={padding + 1}
+            <input class="input is-very-small" type="number" bind:value={kernelSize} min={padding + 1}
               max={inputSizeWithPadding}>
           </div>
 
@@ -178,7 +202,7 @@
             <div class="field-label is-normal">
               <label class="label">Stride:</label>
             </div>
-            <input class="input" type=number id="strideNumber" bind:value={stride} min=1
+            <input class="input is-very-small" type=number id="strideNumber" bind:value={stride} min=1
               max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
           </div>
 
@@ -194,7 +218,7 @@
 
           <div class="annotation">
             <img src='assets/img/pointer.svg' alt='pointer icon' width="25px">
-            <div class="annotation-text">
+            <div class="annotation-text-hyper">
               <span style="font-weight:600">Hover over</span> the matrices to change kernel position.
             </div>
           </div>

@@ -84,10 +84,21 @@
   .wrapper {
     display: flex;
     flex-direction: row;
+    align-items: flex-end;
   }
 
   .column {
     padding: 5px 10px 10px 10px;
+  }
+
+  .header-text {
+    line-height: 1.1;
+  }
+
+  .header-sub-text {
+    font-size: 13px;
+    color: #9a9a9a;
+    margin-bottom: 2px;
   }
 </style>
 
@@ -95,6 +106,8 @@
   <div class="column has-text-centered">
     <div class="header-text">
       Input ({image.length - 2 * padding}, {image.length - 2 * padding}) <br/>
+    </div>
+    <div class="header-sub-text">
       After-padding ({image.length}, {image.length})
     </div>
     <HyperparameterDataview on:message={handleMouseover} data={testImage} highlights={inputHighlights}
@@ -103,6 +116,9 @@
   <div class="column has-text-centered">
     <div class="header-text" style="padding-top: 27px;">
       Output ({output.length}, {output.length})
+    </div>
+    <div class="header-sub-text">
+      &nbsp;
     </div>
     <HyperparameterDataview on:message={handleMouseover} data={testOutput} highlights={outputHighlights}
         outputLength={output.length} stride={stride} padding={padding} isOutput={true} isStrideValid={isStrideValid}/>
