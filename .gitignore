@@ -6,3 +6,4 @@ public/assets/js/bundle.*
 public/assets/css/bundle.*
 *.swp
 yarn.lock
+dist/
