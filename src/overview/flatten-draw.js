@@ -542,7 +542,7 @@ const drawLogitLayer = (arg) => {
   let pos = getMidCoords(svg, anchorElement);
   let wholeSvg = d3.select('#cnn-svg');
   let svgYMid = +wholeSvg.style('height').replace('px', '') / 2;
-  let detailViewTop = 100 + svgYMid - 168 / 2;
+  let detailViewTop = 100 + svgYMid - 192 / 2;
 
   const detailview = document.getElementById('detailview');
   detailview.style.top = `${detailViewTop}px`;
@@ -886,19 +886,29 @@ const softmaxClicked = (arg) => {
           .attr('class', 'annotation-text softmax-detail-text softmax-hover-text')
           .style('text-anchor', 'start')
           .style('dominant-baseline', 'baseline')
-          .text(`Hover over to see`);
+          .append('tspan')
+          .style('font-weight', 700)
+          .style('dominant-baseline', 'baseline')
+          .text(`Hover over `)
+          .append('tspan')
+          .style('font-weight', 400)
+          .style('dominant-baseline', 'baseline')
+          .text('to see');
         
         hoverText.append('tspan')
+          .style('dominant-baseline', 'baseline')
           .attr('x', textX)
           .attr('dy', '1em')
           .text('its ');
 
         hoverText.append('tspan')
+          .style('dominant-baseline', 'baseline')
           .attr('dx', 1)
           .style('fill', '#E56014')
           .text('logit');
         
         hoverText.append('tspan')
+          .style('dominant-baseline', 'baseline')
           .attr('dx', 1)
           .text(' value');
         

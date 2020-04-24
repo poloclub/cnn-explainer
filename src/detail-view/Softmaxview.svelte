@@ -54,6 +54,13 @@
     dispatch('xClicked', {});
   }
 
+  function handleScroll() {
+    let svgHeight = Number(d3.select('#cnn-svg').style('height').replace('px', '')) + 150;
+    let scroll = new SmoothScroll('a[href*="#"]', {offset: -svgHeight});
+    let anchor = document.querySelector(`#article-softmax`);
+    scroll.animateScroll(anchor);
+  }
+
   onMount(() => {
     svg = d3.select(softmaxViewComponent)
       .select('#softmax-svg');
@@ -194,24 +201,44 @@
 </script>
 
 <style>
-  .control-button {
-    color: gray;
-    font-size: 15px;
-    opacity: 0.4;
+  .buttons {
     cursor: pointer;
     position: absolute;
     top: 6px;
     right: 10px;
   }
 
+  .control-button {
+    color: gray;
+    font-size: 15px;
+    opacity: 0.4;
+  }
+
   .control-button:hover {
     opacity: 0.8;
+  }
+
+  .control-button:not(:first-child) {
+    margin-left: 5px;
   }
 
   .title-text {
     font-size: 1.2em;
     font-weight: 500;
     color: #4a4a4a;
+  }
+
+  .annotation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left : 10px;
+    font-size: 12px;
+  }
+
+  .annotation > img {
+    width: 17px;
+    margin-right: 5px;
   }
 
   .box {
@@ -223,15 +250,21 @@
   }
 
   svg {
-    margin: 10px 0 5px 0;
+    margin: 10px 0 12px 0;
   }
 </style>
 
 <div class="container" bind:this={softmaxViewComponent}>
   <div class="box">
 
-    <div class="delete-button control-button" on:click={handleClickX}>
-      <i class="fas control-icon fa-times-circle"></i>
+    <div class="buttons">
+      <div class="control-button" on:click={handleScroll} title="Jump to article section">
+        <i class="fas fa-info-circle"></i>
+      </div>
+
+      <div class="delete-button control-button" on:click={handleClickX} title="Close">
+        <i class="fas control-icon fa-times-circle"></i>
+      </div>
     </div>
 
     <div class="title-text">
@@ -239,6 +272,13 @@
     </div>
 
     <svg id="softmax-svg" width="470" height="105"/>
+
+    <div class="annotation">
+      <img src='PUBLIC_URL/assets/img/pointer.svg' alt='pointer icon'>
+      <div class="annotation-text">
+        <span style="font-weight:600">Hover over</span> the numbers to highlight logit circles.
+      </div>
+    </div>
 
   </div>
 </div>
