@@ -7,3 +7,5 @@ public/assets/css/bundle.*
 *.swp
 yarn.lock
 dist/
+deploy-gh-page.sh
+local-build/
