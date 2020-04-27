@@ -158,6 +158,14 @@
     </p>
     <p>
 		The ReLU activation function is a one-to-one mathematical operation: {reluEquation}
+    </p>
+    <div class="figure">
+    <img src="PUBLIC_URL/assets/figures/relu_graph.png" alt="relu graph" width="30%" height="30%"/>
+      <div class="figure-caption">
+        Figure 3. The ReLU activation function graphed, which disregards all negative data.
+      </div>
+    </div>
+    <p>
 		This activation function is applied elementwise on every value from the input tensor.  For example, if applied ReLU on the value 2.24, the result would be 2.24, since 2.24 is larger than 0.  You can observe how this activation function is applied by clicking a ReLU neuron in the network above.  The Rectified Linear Activation function (ReLU) is performed after every convolutional layer in the network architecture outlined above.  Notice the impact this layer has on the activation map of various neurons throughout the network!
     </p>
     <h6 id='article-softmax'>Softmax</h6>
