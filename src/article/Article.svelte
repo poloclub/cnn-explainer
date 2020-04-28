@@ -72,7 +72,7 @@
     text-decoration: underline;
   }
 
-  .figure {
+  .figure, .video {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -213,7 +213,9 @@
       <li>2:00 - DODO</li>
       <li>etc.</li>
     </ol>
-    <Youtube videoId="g082-zitM7s" playerId="demo_video"/>
+    <div class="video">
+      <Youtube videoId="g082-zitM7s" playerId="demo_video"/>
+    </div>
 
     <h2>How is CNN Explainer implemented?</h2>
     <p>
