@@ -15,7 +15,7 @@
   import PoolView from '../detail-view/Poolview.svelte';
   import SoftmaxView from '../detail-view/Softmaxview.svelte';
   import Modal from './Modal.svelte'
-  import Article from '../Article.svelte';
+  import Article from '../article/Article.svelte';
 
   // Overview functions
   import { loadTrainedModel, constructCNN } from '../utils/cnn-tf.js';
