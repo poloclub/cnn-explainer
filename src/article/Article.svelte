@@ -219,5 +219,20 @@
     <p>
       CNN Explainer uses <a href="https://js.tensorflow.org/"><em>TensorFlow.js</em></a>, an in-browser GPU-accelerated deep learning library to load the pretrained model for visualization.  The entire interactive system is written in Javascript using <a href="https://svelte.dev/"><em>Svelte</em></a> as a framework and <a href="https://d3js.org/"><em>D3.js</em></a> for visualizations. You only need a web browser to get started learning CNNs today!
     </p>
+
+    <h2>Who developed CNN Explainer?</h2>
+    <p>
+      CNN Explainer was created by 
+      <a href="https://zijie.wang/">Jay Wang</a>,
+      <a href="https://www.linkedin.com/in/robert-turko/">Robert Turko</a>, 
+      <a href="http://oshaikh.com/">Omar Shaikh</a>,
+      <a href="https://haekyu.com/">Haekyu Park</a>,
+      <a href="http://nilakshdas.com/">Nilaksh Das</a>,
+      <a href="https://fredhohman.com/">Fred Hohman</a>,
+      <a href="http://minsuk.com">Minsuk Kahng</a>, and
+      <a href="https://www.cc.gatech.edu/~dchau/">Polo Chau</a>,
+      which was the result of a research collaboration between 
+      Georgia Tech and Oregon State.
+    </p>
   </div>
 </body>
