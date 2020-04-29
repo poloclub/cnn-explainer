@@ -84,19 +84,19 @@
 	<div class="icons">
 	
 		<div class="icon" title="Research paper">
-			<a target="_blank" href="https://www.google.com">
+			<a target="_blank" href="http://zijie.wang/redirect/cnn-explainer/">
 				<img src="PUBLIC_URL/assets/img/pdf.png" alt="pdf icon"/>
 			</a>
 		</div>
 
 		<div class="icon" title="Demo video">
-			<a target="_blank" href="https://www.google.com">
+			<a target="_blank" href="https://youtu.be/udVN7fPvGe0">
 				<img src="PUBLIC_URL/assets/img/youtube.png" alt="youtube icon"/>
 			</a>
 		</div>
 
 		<div class="icon" title="Open-source code">
-			<a target="_blank" href="https://www.google.com">
+			<a target="_blank" href="https://github.com/poloclub/cnn-explainer">
 				<img src="PUBLIC_URL/assets/img/github.png" alt="github icon"/>
 			</a>
 		</div>
