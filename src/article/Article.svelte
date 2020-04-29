@@ -200,7 +200,7 @@
     <div class="figure">
     <img src="PUBLIC_URL/assets/figures/softmax_animation.gif" alt="softmax interactive formula view"/>
       <div class="figure-caption">
-        Figure 4. The <em>Softmax Interactive Formula View</em> allows a user to interact with both the color encoded logits and formula to understand how the unscaled scalar values are normalized to yield classification scores.
+        Figure 4. The <em>Softmax Interactive Formula View</em> allows a user to interact with both the color encoded logits and formula to understand how the prediction scores after the flatten layer are normalized to yield classification scores.
       </div>
     </div>
     <h4 id='article-pooling'>Pooling Layers</h4>
