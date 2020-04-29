@@ -74,7 +74,7 @@
   }
 
   #description .video-link {
-    color: #a30b23;
+    color: #3273DC;
     cursor: pointer;
     font-weight: normal;
     text-decoration: none;
