@@ -6,7 +6,8 @@
     nodeCoordinateStore, selectedScaleLevelStore, cnnLayerRangesStore,
     needRedrawStore, cnnLayerMinMaxStore, detailedModeStore,
     shouldIntermediateAnimateStore, isInSoftmaxStore, softmaxDetailViewStore,
-    hoverInfoStore, allowsSoftmaxAnimationStore, modalStore
+    hoverInfoStore, allowsSoftmaxAnimationStore, modalStore,
+    intermediateLayerPositionStore
   } from '../stores.js';
 
   // Svelte views
@@ -106,6 +107,9 @@
 
   let hoverInfo = undefined;
   hoverInfoStore.subscribe( value => {hoverInfo = value;} )
+
+  let intermediateLayerPosition = undefined;
+  intermediateLayerPositionStore.subscribe ( value => {intermediateLayerPosition = value;} )
 
   let width = undefined;
   let height = undefined;
@@ -283,28 +287,24 @@
       }
       
       // Dynamically position the detail view
-      // let wholeSvg = d3.select('#cnn-svg');
-      // let svgYMid = +wholeSvg.style('height').replace('px', '') / 2;
-      // let svgWidth = +wholeSvg.style('width').replace('px', '');
-      // let detailViewTop = 100 + svgYMid - 220 / 2;
+      let wholeSvg = d3.select('#cnn-svg');
+      let svgYMid = +wholeSvg.style('height').replace('px', '') / 2;
+      let svgWidth = +wholeSvg.style('width').replace('px', '');
+      let detailViewTop = 100 + svgYMid - 250 / 2;
+      let positionX = intermediateLayerPosition[Object.keys(layerIndexDict)[curLayerIndex]];
 
-      // let posX = 0;
-      // if (curLayerIndex > 5) {
-      //   posX = (svgWidth - rightX - nodeLength) / 2;
-      //   posX = rightX + nodeLength + posX - 492 / 2;
-      // } else {
-      //   posX = (svgWidth - nodeCoordinate[curLayerIndex][0].x - nodeLength) / 2;
-      //   posX = nodeCoordinate[curLayerIndex][0].x + nodeLength + posX - 492 / 2;
-      // }
-
-      // const detailview = document.getElementById('detailview');
-      // detailview.style.top = `${detailViewTop}px`;
-      // detailview.style.left = `${rightX}px`;
-      // detailview.style.position = 'absolute';
+      let posX = 0;
+      if (curLayerIndex > 6) {
+        posX = (positionX - svgPaddings.left) / 2;
+        posX = svgPaddings.left + posX - 486 / 2;
+      } else {
+        posX = (svgWidth + svgPaddings.right - positionX) / 2;
+        posX = positionX + posX - 486 / 2;
+      }
 
       const detailview = document.getElementById('detailview');
-      detailview.style.top = `${detailedViewAbsCoords[curLayerIndex][1]}px`;
-      detailview.style.left = `${detailedViewAbsCoords[curLayerIndex][0]}px`;
+      detailview.style.top = `${detailViewTop}px`;
+      detailview.style.left = `${posX}px`;
       detailview.style.position = 'absolute';
 
       detailedViewNum = d.index;
