@@ -18,7 +18,8 @@
 	export let playerId = "player";
 
 	let player;
-	export function play(){
+	export function play(startSecond = 0){
+		player.seekTo(startSecond);
 		player.playVideo()
 	}
 	const dispatch = createEventDispatcher();

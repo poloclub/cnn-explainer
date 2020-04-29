@@ -4,6 +4,8 @@
 
 	let softmaxEquation = `$$\\text{Softmax}(x_{i}) = \\frac{\\exp(x_i)}{\\sum_j \\exp(x_j)}$$`;
 	let reluEquation = `$$\\text{ReLU}(x) = \\max(0,x)$$`;
+
+  let currentPlayer;
 </script>
 
 <style>
@@ -63,12 +65,30 @@
     line-height: 1.6;
   }
 
+  #description small {
+    font-size: 12px;
+  }
+
   #description ol li img {
     vertical-align: middle;
   }
+
+  #description .video-link {
+    color: #a30b23;
+    cursor: pointer;
+    font-weight: normal;
+    text-decoration: none;
+  }
+
+  #description ul {
+      list-style-type: disc;
+      margin-top: -10px;
+      margin-left: 40px;
+      margin-bottom: 15px;
+  }
     
   #description a:hover, 
-  #description .video-part-link:hover {
+  #description .video-link:hover {
     text-decoration: underline;
   }
 
@@ -208,13 +228,42 @@
     </ol> 
 
     <h2>Video Tutorial</h2>
-    <ol>
-      <li>1:00 - TODO</li>
-      <li>2:00 - DODO</li>
-      <li>etc.</li>
-    </ol>
+    <ul>
+      <li class="video-link" on:click={currentPlayer.play(0)}>
+        CNN Explainer Introduction
+        <small>(0:00-0:22)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(27)}>
+        <em>Overview</em>
+        <small>(0:27-0:37)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(37)}>
+        Convolutional <em>Elastic Explanation View</em>
+        <small>(0:37-0:46)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(46)}>
+        Convolutional, ReLU, and Pooling <em>Interactive Formula Views</em>
+        <small>(0:46-1:21)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(82)}>
+        Flatten <em>Elastic Explanation View</em>
+        <small>(1:22-1:41)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(101)}>
+        Softmax <em>Interactive Formula View</em>
+        <small>(1:41-2:02)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(126)}>
+        Engaging Learning Experience: Understanding Classification
+        <small>(2:06-2:28)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(149)}>
+        Interactive Tutorial Article
+        <small>(2:29-2:54)</small>
+      </li>
+    </ul>
     <div class="video">
-      <Youtube videoId="g082-zitM7s" playerId="demo_video"/>
+      <Youtube videoId="udVN7fPvGe0" playerId="demo_video" bind:this={currentPlayer}/>
     </div>
 
     <h2>How is CNN Explainer implemented?</h2>
