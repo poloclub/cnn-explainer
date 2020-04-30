@@ -283,7 +283,7 @@
       <a href="http://minsuk.com">Minsuk Kahng</a>, and
       <a href="https://www.cc.gatech.edu/~dchau/">Polo Chau</a>,
       which was the result of a research collaboration between 
-      Georgia Tech and Oregon State.
+      Georgia Tech and Oregon State.  We thank Anmol Chhabria, Kaan Sancak, Kantwon Rogers, and the Georgia Tech Visualization Lab for their support and constructive feedback.  This work was supported in part by NSF grants IIS-1563816, CNS-1704701, NASA NSTRF, DARPA GARD, gifts from Intel, NVIDIA, Google, Amazon.
     </p>
   </div>
 </body>
