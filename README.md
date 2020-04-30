@@ -3,7 +3,7 @@
 CNN Explainer is an interactive visualization system designed for non-experts
 to more easily learn about convolutional neural networks (CNNs).
 
-<a href="https://youtu.be/udVN7fPvGe0" target="_blank"><img src="./public/assets/figures/youtube-thumbnail.png" style="max-width:100%;"></a>
+<a href="https://youtu.be/udVN7fPvGe0" target="_blank"><img src="https://i.imgur.com/TIKlgt6.png" style="max-width:100%;"></a>
 
 ## Live Demo
 
