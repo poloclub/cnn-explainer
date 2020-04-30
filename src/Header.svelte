@@ -90,7 +90,7 @@
 		</div>
 
 		<div class="icon" title="Demo video">
-			<a target="_blank" href="https://youtu.be/udVN7fPvGe0">
+			<a target="_blank" href="https://youtu.be/HnWIHWFbuUQ">
 				<img src="PUBLIC_URL/assets/img/youtube.png" alt="youtube icon"/>
 			</a>
 		</div>

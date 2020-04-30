@@ -4,7 +4,7 @@ An interactive visualization system designed to help non-experts learn about Con
 
 [![Build Status](https://travis-ci.com/poloclub/cnn-explainer.svg?branch=master)](https://travis-ci.com/poloclub/cnn-explainer)
 
-<a href="https://youtu.be/udVN7fPvGe0" target="_blank"><img src="https://i.imgur.com/TIKlgt6.png" style="max-width:100%;"></a>
+<a href="https://youtu.be/HnWIHWFbuUQ" target="_blank"><img src="https://i.imgur.com/TIKlgt6.png" style="max-width:100%;"></a>
 
 ## Live Demo
 

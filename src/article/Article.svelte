@@ -263,7 +263,7 @@
       </li>
     </ul>
     <div class="video">
-      <Youtube videoId="udVN7fPvGe0" playerId="demo_video" bind:this={currentPlayer}/>
+      <Youtube videoId="HnWIHWFbuUQ" playerId="demo_video" bind:this={currentPlayer}/>
     </div>
 
     <h2>How is CNN Explainer implemented?</h2>
