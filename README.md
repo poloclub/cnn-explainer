@@ -17,7 +17,7 @@ Clone or download this repository:
 ```
 git clone git@github.com:poloclub/cnn-explainer.git
 
-# Or use degit, if you don't want to download commit histories
+# Use degit if you don't want to download commit histories
 degit poloclub/cnn-explainer
 ```
 
@@ -27,13 +27,13 @@ Install the dependencies:
 npm install
 ```
 
-Than run CNN Explainer:
+Then run CNN Explainer:
 
 ```
 npm run dev
 ```
 
-Navigate to [localhost:5000](https://localhost:5000). You should CNN Explainer running in your broswer :)
+Navigate to [localhost:5000](https://localhost:5000). You should see CNN Explainer running in your broswer :)
 
 To see how we trained the CNN, visit the directory [`./tiny-vgg/`](tiny-vgg).
 

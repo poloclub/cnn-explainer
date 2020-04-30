@@ -2,7 +2,7 @@
 
 This directory includes code and data to train a Tiny VGG model
 (inspired by the demo CNN in [Stanford CS231n class](http://cs231n.stanford.edu))
-on 10 every-day classes from the [Tiny ImageNet](https://tiny-imagenet.herokuapp.com).
+on 10 everyday classes from the [Tiny ImageNet](https://tiny-imagenet.herokuapp.com).
 
 ## Installation
 
@@ -55,7 +55,7 @@ First, you want to unzip `data.zip`. The file structure would be something like:
 To install all dependencies, run the following code
 
 ```
-conda env create --file environment.yml
+conda env create --file environment.yaml
 ```
 
 ## Training
@@ -66,14 +66,14 @@ To train Tiny VGG on these 10 classes, run the following code
 python tiny-vgg.py
 ```
 
-After training, you will get two trained models in Keras format `trained_tiny_vgg.h5`
+After training, you will get two saved models in Keras format: `trained_tiny_vgg.h5`
 and `trained_vgg_best.h5`. The first file is the final model after training, and
 `trained_vgg_best.h5` is the model having the best validation performance.
 You can use either one for CNN Explainer.
 
 ## Convert Model Format
 
-Before loading the model using *tensorflow.js*, you want to convert the model format
+Before loading the model using *tensorflow.js*, you want to convert the model file
 from Keras `h5` format to [tensorflow.js format](https://www.tensorflow.org/js/tutorials/conversion/import_keras).
 
 ```
