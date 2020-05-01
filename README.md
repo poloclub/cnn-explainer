@@ -3,8 +3,16 @@
 An interactive visualization system designed to help non-experts learn about Convolutional Neural Networks (CNNs)
 
 [![Build Status](https://travis-ci.com/poloclub/cnn-explainer.svg?branch=master)](https://travis-ci.com/poloclub/cnn-explainer)
+[![arxiv badge](https://img.shields.io/badge/arXiv-2004.15004-red)](http://arxiv.org/abs/2004.15004)
 
 <a href="https://youtu.be/HnWIHWFbuUQ" target="_blank"><img src="https://i.imgur.com/TIKlgt6.png" style="max-width:100%;"></a>
+
+For more information, check out our manuscript:
+
+[**CNN Explainer: Learning Convolutional Neural Networks with Interactive Visualization**](https://arxiv.org/abs/2004.15004).
+Wang, Zijie J., Robert Turko, Omar Shaikh, Haekyu Park, Nilaksh Das, Fred Hohman, Minsuk Kahng, and Duen Horng Chau.
+arXiv preprint 2020. arXiv:2004.15004.
+
 
 ## Live Demo
 
@@ -17,7 +25,7 @@ Clone or download this repository:
 ```
 git clone git@github.com:poloclub/cnn-explainer.git
 
-# Use degit if you don't want to download commit histories
+# use degit if you don't want to download commit histories
 degit poloclub/cnn-explainer
 ```
 
@@ -58,8 +66,22 @@ We thank
 [Georgia Tech Visualization Lab](http://vis.gatech.edu)
 for their support and constructive feedback.
  
-## License
+## Citation
+```
+@article{wangCNNExplainerLearning2020,
+  title = {{{CNN Explainer}}: {{Learning Convolutional Neural Networks}} with {{Interactive Visualization}}},
+  shorttitle = {{{CNN Explainer}}},
+  author = {Wang, Zijie J. and Turko, Robert and Shaikh, Omar and Park, Haekyu and Das, Nilaksh and Hohman, Fred and Kahng, Minsuk and Chau, Duen Horng},
+  year = {2020},
+  month = apr,
+  archivePrefix = {arXiv},
+  eprint = {2004.15004},
+  eprinttype = {arxiv},
+  journal = {arXiv:2004.15004 [cs]}
+}
+```
 
+## License
 The software is available under the [MIT License](https://github.com/poloclub/cnn-explainer/blob/master/LICENSE).
 
 ## Contact
