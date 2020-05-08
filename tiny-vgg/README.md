@@ -77,7 +77,7 @@ Before loading the model using *tensorflow.js*, you want to convert the model fi
 from Keras `h5` format to [tensorflow.js format](https://www.tensorflow.org/js/tutorials/conversion/import_keras).
 
 ```
-ensorflowjs_converter --input_format keras trained_vgg_best.h5 ./
+tensorflowjs_converter --input_format keras trained_vgg_best.h5 ./
 ```
 
 Then you can put the output file `group1-shard1of1.bin` in `/public/data` and use
