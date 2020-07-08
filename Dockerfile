@@ -1,10 +1,16 @@
-FROM node:7
+FROM node:12
 
-COPY package.json
+RUN mkdir workspace
+WORKDIR /workspace
+
+COPY package.json .
 
 RUN npm install
 
+COPY . .
+
 EXPOSE 5000
 
-CMD npm run dev
+#ENTRYPOINT npm 
+CMD ["npm", "run", "dev"]
 
