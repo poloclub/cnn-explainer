@@ -18,7 +18,7 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "start": "sirv public --single",
+    "start": "sirv public --single --host 0.0.0.0",
     "start:dev": "sirv public --single --dev"
   }
 }
