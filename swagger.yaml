@@ -1,0 +1,10 @@
+openapi: 3.0.1
+
+info:
+	title: CNN-Explainer
+	version: 0.0.1
+
+servers:
+	-url: https://cnn-explainer-wook-2.endpoint.ainize.ai
+
+
