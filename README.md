@@ -3,7 +3,9 @@
 ## Easy to experience cnn-explainer using Ainize
 1. Click below button  
 [![Run on Ainize](https://ainize.ai/static/images/run_on_ainize_button.svg)](https://ainize.web.app/redirect?git_repo=github.com/Wook-2/cnn-explainer)
-2. Click Base url link  <img src="https://github.com/Wook-2/cnn-explainer/blob/master/src/ainize_page.png" width="45%" height="30%"></img>
+2. Click Base url link  
+<img src="https://github.com/Wook-2/cnn-explainer/blob/master/src/ainize_page.png" width="45%" height="30%"></img>
+3. Now you can experience cnn-explainer!
 ---
 An interactive visualization system designed to help non-experts learn about Convolutional Neural Networks (CNNs)
 
