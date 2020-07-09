@@ -3,8 +3,8 @@
 ## Easy to experience cnn-explainer using Ainize
 1. Click below button  
 [![Run on Ainize](https://ainize.ai/static/images/run_on_ainize_button.svg)](https://ainize.web.app/redirect?git_repo=github.com/Wook-2/cnn-explainer)
-2. hi
-
+2. 
+---
 An interactive visualization system designed to help non-experts learn about Convolutional Neural Networks (CNNs)
 
 [![Build Status](https://travis-ci.com/poloclub/cnn-explainer.svg?branch=master)](https://travis-ci.com/poloclub/cnn-explainer)
