@@ -244,6 +244,7 @@
   }
 
   const intermediateNodeMouseLeaveHandler = (d, i, g) => {
+    // screenshot
     // return;
     if (detailedViewNum !== undefined) { return; }
     svg.select(`rect#underneath-gateway-${d.index}`)

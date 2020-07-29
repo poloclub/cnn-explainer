@@ -84,7 +84,7 @@
 	<div class="icons">
 	
 		<div class="icon" title="Research paper">
-			<a target="_blank" href="http://zijie.wang/redirect/cnn-explainer/">
+			<a target="_blank" href="https://arxiv.org/abs/2004.15004">
 				<img src="PUBLIC_URL/assets/img/pdf.png" alt="pdf icon"/>
 			</a>
 		</div>

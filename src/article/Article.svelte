@@ -181,7 +181,7 @@
   	The ReLU activation function is a one-to-one mathematical operation: {reluEquation}
     </p>
     <div class="figure">
-    <img src="PUBLIC_URL/assets/figures/relu_graph.svg" alt="relu graph" width="30%" height="30%"/>
+    <img src="PUBLIC_URL/assets/figures/relu_graph.png" alt="relu graph" width="30%" height="30%"/>
       <div class="figure-caption">
         Figure 3. The ReLU activation function graphed, which disregards all negative data.
       </div>

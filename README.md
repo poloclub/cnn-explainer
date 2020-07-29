@@ -13,7 +13,6 @@ For more information, check out our manuscript:
 Wang, Zijie J., Robert Turko, Omar Shaikh, Haekyu Park, Nilaksh Das, Fred Hohman, Minsuk Kahng, and Duen Horng Chau.
 arXiv preprint 2020. arXiv:2004.15004.
 
-
 ## Live Demo
 
 For a live demo, visit: http://poloclub.github.io/cnn-explainer/
@@ -22,7 +21,7 @@ For a live demo, visit: http://poloclub.github.io/cnn-explainer/
 
 Clone or download this repository:
 
-```
+```bash
 git clone git@github.com:poloclub/cnn-explainer.git
 
 # use degit if you don't want to download commit histories
@@ -31,19 +30,20 @@ degit poloclub/cnn-explainer
 
 Install the dependencies:
 
-```
+```bash
 npm install
 ```
 
 Then run CNN Explainer:
 
-```
+```bash
 npm run dev
 ```
 
 Navigate to [localhost:5000](https://localhost:5000). You should see CNN Explainer running in your broswer :)
 
 To see how we trained the CNN, visit the directory [`./tiny-vgg/`](tiny-vgg).
+If you want to use CNN Explainer with your own CNN model or image classes, see [#8](/../../issues/8) and [#14](/../../issues/14).
 
 ## Credits
 
@@ -65,9 +65,10 @@ We thank
 [Kantwon Rogers](https://www.kantwon.com), and the
 [Georgia Tech Visualization Lab](http://vis.gatech.edu)
 for their support and constructive feedback.
- 
+
 ## Citation
-```
+
+```bibTeX
 @article{wangCNNExplainerLearning2020,
   title = {{{CNN Explainer}}: {{Learning Convolutional Neural Networks}} with {{Interactive Visualization}}},
   shorttitle = {{{CNN Explainer}}},
@@ -82,10 +83,9 @@ for their support and constructive feedback.
 ```
 
 ## License
+
 The software is available under the [MIT License](https://github.com/poloclub/cnn-explainer/blob/master/LICENSE).
 
 ## Contact
 
-If you have any questions, feel free to [open an issue](https://github.com/poloclub/cnn-explainer/issues/new/choose) or contact [Jay Wang](https://www.zijie.wang).
-
-
+If you have any questions, feel free to [open an issue](https://github.com/poloclub/cnn-explainer/issues/new/choose) or contact [Jay Wang](https://zijie.wang).
