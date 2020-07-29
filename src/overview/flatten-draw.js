@@ -1151,7 +1151,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     let index = d.index;
 
     // screenshot
-    // if (index === 70) {return;}
+    // if (index === 32) {return;}
 
     // Update the hover info UI
     if (d.weight === undefined) {

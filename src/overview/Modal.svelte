@@ -178,8 +178,8 @@
             <label class="file-label">
               <input class="file-input" type="file" name="image"
                 accept=".png,.jpeg,.tiff,.jpg,.png"
-                on:change={imageUpload}
-                bind:files={files}>
+                bind:files={files}
+                on:change={imageUpload}>
               <span class="file-cta small-font">
                 <span class="file-icon">
                   <i class="fas fa-upload"></i>
