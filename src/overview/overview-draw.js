@@ -765,21 +765,21 @@ export const updateCNN = () => {
 
     let localLegendScale1 = d3.scaleLinear()
       .range([0, 2 * nodeLength + hSpaceAroundGap])
-      .domain([-range1, range1]);
+      .domain([-range1 / 2, range1 / 2]);
     
     let localLegendScale2 = d3.scaleLinear()
       .range([0, 3 * nodeLength + 2 * hSpaceAroundGap])
-      .domain([-range2, range2]);
+      .domain([-range2 / 2, range2 / 2]);
 
     let localLegendAxis1 = d3.axisBottom()
       .scale(localLegendScale1)
       .tickFormat(d3.format('.2f'))
-      .tickValues([-range1, 0, range1]);
+      .tickValues([-range1 / 2, 0, range1 / 2]);
     
     let localLegendAxis2 = d3.axisBottom()
       .scale(localLegendScale2)
       .tickFormat(d3.format('.2f'))
-      .tickValues([-range2, 0, range2]);
+      .tickValues([-range2 / 2, 0, range2 / 2]);
     
     svg.select(`g#local-legend-${i}-1`).select('g').call(localLegendAxis1);
     svg.select(`g#local-legend-${i}-2`).select('g').call(localLegendAxis2);
