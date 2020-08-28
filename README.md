@@ -11,7 +11,7 @@ For more information, check out our manuscript:
 
 [**CNN Explainer: Learning Convolutional Neural Networks with Interactive Visualization**](https://arxiv.org/abs/2004.15004).
 Wang, Zijie J., Robert Turko, Omar Shaikh, Haekyu Park, Nilaksh Das, Fred Hohman, Minsuk Kahng, and Duen Horng Chau.
-arXiv preprint 2020. arXiv:2004.15004.
+*IEEE Transactions on Visualization and Computer Graphics (TVCG), 2020.*
 
 ## Live Demo
 
@@ -73,12 +73,9 @@ for their support and constructive feedback.
   title = {{{CNN Explainer}}: {{Learning Convolutional Neural Networks}} with {{Interactive Visualization}}},
   shorttitle = {{{CNN Explainer}}},
   author = {Wang, Zijie J. and Turko, Robert and Shaikh, Omar and Park, Haekyu and Das, Nilaksh and Hohman, Fred and Kahng, Minsuk and Chau, Duen Horng},
-  year = {2020},
-  month = apr,
-  archivePrefix = {arXiv},
-  eprint = {2004.15004},
-  eprinttype = {arxiv},
-  journal = {arXiv:2004.15004 [cs]}
+  journal={IEEE Transactions on Visualization and Computer Graphics (TVCG)},
+  year={2020},
+  publisher={IEEE}
 }
 ```
 
