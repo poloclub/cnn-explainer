@@ -3,6 +3,7 @@ node_modules
 public/bundle.*
 package-lock.json
 public/assets/js/bundle.*
+public/assets/js/
 public/assets/css/bundle.*
 *.swp
 yarn.lock
