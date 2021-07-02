@@ -1415,7 +1415,7 @@
     image-rendering: crisp-edges;
   }
 
-  :global(.layer-label, .layer-detailed-label, .layer-intermediate-label) {
+  :global(.layer-label), :global(.layer-detailed-label), :global(.layer-intermediate-label) {
     font-size: 12px;
     opacity: 0.8;
     text-anchor: middle;
@@ -1433,7 +1433,7 @@
     opacity: 1;
   }
 
-  :global(.legend text, .legend line, .legend path) {
+  :global(.legend text), :global(.legend line), :global(.legend path) {
     opacity: 0.7;
   }
 
@@ -1450,8 +1450,9 @@
     stroke-width: 3px;
   }
 
-  :global(.bounding, .edge, .edge-group, foreignObject, .bounding-flatten,
-    .underneath-gateway, .input-annotation) {
+  :global(.bounding), :global(.edge), :global(.edge-group),
+  :global(foreignObject), :global(.bounding-flatten),
+  :global(.underneath-gateway), :global(.input-annotation) {
     transition: opacity 300ms ease-in-out;
   }
 
