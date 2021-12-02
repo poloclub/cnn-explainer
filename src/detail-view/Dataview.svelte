@@ -44,14 +44,14 @@
       .attr("width", function(d) { return d.width; })
       .attr("height", function(d) { return d.height; })
       .style("opacity", 0.8)
-      .style("fill", function(d) { 
+      .style("fill", function(d) {
         let normalizedValue = d.text;
         if (isInputLayer){
           normalizedValue = 1 - d.text;
         } else {
           normalizedValue = (d.text + dataRange / 2) / dataRange;
         }
-        return colorScale(normalizedValue); 
+        return colorScale(normalizedValue);
       })
       .on('mouseover', function(d) {
         if (data.length != outputLength) {
@@ -74,7 +74,7 @@
         .style("font-size", Math.floor(constraint / textConstraintDivisor) + "px")
         .attr("x", function(d) { return d.x + d.width / 2; })
         .attr("y", function(d) { return d.y + d.height / 2; })
-        .style("fill", function(d) { 
+        .style("fill", function(d) {
         let normalizedValue = d.text;
           if (isInputLayer){
             normalizedValue = 1 - d.text;
@@ -89,7 +89,9 @@
         })
         .style("text-anchor", "middle")
         .style("dominant-baseline", "middle")
-        .text(function(d) { return d.text; })
+        .text(function(d) {
+          return d.text.toString().replace('-', '－');
+        })
     }
   }
 
@@ -97,7 +99,7 @@
     if (data != oldData) {
       redraw();
       oldData = data;
-    }    
+    }
 
     if (highlights != oldHighlight) {
       var grid = d3.select(grid_final).select('#grid').select("svg")
