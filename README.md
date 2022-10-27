@@ -41,23 +41,23 @@ Then run CNN Explainer:
 npm run dev
 ```
 
-Navigate to [localhost:5000](https://localhost:5000). You should see CNN Explainer running in your broswer :)
+Navigate to [localhost:3000](https://localhost:3000). You should see CNN Explainer running in your broswer :)
 
 To see how we trained the CNN, visit the directory [`./tiny-vgg/`](tiny-vgg).
 If you want to use CNN Explainer with your own CNN model or image classes, see [#8](/../../issues/8) and [#14](/../../issues/14).
 
 ## Credits
 
-CNN Explainer was created by 
+CNN Explainer was created by
 <a href="https://zijie.wang/">Jay Wang</a>,
-<a href="https://www.linkedin.com/in/robert-turko/">Robert Turko</a>, 
+<a href="https://www.linkedin.com/in/robert-turko/">Robert Turko</a>,
 <a href="http://oshaikh.com/">Omar Shaikh</a>,
 <a href="https://haekyu.com/">Haekyu Park</a>,
 <a href="http://nilakshdas.com/">Nilaksh Das</a>,
 <a href="https://fredhohman.com/">Fred Hohman</a>,
 <a href="http://minsuk.com">Minsuk Kahng</a>, and
 <a href="https://www.cc.gatech.edu/~dchau/">Polo Chau</a>,
-which was the result of a research collaboration between 
+which was the result of a research collaboration between
 Georgia Tech and Oregon State.
 
 We thank
