@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "devDependencies": {
     "@rollup/plugin-replace": "^2.3.2",
+    "gh-pages": "^6.0.0",
     "rollup": "^1.27.13",
     "rollup-plugin-commonjs": "^10.0.0",
     "rollup-plugin-livereload": "^1.0.0",
@@ -19,6 +20,7 @@
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "start": "sirv public --single",
-    "start:dev": "sirv public --single --dev --port 3000"
+    "start:dev": "sirv public --single --dev --port 3000",
+    "deploy": "npx"
   }
 }
