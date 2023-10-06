@@ -13,7 +13,7 @@
     recommendation-count="10"
     similar-candidate-count="15"
     position-left="30"
-    display-delay="90000"
+    display-delay="30000"
     homepage-url="https://poloclub.github.io/"
   />
   <Header />
