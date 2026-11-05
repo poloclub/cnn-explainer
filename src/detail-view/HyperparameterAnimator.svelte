@@ -1,4 +1,5 @@
 <script>
+  import { t } from '../i18n.js';
   import { createEventDispatcher } from 'svelte';
   import { array1d, compute_input_multiplies_with_weight,
           generateOutputMappings, gridData
@@ -105,17 +106,17 @@
 <div class="wrapper">
   <div class="column has-text-centered">
     <div class="header-text">
-      Input ({image.length - 2 * padding}, {image.length - 2 * padding}) <br/>
+      {t("Input")} ({image.length - 2 * padding}, {image.length - 2 * padding}) <br/>
     </div>
     <div class="header-sub-text">
-      After-padding ({image.length}, {image.length})
+      {t("After-padding")} ({image.length}, {image.length})
     </div>
     <HyperparameterDataview on:message={handleMouseover} data={testImage} highlights={inputHighlights}
         outputLength={output.length} stride={stride} padding={padding} isStrideValid={isStrideValid}/>
   </div>
   <div class="column has-text-centered">
     <div class="header-text" style="padding-top: 27px;">
-      Output ({output.length}, {output.length})
+      {t("Output")} ({output.length}, {output.length})
     </div>
     <div class="header-sub-text">
       &nbsp;

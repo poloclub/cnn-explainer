@@ -1,4 +1,5 @@
 <script>
+  import { t, locale, changeLocale, languages } from './i18n.js';
 </script>
 
 <style>
@@ -52,6 +53,17 @@
     height: 100%;
     object-fit: contain;
 	}
+.language-picker { display: flex; gap: 6px; align-items: center; color: white; font-size: 13px; white-space: nowrap; }
+  .language-picker select { font: inherit; padding: 3px; }
+  @media (max-width: 1200px) {
+    #logo svg { display: none; }
+  }
+  @media (max-width: 540px) {
+    #logo-text { font-size: 20px; }
+    .icon { width: 20px; height: 20px; margin-left: 8px; }
+    .language-picker span { display: none; }
+    #header { padding: 0 10px; }
+  }
 </style>
 
 <div id="header">
@@ -75,29 +87,37 @@
 
 			<g filter="url(#chalk-texture)" transform="translate(0, 35)">
 				<text id="svg-logo-tagline">
-					Learn Convolutional Neural Network (CNN) in your browser! 
+					{t("Learn Convolutional Neural Network (CNN) in your browser!")}
 				</text>
 			</g>
 		</svg>
   </div>
 
 	<div class="icons">
+    <label class="language-picker">
+      <span>{t("Language")}</span>
+      <select aria-label={t("Language")} value={locale} on:change={event => changeLocale(event.target.value)}>
+        {#each languages as language}
+          <option value={language.code}>{language.name}</option>
+        {/each}
+      </select>
+    </label>
 	
-		<div class="icon" title="Research paper">
+		<div class="icon" title={t("Research paper")}>
 			<a target="_blank" href="https://arxiv.org/abs/2004.15004">
-				<img src="PUBLIC_URL/assets/img/pdf.png" alt="pdf icon"/>
+				<img src="PUBLIC_URL/assets/img/pdf.png" alt={t("pdf icon")}/>
 			</a>
 		</div>
 
-		<div class="icon" title="Demo video">
+		<div class="icon" title={t("Demo video")}>
 			<a target="_blank" href="https://youtu.be/HnWIHWFbuUQ">
-				<img src="PUBLIC_URL/assets/img/youtube.png" alt="youtube icon"/>
+				<img src="PUBLIC_URL/assets/img/youtube.png" alt={t("youtube icon")}/>
 			</a>
 		</div>
 
-		<div class="icon" title="Open-source code">
+		<div class="icon" title={t("Open-source code")}>
 			<a target="_blank" href="https://github.com/poloclub/cnn-explainer">
-				<img src="PUBLIC_URL/assets/img/github.png" alt="github icon"/>
+				<img src="PUBLIC_URL/assets/img/github.png" alt={t("github icon")}/>
 			</a>
 		</div>
 

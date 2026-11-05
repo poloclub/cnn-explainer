@@ -1,3 +1,4 @@
+import { t } from '../i18n.js';
 /* global d3 */
 
 import {
@@ -547,7 +548,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .attr('class', `kernel kernel-${ni}`)
       .attr('transform', `translate(${kernelRectX}, ${n.y})`);
 
-    let weightText = 'Kernel weights: [';
+    let weightText = t('Kernel weights: [');
     let f2 = d3.format('.2f');
     for (let r = 0; r < kernelMatrix.length; r++) {
       for (let c = 0; c < kernelMatrix[0].length; c++) {
@@ -673,10 +674,10 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
         .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
           d.bias, kernelColorGap))
         .on('mouseover', () => {
-          hoverInfoStore.set( {show: true, text: `Bias: ${formater(d.bias)}`} );
+          hoverInfoStore.set( {show: true, text: `${t("Bias: ")}${formater(d.bias)}`} );
         })
         .on('mouseleave', () => {
-          hoverInfoStore.set( {show: false, text: `Bias: ${formater(d.bias)}`} );
+          hoverInfoStore.set( {show: false, text: `${t("Bias: ")}${formater(d.bias)}`} );
         });
 
     // Link from bias to the plus symbol
@@ -698,10 +699,10 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
       .style('fill', gappedColorScale(layerColorScales.weight, kernelRange,
         d.bias, kernelColorGap))
       .on('mouseover', () => {
-        hoverInfoStore.set( {show: true, text: `Bias: ${formater(d.bias)}`} );
+        hoverInfoStore.set( {show: true, text: `${t("Bias: ")}${formater(d.bias)}`} );
       })
       .on('mouseleave', () => {
-        hoverInfoStore.set( {show: false, text: `Bias: ${formater(d.bias)}`} );
+        hoverInfoStore.set( {show: false, text: `${t("Bias: ")}${formater(d.bias)}`} );
       });
     
     // Link from bias to the plus symbol
@@ -746,7 +747,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .style('dominant-baseline', 'middle')
     .style('font-weight', 800)
     .style('opacity', '0.8')
-    .text('intermediate');
+    .text(t("intermediate"));
   
   intermediateLayer.append('g')
     .attr('class', 'animation-control')
@@ -779,7 +780,7 @@ const drawIntermediateLayer = (curLayerIndex, leftX, rightX, rightStart,
     .style('opacity', '0.7')
     .style('font-weight', 800)
     .append('tspan')
-    .text('intermediate')
+    .text(t("intermediate"))
     .append('tspan')
     .style('font-size', '8px')
     .style('font-weight', 'normal')
@@ -848,7 +849,7 @@ const drawIntermediateLayerAnnotation = (arg) => {
     .attr('class', 'kernel-annotation');
   
   kernelAnnotation.append('text')
-    .text('Kernel')
+    .text(t("Kernel"))
     .attr('class', 'annotation-text')
     .attr('x', leftX - 2.5 * kernelRectLength * 3)
     .attr('y', nodeCoordinate[curLayerIndex - 1][0].y + kernelRectLength * 3)
@@ -900,13 +901,13 @@ const drawIntermediateLayerAnnotation = (arg) => {
   
   slideText.append('tspan')
     .style('dominant-baseline', 'hanging')
-    .text('Slide kernel over input channel');
+    .text(t("Slide kernel over input channel"));
 
   slideText.append('tspan')
     .attr('x', sliderX)
     .attr('dy', '1em')
     .style('dominant-baseline', 'hanging')
-    .text('to get intermediate result');
+    .text(t("to get intermediate result"));
 
   // slideText.append('tspan')
   //   .attr('x', sliderX)
@@ -919,12 +920,12 @@ const drawIntermediateLayerAnnotation = (arg) => {
     .attr('dy', '1.2em')
     .style('dominant-baseline', 'hanging')
     .style('font-weight', 700)
-    .text('Click ');
+    .text(t("Click "));
   
   slideText.append('tspan')
     .style('dominant-baseline', 'hanging')
     .style('font-weight', 400)
-    .text('to learn more')
+    .text(t("to learn more"))
 
   drawArrow({
     group: group,
@@ -947,25 +948,25 @@ const drawIntermediateLayerAnnotation = (arg) => {
 
   slideText2.append('tspan')
     .style('dominant-baseline', 'hanging')
-    .text('Each input chanel');
+    .text(t("Each input chanel"));
 
   slideText2.append('tspan')
     .attr('x', sliderX)
     .attr('dy', '1em')
     .style('dominant-baseline', 'hanging')
-    .text('gets a different kernel');
+    .text(t("gets a different kernel"));
 
   slideText2.append('tspan')
     .attr('x', sliderX)
     .attr('dy', '1.3em')
     .style('font-weight', 700)
     .style('dominant-baseline', 'hanging')
-    .text('Hover over ');
+    .text(t("Hover over "));
 
   slideText2.append('tspan')
     .style('font-weight', 400)
     .style('dominant-baseline', 'hanging')
-    .text('to see value!')
+    .text(t("to see value!"))
 
   drawArrow({
     group: group,
@@ -1006,13 +1007,13 @@ const drawIntermediateLayerAnnotation = (arg) => {
   
   plusText.append('tspan')
     .style('dominant-baseline', 'hanging')
-    .text('Add up all intermediate');
+    .text(t("Add up all intermediate"));
   
   plusText.append('tspan')
     .attr('x', textX)
     .attr('dy', '1em')
     .style('dominant-baseline', 'hanging')
-    .text('results and then add bias');
+    .text(t("results and then add bias"));
   
   if (i === 9) {
     drawArrow({
@@ -1051,7 +1052,7 @@ const drawIntermediateLayerAnnotation = (arg) => {
     .attr('y', biasTextY)
     .style('text-anchor', 'middle')
     .style('dominant-baseline', i === 0 ? 'hanging' : 'baseline')
-    .text('Bias');
+    .text(t("Bias"));
 }
 
 /**

@@ -1,3 +1,4 @@
+import { t } from '../i18n.js';
 /* global d3, SmoothScroll */
 
 import {
@@ -117,7 +118,7 @@ const logitCircleMouseOverHandler = (i) => {
   // Update the hover info UI
   hoverInfoStore.set({
     show: true,
-    text: `Logit: ${formater(logits[i])}`
+    text: `${t("Logit: ")}${formater(logits[i])}`
   })
 
   // Highlight the text in the detail view
@@ -166,7 +167,7 @@ const logitCircleMouseLeaveHandler = (i) => {
   // Update the hover info UI
   hoverInfoStore.set({
     show: false,
-    text: `Logit: ${formater(logits[i])}`
+    text: `${t("Logit: ")}${formater(logits[i])}`
   })
 
   // Dehighlight the text in the detail view
@@ -555,7 +556,7 @@ const drawLogitLayer = (arg) => {
     logitColors: logits.map(d => layerColorScales.logit(logitColorScale(d))),
     selectedI: selectedI,
     highlightI: -1,
-    outputName: classList[selectedI],
+    outputName: t(classList[selectedI]),
     outputValue: cnn[layerIndexDict['output']][selectedI].output,
     startAnimation: {i: -1, duration: 0, hasInitialized: hasInitialized}
   })
@@ -739,21 +740,21 @@ const softmaxClicked = (arg) => {
           .attr('class', 'annotation-text softmax-detail-text')
           .style('dominant-baseline', 'baseline')
           .style('text-anchor', 'middle')
-          .text('Normalize ');
+          .text(t("Normalize "));
         
         text.append('tspan') 
           .attr('dx', 1)
           .style('fill', '#E56014')
-          .text('logits');
+          .text(t("logits"));
         
         text.append('tspan')
           .attr('dx', 1)
-          .text(' into');
+          .text(t(" into"));
 
         text.append('tspan')
           .attr('x', textX)
           .attr('dy', '1.1em')
-          .text('class probabilities');
+          .text(t("class probabilities"));
 
         if (selectedI === 0) {
           drawArrow({
@@ -815,11 +816,11 @@ const softmaxClicked = (arg) => {
           .attr('x', textX)
           .attr('y', (svgPaddings.top + vSpaceAroundGap) / 2 + 3)
           .style('text-anchor', 'start')
-          .text('Before')
+          .text(t("Before"))
           .append('tspan')
           .attr('x', textX)
           .attr('dy', '1em')
-          .text('normalization')
+          .text(t("normalization"))
 
 
         drawArrow({
@@ -838,11 +839,11 @@ const softmaxClicked = (arg) => {
           .attr('x', nodeCoordinate[layerIndexDict['output']][0].x - 35)
           .attr('y', (svgPaddings.top + vSpaceAroundGap) / 2 + 3)
           .style('text-anchor', 'end')
-          .text('After')
+          .text(t("After"))
           .append('tspan')
           .attr('x', nodeCoordinate[layerIndexDict['output']][0].x - 35)
           .attr('dy', '1em')
-          .text('normalization')
+          .text(t("normalization"))
 
         drawArrow({
           group: softmaxDetailAnnotation,
@@ -865,7 +866,7 @@ const softmaxClicked = (arg) => {
             .style('text-anchor', 'middle')
             .style('dominant-baseline', 'hanging')
             .style('opacity', 0)
-            .text(`${classList[i]}`);
+            .text(t(classList[i]));
         }
 
         let hoverTextGroup = softmaxDetailAnnotation.append('g')
@@ -889,17 +890,17 @@ const softmaxClicked = (arg) => {
           .append('tspan')
           .style('font-weight', 700)
           .style('dominant-baseline', 'baseline')
-          .text(`Hover over `)
+          .text(t("Hover over "))
           .append('tspan')
           .style('font-weight', 400)
           .style('dominant-baseline', 'baseline')
-          .text('to see');
+          .text(t("to see"));
         
         hoverText.append('tspan')
           .style('dominant-baseline', 'baseline')
           .attr('x', textX)
           .attr('dy', '1em')
-          .text('its ');
+          .text(t("its "));
 
         hoverText.append('tspan')
           .style('dominant-baseline', 'baseline')
@@ -910,7 +911,7 @@ const softmaxClicked = (arg) => {
         hoverText.append('tspan')
           .style('dominant-baseline', 'baseline')
           .attr('dx', 1)
-          .text(' value');
+          .text(t(" value"));
         
         drawArrow({
           group: hoverTextGroup,
@@ -1121,12 +1122,12 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     if (d.weight === undefined) {
       hoverInfo = {
         show: true,
-        text: `Pixel value: ${formater(flattenFactoredFDict[index])}`
+        text: `${t("Pixel value: ")}${formater(flattenFactoredFDict[index])}`
       };
     } else {
       hoverInfo = {
         show: true,
-        text: `Weight: ${formater(d.weight)}`
+        text: `${t("Weight: ")}${formater(d.weight)}`
       };
     }
     hoverInfoStore.set(hoverInfo);
@@ -1157,12 +1158,12 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     if (d.weight === undefined) {
       hoverInfo = {
         show: false,
-        text: `Pixel value: ${formater(flattenFactoredFDict[index])}`
+        text: `${t("Pixel value: ")}${formater(flattenFactoredFDict[index])}`
       };
     } else {
       hoverInfo = {
         show: false,
-        text: `Weight: ${formater(d.weight)}`
+        text: `${t("Weight: ")}${formater(d.weight)}`
       };
     }
     hoverInfoStore.set(hoverInfo);
@@ -1377,10 +1378,10 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('fill', gappedColorScale(layerColorScales.weight,
         flattenRange, d.bias, 0.35))
     .on('mouseover', () => {
-      hoverInfoStore.set( {show: true, text: `Bias: ${formater(d.bias)}`} );
+      hoverInfoStore.set( {show: true, text: `${t("Bias: ")}${formater(d.bias)}`} );
     })
     .on('mouseleave', () => {
-      hoverInfoStore.set( {show: false, text: `Bias: ${formater(d.bias)}`} );
+      hoverInfoStore.set( {show: false, text: `${t("Bias: ")}${formater(d.bias)}`} );
     })
     .on('click', () => { d3.event.stopPropagation(); });
   
@@ -1463,7 +1464,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('dominant-baseline', 'middle')
     .style('font-size', '12px')
     .style('opacity', 0.5)
-    .text('softmax');
+    .text(t("softmax"));
 
   // Draw the layer label
   let layerLabel = intermediateLayer.append('g')
@@ -1488,7 +1489,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('dominant-baseline', 'middle')
     .style('opacity', 0.8)
     .style('font-weight', 800)
-    .text('flatten');
+    .text(t("flatten"));
 
   let svgHeight = Number(d3.select('#cnn-svg').style('height').replace('px', '')) + 150;
   let scroll = new SmoothScroll('a[href*="#"]', {offset: -svgHeight});
@@ -1510,7 +1511,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     });
   
   detailedLabelGroup.append('title')
-    .text('Move to article section');
+    .text(t("Move to article section"));
 
   let detailedLabelText = detailedLabelGroup.append('text')
     .style('text-anchor', 'middle')
@@ -1518,7 +1519,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('opacity', '0.7')
     .style('font-weight', 800)
     .append('tspan')
-    .text('flatten');
+    .text(t("flatten"));
   
   let dimension = cnn[layerIndexDict['max_pool_2']].length * 
     cnn[layerIndexDict['max_pool_2']][0].output.length *
@@ -1619,7 +1620,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   
   plusText.append('tspan')
     .style('dominant-baseline', 'hanging')
-    .text('Add up all products');
+    .text(t("Add up all products"));
   
   plusText.append('tspan')
     .attr('x', textX)
@@ -1630,7 +1631,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   plusText.append('tspan')
     .style('fill', '#66a3c8')
     .style('dominant-baseline', 'hanging')
-    .text('element');
+    .text(t("element"));
 
   plusText.append('tspan')
     .style('dominant-baseline', 'hanging')
@@ -1639,7 +1640,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   plusText.append('tspan')
     .style('dominant-baseline', 'hanging')
     .style('fill', '#b58946')
-    .text('weight');
+    .text(t("weight"));
 
   plusText.append('tspan')
     .style('dominant-baseline', 'hanging')
@@ -1649,12 +1650,12 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('x', textX)
     .attr('dy', '1em')
     .style('dominant-baseline', 'hanging')
-    .text('and then ');
+    .text(t("and then "));
 
   plusText.append('tspan')
     .style('dominant-baseline', 'hanging')
     .style('fill', '#479d94')
-    .text('bias');
+    .text(t("bias"));
   
   drawArrow({
     group: plusAnnotation,
@@ -1677,7 +1678,7 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .attr('y', biasTextY)
     .style('text-anchor', 'middle')
     .style('dominant-baseline', 'baseline')
-    .text('Bias');
+    .text(t("Bias"));
   
   // Add annotation for the softmax symbol
   let softmaxAnnotation = intermediateLayerAnnotation.append('g')
@@ -1690,11 +1691,11 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
     .style('dominant-baseline', 'baseline')
     .style('text-anchor', 'middle')
     .style('font-weight', 700)
-    .text('Click ')
+    .text(t("Click "))
     .append('tspan')
     .attr('dx', 1)
     .style('font-weight', 400)
-    .text('to learn more');
+    .text(t("to learn more"));
 
   drawArrow({
     group: softmaxAnnotation,
@@ -1723,25 +1724,25 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
   let tempTspan = flattenText.append('tspan')
     .style('dominant-baseline', 'hanging')
     .style('font-weight', 700)
-    .text('Hover over ');
+    .text(t("Hover over "));
   
   tempTspan.append('tspan')
     .attr('dx', 1)
     .style('font-weight', 400)
     .style('dominant-baseline', 'hanging')
-    .text('matrix to');
+    .text(t("matrix to"));
   
   flattenText.append('tspan')
     .style('dominant-baseline', 'hanging')
     .attr('x', textX)
     .attr('dy', '1em')
-    .text('see how it is flattened');
+    .text(t("see how it is flattened"));
   
   flattenText.append('tspan')
     .style('dominant-baseline', 'hanging')
     .attr('x', textX)
     .attr('dy', '1em')
-    .text('into a 1D array!');
+    .text(t("into a 1D array!"));
 
   drawArrow({
     group: flattenAnnotation,
@@ -1765,19 +1766,19 @@ export const drawFlatten = (curLayerIndex, d, i, width, height) => {
 
   middleText.append('tspan')
     .style('dominant-baseline', 'hanging')
-    .text('Same flattening');
+    .text(t("Same flattening"));
   
   middleText.append('tspan')
     .style('dominant-baseline', 'hanging')
     .attr('x', textX)
     .attr('dy', '1em')
-    .text('operation for');
+    .text(t("operation for"));
 
   middleText.append('tspan')
     .style('dominant-baseline', 'hanging')
     .attr('x', textX)
     .attr('dy', '1em')
-    .text('each neuron');
+    .text(t("each neuron"));
 
   drawArrow({
     group: flattenAnnotation,

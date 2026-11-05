@@ -1,4 +1,5 @@
 <script>
+  import { t } from '../i18n.js';
   import { createEventDispatcher } from 'svelte';
   import { array1d, getMatrixSliceFromOutputHighlights,
     getVisualizationSizeConstraint, getMatrixSliceFromInputHighlights, gridData
@@ -84,7 +85,7 @@
 
 <div class="column has-text-centered">
   <div class="header-text">
-    Input ({image.length}, {image[0].length})
+    {t("Input")} ({image.length}, {image[0].length})
   </div>
   <Dataview on:message={handleMouseover} data={gridImage} highlights={inputHighlights} outputLength={output.length}
       isKernelMath={false} constraint={getVisualizationSizeConstraint(image.length)} dataRange={dataRange} stride={1}/>  
@@ -105,7 +106,7 @@
 </div>
 <div class="column has-text-centered">
   <div class="header-text">
-    Output ({output.length}, {output[0].length})
+    {t("Output")} ({output.length}, {output[0].length})
   </div>
   <Dataview on:message={handleMouseover} data={gridOutput} highlights={outputHighlights} isKernelMath={false} 
       outputLength={output.length} constraint={getVisualizationSizeConstraint(output.length)} dataRange={dataRange} stride={1}/>
