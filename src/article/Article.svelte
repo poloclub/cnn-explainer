@@ -199,6 +199,202 @@
   </div>
 </body>
 
+{:else if locale === 'ja'}
+<body>
+  <div id="description">
+    <h2>畳み込みニューラルネットワークとは？</h2>
+    <p>機械学習では、分類器がデータにクラスラベルを割り当てます。例えば、<em>画像分類器</em>は画像に写る物体に応じて、鳥や飛行機などのラベルを出力します。<em>畳み込みニューラルネットワーク</em>（Convolutional Neural Network、CNN）は、このような画像分類を得意とするニューラルネットワークです。</p>
+    <p>CNN は、データに含まれるパターンを認識するアルゴリズムです。ニューラルネットワークは通常、層状に並ぶニューロンで構成され、それぞれが学習可能な重みとバイアスを持ちます。まず基本的な構成要素を見てみましょう。</p>
+    <ol>
+      <li><strong>テンソル</strong>は、n 次元の行列と考えられます。上の CNN では、出力層以外のテンソルは三次元です。</li>
+      <li><strong>ニューロン</strong>は、複数の入力を受け取り、出力を生成する関数と考えられます。上の図では、ニューロンの出力を赤から青の色で示す<strong>活性化マップ</strong>として表しています。</li>
+      <li><strong>層</strong>は、同じ演算を行い、同じハイパーパラメーターを持つニューロンの集まりです。</li>
+      <li><strong>カーネルの重みとバイアス</strong>は、学習時に調整され、分類器がタスクやデータセットに適応できるようにします。各ニューロンは独自のパラメーターを使います。図では黄色から緑の発散カラースケールで表しています。ニューロンをクリックすると<em>対話型数式ビュー</em>で値を確認できます。<em>畳み込みの展開説明ビュー</em>でカーネルやバイアスにマウスを重ねても確認できます。</li>
+      <li>CNN は<strong>微分可能なスコア関数</strong>を表します。出力層では、それを<strong>クラスごとのスコア</strong>として表示しています。</li>
+    </ol>
+    <p>ニューラルネットワークを学んだことがあれば、これらの用語はおなじみかもしれません。CNN の特徴は、画像や画像に似たデータから学ぶのに適した畳み込み層を使うことです。CNN は、<a href="http://ijcsit.com/docs/Volume%207/vol7issue5/ijcsit20160705014.pdf">画像処理、分類、領域分割、物体検出</a>など、さまざまなコンピュータービジョンのタスクに利用されます。</p>
+    <p>CNN Explainer では、小さな CNN による画像分類を観察できます。小規模なので精度は完璧ではありませんが、入門には適しています。ここで使う <a href="http://cs231n.stanford.edu/">Tiny VGG</a> は、高性能な CNN と共通する層や演算を小さな規模で備え、仕組みを理解しやすくしています。</p>
+
+      <h2>ネットワークの各層は何をするのか？</h2>
+      <p>ネットワークを一層ずつ見ていきましょう。読みながら上の図をクリックしたり、マウスを重ねたりして、自由に操作してください。</p>
+      <h4 id='article-input'>入力層</h4>
+      <p>左端の入力層は、CNN に入力する画像を表します。RGB 画像を使うため、入力には赤・緑・青に対応する三つのチャネルがあります。上の <img class="is-rounded" width="12%" height="12%" src="PUBLIC_URL/assets/figures/network_details.png" alt="ネットワーク詳細ボタン"/> ボタンをクリックすると、この層や他の層のサイズ、カラースケールなどの詳細を表示できます。</p>
+      <h4 id='article-convolution'>畳み込み層</h4>
+      <p>畳み込み層は CNN の基盤です。学習済みのカーネル（重み）を使い、画像を区別するための特徴を抽出します。畳み込み層を操作すると、前の層からの接続が表示されます。各接続は異なるカーネルを表し、畳み込み演算によって現在のニューロンの出力、すなわち活性化マップを生成します。</p>
+    <p>各カーネルと、前の層の対応するチャネルにある局所領域を要素ごとに掛け合わせ、その和を求めます。カーネルごとに一つの中間結果が得られます。すべての中間結果を要素ごとに足し、学習済みのバイアスを加えると、畳み込みニューロンの出力になります。</p>
+    <p>上の Tiny VGG の最初の畳み込み層には 10 個のニューロンがあり、前の層には 3 個あります。このネットワークでは、各畳み込みニューロンは前の層の全チャネルと接続しています。最初の畳み込み層の一番上の活性化マップにマウスを重ねると、三つの異なるカーネルが使われていることが分かります。</p>
+    <div class="figure">
+      <img src="PUBLIC_URL/assets/figures/convlayer_overview_demo.gif" alt="最初の畳み込み層の一番上の活性化マップを選択" width=60% height=60% align="middle"/>
+      <div class="figure-caption">図 1：最初の畳み込み層の一番上の活性化マップにマウスを重ねると、三つのカーネルが表示されます。クリックすると、それぞれの畳み込み演算を確認できます。</div>
+    </div>
+
+    <p>カーネルサイズは、ネットワークの設計者が指定するハイパーパラメーターです。活性化マップを生成するには、学習済みカーネルと前の層の局所領域を要素ごとに掛け合わせ、和を求めます。Tiny VGG のストライドは 1 なので、演算のたびにカーネルを 1 ピクセル動かします。ストライドはデータに合わせて調整できます。三つのカーネルすべてにこの操作を行い、三つの中間結果を得ます。</p>
+    <div class="figure">
+      <img src="PUBLIC_URL/assets/figures/convlayer_detailedview_demo.gif" alt="最初の畳み込み層の一番上の活性化マップを選択" />
+      <div class="figure-caption">図 2：入力にカーネルを適用し、対象の活性化マップの一番上の中間結果を計算しています。</div>
+    </div>
+    <p>次に、三つの中間結果を要素ごとに足し、学習したバイアスを加えます。得られた二次元テンソルが、最初の畳み込み層の一番上のニューロンの活性化マップです。他のニューロンの活性化マップも同じ方法で生成します。</p>
+    <p>したがって、最初の畳み込み層では、3 × 3 のカーネルを 3 × 10 = 30 個使います。前の層との接続方法はネットワーク設計の一部であり、必要なカーネル数に影響します。図のさまざまな部分をクリックし、上の例をたどって畳み込み演算を確認してみましょう。</p>
+    <h6>ハイパーパラメーターを理解する</h6>
+    <p><HyperparameterView/></p>
+    <ol>
+      <li><strong>パディング（Padding）</strong>は、カーネルが活性化マップの境界を越える場合に使います。境界付近の情報を保持し、<a href="https://arxiv.org/pdf/1603.07285.pdf">入力の空間サイズを維持する</a>のに役立つため、より深いネットワークを設計できます。<a href="https://arxiv.org/pdf/1811.11718.pdf">さまざまな方法</a>がありますが、簡単で計算効率のよいゼロパディングが広く使われます。入力の周囲に対称にゼロを追加する方法で、<a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf">AlexNet</a> などでも採用されています。</li>
+      <li><strong>カーネルサイズ（Kernel size）</strong>はフィルターサイズとも呼ばれ、入力上を動く窓の大きさです。小さいカーネルは細かな局所特徴を捉えます。上の例では出力サイズの減少も小さいため、層を深く重ねられます。大きいカーネルは広い範囲の特徴に適しますが、この設定では空間サイズを速く縮小します。タスクやデータセットに合わせて選ぶ必要があります。画像分類では小さいカーネルにより、<a href="https://arxiv.org/pdf/1409.1556.pdf">多くの層を重ねて複雑な特徴を学習</a>しやすくなります。</li>
+      <li><strong>ストライド（Stride）</strong>は、カーネルを一度に動かすピクセル数です。Tiny VGG の畳み込み層はストライド 1 を使います。3 × 3 の領域で積和を計算し、次の演算では右へ 1 ピクセル動かします。小さいストライドでは多くの位置から情報を取り出せるため、出力の空間サイズも大きくなります。大きいストライドでは位置の間隔が広がり、出力が小さくなります。設計時には、選んだストライドで窓が入力の境界に適切に揃うことも確認します。上のデモで入力サイズ、カーネルサイズ、ストライドを変えてみましょう。</li>
+    </ol>
+    <h4>活性化関数</h4>
+    <h6 id='article-relu'>ReLU</h6>
+    <p>深い CNN は、層を重ねることで多くの特徴を学習します。その<a href="https://arxiv.org/pdf/1512.03385.pdf">高い精度</a>を支える重要な要素が非線形性です。ReLU は非線形性を導入し、非線形な決定境界を表現できるようにします。非線形な活性化関数がなければ、線形な層をいくつ重ねても全体は線形変換のままです。また、<em>Sigmoid</em> などと比べ、ReLU を使う CNN は通常より速く学習できることが<a href="https://arxiv.org/pdf/1906.01975.pdf">実験で示されています</a>。</p>
+    <p>ReLU 活性化関数は、各要素に次の演算を行います：{reluEquation}</p>
+    <div class="figure">
+    <img src="PUBLIC_URL/assets/figures/relu_graph.png" alt="ReLU 関数のグラフ" width="30%" height="30%"/>
+      <div class="figure-caption">図 3：ReLU 活性化関数は、すべての負の値を 0 にします。</div>
+    </div>
+    <p>ReLU は入力テンソルの各要素に作用します。例えば 2.24 は 0 より大きいので出力も 2.24 です。負の値は 0 になります。上の ReLU ニューロンをクリックすると、この操作を観察できます。このネットワークでは各畳み込み層の後に ReLU（整流線形ユニット）を適用します。活性化マップがどのように変わるか確認してください。</p>
+    <h6 id='article-softmax'>Softmax</h6>
+    <p>{softmaxEquation} Softmax は、出力の合計が 1 になるようにスコアを変換し、クラス確率として扱えるようにします。最後の層をクリックすると演算を確認できます。平坦化後の logit（正規化前のスカラー値）は、0 から 1 の間に制限されていません。薄いオレンジから濃いオレンジのカラースケールで表しています。Softmax を通すと、各クラスに確率が対応します。</p>
+    <p>通常の正規化と Softmax はどう違うのでしょうか。どちらも値を 0 から 1 の範囲に調整できますが、学習では誤差逆伝播のために微分可能な関数が必要です。Softmax は argmax の滑らかで微分可能な代わりとして考えられます。指数関数によって大きな logit を強調する点が、単純な線形スケーリングと異なります。</p>
+    <div class="figure">
+    <img src="PUBLIC_URL/assets/figures/softmax_animation.gif" alt="Softmax の対話型数式ビュー"/>
+      <div class="figure-caption">図 4：Softmax の対話型数式ビューでは、色で表した logit と数式を操作し、クラススコアが確率に変換される仕組みを学べます。</div>
+    </div>
+    <h4 id='article-pooling'>プーリング層</h4>
+    <p>プーリングにはいくつかの種類がありますが、いずれも特徴マップの空間サイズを徐々に小さくし、後続の層のパラメーター数や計算量を減らします。上の Tiny VGG は最大プーリング（Max-Pooling）を使います。</p>
+    <p>最大プーリングでは、窓のサイズとストライドを指定します。窓を入力上で動かし、各窓内の最大値だけを出力します。上のプーリングニューロンをクリックすると、この操作を観察できます。</p>
+    <p>ここでは 2 × 2 の窓とストライド 2 を使い、各領域で最大値を一つ残すため、活性化値の数は 75% 減少します。これにより計算効率が上がり、過学習の抑制にも役立ちます。</p>
+    <h4 id='article-flatten'>平坦化層</h4>
+    <p>平坦化層（Flatten）は、三次元テンソルを一次元ベクトルに変換し、分類に使う全結合層へ渡します。例えば 5 × 5 × 2 のテンソルは長さ 50 のベクトルになります。畳み込み層が抽出した特徴を平坦化し、全結合層でクラスごとのスコアを計算した後、Softmax で確率に変換します。出力クラスをクリックすると、この層を確認できます。</p>
+
+    <h2>対話機能</h2>
+    <ol>
+      <li><strong>自分の画像をアップロード：</strong><img class="icon is-rounded" src="PUBLIC_URL/assets/figures/upload_image_icon.png" alt="画像アップロードボタン"/> をクリックし、画像が 10 クラスのどれに分類されるかを確認できます。ニューロンを調べることで、活性化マップや抽出した特徴を理解できます。</li>
+      <li><strong>活性化マップのカラースケールを変更：</strong><img class="is-rounded" width="12%" height="12%" src="PUBLIC_URL/assets/figures/heatmap_scale.png" alt="カラースケール範囲の選択"/> を調整し、異なる抽象度での活性化値を比較できます。</li>
+      <li><strong>ネットワークの詳細を確認：</strong><img class="is-rounded" width="12%" height="12%" src="PUBLIC_URL/assets/figures/network_details.png" alt="ネットワーク詳細ボタン"/> をクリックすると、層のサイズやカラースケールを表示できます。</li>
+      <li><strong>演算をシミュレーション：</strong><img class="icon is-rounded" src="PUBLIC_URL/assets/figures/play_button.png" alt="再生ボタン"/> でアニメーションを再生できます。<em>対話型数式ビュー</em>で入力や出力にマウスを重ねると、それぞれの対応関係や演算を確認できます。</li>
+      <li><strong>各層の役割を学習：</strong><em>対話型数式ビュー</em>の <img class="icon is-rounded" src="PUBLIC_URL/assets/figures/info_button.png" alt="説明ボタン"/> をクリックすると、記事の該当箇所に移動します。</li>
+    </ol>
+
+    <h2>動画チュートリアル（英語）</h2>
+    <ul>
+      <li class="video-link" on:click={currentPlayer.play(0)}>CNN Explainer の紹介 <small>(0:00–0:22)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(27)}><em>概要</em> <small>(0:27–0:37)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(37)}>畳み込みの<em>展開説明ビュー</em> <small>(0:37–0:46)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(46)}>畳み込み・ReLU・プーリングの<em>対話型数式ビュー</em> <small>(0:46–1:21)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(82)}>平坦化の<em>展開説明ビュー</em> <small>(1:22–1:41)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(101)}>Softmax の<em>対話型数式ビュー</em> <small>(1:41–2:02)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(126)}>対話しながら分類を理解する <small>(2:06–2:28)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(149)}>対話型チュートリアル記事 <small>(2:29–2:54)</small></li>
+    </ul>
+    <div class="video">
+      <Youtube videoId="HnWIHWFbuUQ" playerId="demo_video" bind:this={currentPlayer}/>
+    </div>
+
+    <h2>CNN Explainer はどのように実装されているのか？</h2>
+    <p>CNN Explainer は、ブラウザー内で GPU による高速化が可能な深層学習ライブラリー <a href="https://js.tensorflow.org/">TensorFlow.js</a> を使い、学習済みモデルを読み込んで可視化します。システムは JavaScript で記述され、<a href="https://svelte.dev/">Svelte</a> をフレームワークに、<a href="https://d3js.org/">D3.js</a> を可視化に使用しています。ブラウザーがあれば CNN の学習を始められます。</p>
+
+    <h2>CNN Explainer の開発者</h2>
+    <p>CNN Explainer は <a href="https://zijie.wang/">Jay Wang</a>、<a href="https://www.linkedin.com/in/robert-turko/">Robert Turko</a>、<a href="http://oshaikh.com/">Omar Shaikh</a>、<a href="https://haekyu.com/">Haekyu Park</a>、<a href="http://nilakshdas.com/">Nilaksh Das</a>、<a href="https://fredhohman.com/">Fred Hohman</a>、<a href="http://minsuk.com">Minsuk Kahng</a>、<a href="https://www.cc.gatech.edu/~dchau/">Polo Chau</a> が制作した、ジョージア工科大学とオレゴン州立大学の共同研究の成果です。Anmol Chhabria、Kaan Sancak、Kantwon Rogers、ジョージア工科大学可視化研究室の支援と建設的な意見に感謝します。本研究は NSF 助成 IIS-1563816、CNS-1704701、NASA NSTRF、DARPA GARD、および Intel、NVIDIA、Google、Amazon からの支援を一部受けています。</p>
+  </div>
+</body>
+
+{:else if locale === 'de'}
+<body>
+  <div id="description">
+    <h2>Was ist ein Convolutional Neural Network?</h2>
+    <p>Beim maschinellen Lernen weist ein Klassifikator einem Datenpunkt eine Klasse zu. Ein <em>Bildklassifikator</em> erkennt zum Beispiel, ob ein Bild einen Vogel oder ein Flugzeug zeigt. Ein <em>Convolutional Neural Network</em> (CNN), auf Deutsch ein faltendes neuronales Netz, eignet sich besonders gut für solche Aufgaben.</p>
+    <p>Ein CNN ist ein neuronales Netz: ein Algorithmus, der Muster in Daten erkennt. Solche Netze bestehen gewöhnlich aus Neuronen, die in Schichten angeordnet sind und lernbare Gewichte und Bias-Werte besitzen. Betrachten wir zunächst die Grundbausteine.</p>
+    <ol>
+      <li>Ein <strong>Tensor</strong> lässt sich als n-dimensionale Matrix verstehen. Im Netz oben sind die Tensoren mit Ausnahme der Ausgabeschicht dreidimensional.</li>
+      <li>Ein <strong>Neuron</strong> lässt sich als Funktion verstehen, die mehrere Eingaben verarbeitet und eine Ausgabe erzeugt. Oben werden die Ausgaben als rot bis blau eingefärbte <strong>Aktivierungskarten</strong> dargestellt.</li>
+      <li>Eine <strong>Schicht</strong> ist eine Gruppe von Neuronen, die dieselbe Operation mit denselben Hyperparametern ausführen.</li>
+      <li><strong>Kernelgewichte und Bias-Werte</strong> werden beim Training angepasst, damit der Klassifikator die Aufgabe und den Datensatz erlernen kann. Jedes Neuron verwendet eigene Parameter. Sie werden durch eine divergierende Farbskala von Gelb bis Grün dargestellt. Ein Klick auf ein Neuron zeigt konkrete Werte in der <em>interaktiven Formelansicht</em>. Auch in der <em>aufgeklappten Faltungsansicht</em> lassen sich Werte durch Überfahren von Kernel oder Bias anzeigen.</li>
+      <li>Ein CNN stellt eine <strong>differenzierbare Bewertungsfunktion</strong> dar. Ihre Ergebnisse erscheinen in der Ausgabeschicht als <strong>Klassenwerte</strong>.</li>
+    </ol>
+    <p>Wer neuronale Netze kennt, hat diese Begriffe möglicherweise schon gehört. Was zeichnet ein CNN aus? Es nutzt Faltungsschichten, die sich besonders zum Lernen aus Bildern und ähnlichen Daten eignen. Einsatzgebiete sind etwa <a href="http://ijcsit.com/docs/Volume%207/vol7issue5/ijcsit20160705014.pdf">Bildverarbeitung, Klassifikation, Segmentierung und Objekterkennung</a>.</p>
+    <p>CNN Explainer zeigt, wie ein kleines CNN Bilder klassifiziert. Seine Genauigkeit ist begrenzt, doch gerade die geringe Größe erleichtert den Einstieg. Die Architektur <a href="http://cs231n.stanford.edu/">Tiny VGG</a> enthält viele Schichten und Operationen, die auch größere leistungsfähige CNNs verwenden, nur in kleinerem Maßstab.</p>
+
+      <h2>Welche Aufgabe hat jede Schicht?</h2>
+      <p>Gehen wir die Schichten nacheinander durch. Klicken Sie beim Lesen auf Teile der Visualisierung oder bewegen Sie die Maus darüber, um die Operationen zu erkunden.</p>
+      <h4 id='article-input'>Eingabeschicht</h4>
+      <p>Die Schicht ganz links zeigt das Eingabebild des CNN. Da wir RGB-Bilder verwenden, besitzt sie drei Kanäle für Rot, Grün und Blau. Klicken Sie oben auf <img class="is-rounded" width="12%" height="12%" src="PUBLIC_URL/assets/figures/network_details.png" alt="Netzwerkdetails"/>, um Größenangaben und Farbskalen für diese und andere Schichten einzublenden.</p>
+      <h4 id='article-convolution'>Faltungsschichten</h4>
+      <p>Faltungsschichten bilden die Grundlage eines CNN. Sie verwenden gelernte Kernel (Gewichte), um Merkmale zu extrahieren, die Bilder voneinander unterscheiden. Beim Erkunden sehen Sie Verbindungen von der vorherigen zur aktuellen Schicht. Jede Verbindung steht für einen eigenen Kernel, dessen Faltung zur Ausgabe beziehungsweise Aktivierungskarte des aktuellen Neurons beiträgt.</p>
+    <p>Jeder Kernel wird elementweise mit einem lokalen Ausschnitt des zugehörigen Eingabekanals multipliziert; anschließend werden die Produkte summiert. Pro Kernel entsteht ein Zwischenergebnis. Die elementweise Summe aller Zwischenergebnisse zuzüglich des gelernten Bias ergibt die Ausgabe des Faltungsneurons.</p>
+    <p>Die erste Faltungsschicht von Tiny VGG besitzt 10 Neuronen, die vorherige Schicht 3. Jedes Faltungsneuron ist hier mit allen Kanälen der vorherigen Schicht verbunden. Wenn Sie die oberste Aktivierungskarte der ersten Faltungsschicht mit der Maus überfahren, sehen Sie die drei verschiedenen Kernel, die dafür verwendet werden.</p>
+    <div class="figure">
+      <img src="PUBLIC_URL/assets/figures/convlayer_overview_demo.gif" alt="Auswahl der obersten Aktivierungskarte der ersten Faltungsschicht" width=60% height=60% align="middle"/>
+      <div class="figure-caption">Abbildung 1: Beim Überfahren der obersten Aktivierungskarte in der ersten Faltungsschicht erscheinen die drei beteiligten Kernel. Ein Klick zeigt die jeweilige Faltungsoperation.</div>
+    </div>
+
+    <p>Die Kernelgröße ist ein Hyperparameter, den die Architektur festlegt. Zur Berechnung einer Aktivierungskarte wird jeder gelernte Kernel über lokale Bereiche der vorherigen Ausgabe geschoben und dort die Summe der elementweisen Produkte gebildet. Tiny VGG verwendet die Schrittweite 1: Der Kernel bewegt sich jeweils um einen Pixel. Diese Schrittweite kann an den Datensatz angepasst werden. Drei Kernel liefern hier drei Zwischenergebnisse.</p>
+    <div class="figure">
+      <img src="PUBLIC_URL/assets/figures/convlayer_detailedview_demo.gif" alt="Auswahl der obersten Aktivierungskarte der ersten Faltungsschicht" />
+      <div class="figure-caption">Abbildung 2: Ein Kernel wird auf die Eingabe angewendet und erzeugt das oberste Zwischenergebnis für die betrachtete Aktivierungskarte.</div>
+    </div>
+    <p>Anschließend werden die drei Zwischenergebnisse elementweise addiert und um den gelernten Bias ergänzt. Der entstehende zweidimensionale Tensor ist die Aktivierungskarte des obersten Neurons in der ersten Faltungsschicht. Die anderen Aktivierungskarten entstehen auf dieselbe Weise.</p>
+    <p>Insgesamt verwendet die erste Faltungsschicht also 3 × 10 = 30 verschiedene Kernel der Größe 3 × 3. Die Verbindungen zur vorherigen Schicht sind eine Architekturentscheidung und bestimmen die Anzahl der Kernel mit. Erkunden Sie die Visualisierung und verfolgen Sie das Beispiel Schritt für Schritt.</p>
+    <h6>Hyperparameter verstehen</h6>
+    <p><HyperparameterView/></p>
+    <ol>
+      <li><strong>Padding</strong> wird verwendet, wenn ein Kernel über die Grenzen der Aktivierungskarte hinausreichen würde. Es hilft, Randinformationen zu erhalten und die <a href="https://arxiv.org/pdf/1603.07285.pdf">räumliche Größe der Eingabe beizubehalten</a>, sodass tiefere Netze möglich werden. Es gibt <a href="https://arxiv.org/pdf/1811.11718.pdf">verschiedene Padding-Verfahren</a>. Häufig wird wegen seiner Einfachheit und Effizienz Zero-Padding eingesetzt: Dabei werden symmetrisch Nullen um die Eingabe ergänzt. Auch <a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf">AlexNet</a> verwendet dieses Verfahren.</li>
+      <li>Die <strong>Kernelgröße</strong>, auch Filtergröße genannt, beschreibt die Abmessungen des gleitenden Fensters. Kleine Kernel erfassen feine lokale Merkmale. Im Beispiel oben verkleinern sie die räumlichen Abmessungen weniger stark, sodass mehr Schichten möglich sind. Größere Kernel erfassen größere Strukturen, reduzieren hier aber die räumliche Größe schneller. Die Wahl hängt von Aufgabe und Datensatz ab. Kleine Kernel ermöglichen bei der Bildklassifikation häufig, <a href="https://arxiv.org/pdf/1409.1556.pdf">mehr Schichten zu kombinieren und komplexere Merkmale zu lernen</a>.</li>
+      <li>Die <strong>Schrittweite (Stride)</strong> gibt an, um wie viele Pixel sich der Kernel pro Schritt bewegt. Tiny VGG verwendet in den Faltungsschichten die Schrittweite 1: Nach der Berechnung eines Wertes im 3 × 3-Fenster wird dieses um einen Pixel nach rechts verschoben. Eine kleine Schrittweite tastet mehr Positionen ab und erzeugt größere Ausgaben. Eine große Schrittweite erfasst weniger Positionen und erzeugt kleinere Ausgaben. Beim Entwurf ist außerdem auf eine passende Ausrichtung an den Eingaberändern zu achten. Verändern Sie oben Eingabegröße, Kernelgröße und Schrittweite, um diesen Zusammenhang zu erkunden.</li>
+    </ol>
+    <h4>Aktivierungsfunktionen</h4>
+    <h6 id='article-relu'>ReLU</h6>
+    <p>Tiefe CNNs können mit jeder weiteren Schicht komplexere Merkmale lernen. Ein wichtiger Grund für ihre <a href="https://arxiv.org/pdf/1512.03385.pdf">hohe Genauigkeit</a> ist Nichtlinearität. ReLU fügt dem Modell diese Eigenschaft hinzu und ermöglicht nichtlineare Entscheidungsgrenzen. Ohne nichtlineare Aktivierungsfunktionen bliebe auch eine Verkettung linearer Schichten eine lineare Abbildung. Zudem zeigen <a href="https://arxiv.org/pdf/1906.01975.pdf">empirische Untersuchungen</a>, dass sich CNNs mit ReLU häufig schneller trainieren lassen als mit anderen nichtlinearen Funktionen wie <em>Sigmoid</em>.</p>
+    <p>ReLU wendet auf jedes Element die folgende Operation an: {reluEquation}</p>
+    <div class="figure">
+    <img src="PUBLIC_URL/assets/figures/relu_graph.png" alt="Graph der ReLU-Funktion" width="30%" height="30%"/>
+      <div class="figure-caption">Abbildung 3: Die ReLU-Funktion setzt alle negativen Werte auf 0.</div>
+    </div>
+    <p>ReLU wird auf jeden Wert des Eingabetensors angewendet. Zum Beispiel bleibt 2,24 unverändert, weil der Wert größer als 0 ist; negative Werte werden zu 0. Klicken Sie auf ein ReLU-Neuron, um dies zu beobachten. In der gezeigten Architektur folgt auf jede Faltungsschicht eine ReLU-Aktivierung (Rectified Linear Unit). Beachten Sie, wie sich dadurch die Aktivierungskarten verändern.</p>
+    <h6 id='article-softmax'>Softmax</h6>
+    <p>{softmaxEquation} Softmax transformiert die Klassenwerte so, dass ihre Summe 1 beträgt. Damit lassen sie sich als Klassenwahrscheinlichkeiten interpretieren. Ein Klick auf die letzte Schicht zeigt diese Operation. Die Logits, also unnormierte skalare Werte, sind nach dem Flatten-Schritt nicht auf den Bereich von 0 bis 1 begrenzt. Sie werden durch eine Farbskala von Hellorange bis Dunkelorange dargestellt. Nach Softmax entspricht jeder Klasse eine Wahrscheinlichkeit.</p>
+    <p>Was unterscheidet Softmax von einer gewöhnlichen Normierung? Beide können Werte in den Bereich von 0 bis 1 bringen. Für das Training mittels Backpropagation benötigen wir jedoch eine differenzierbare Funktion. Softmax lässt sich als glatte, differenzierbare Alternative zu argmax verstehen: Durch die Exponentialfunktion werden größere Logits stärker betont als bei einer einfachen linearen Skalierung.</p>
+    <div class="figure">
+    <img src="PUBLIC_URL/assets/figures/softmax_animation.gif" alt="Interaktive Softmax-Formelansicht"/>
+      <div class="figure-caption">Abbildung 4: Die interaktive Softmax-Formelansicht zeigt anhand farbiger Logits und der Formel, wie Klassenwerte zu Wahrscheinlichkeiten normiert werden.</div>
+    </div>
+    <h4 id='article-pooling'>Pooling-Schichten</h4>
+    <p>Es gibt verschiedene Pooling-Verfahren. Sie verkleinern schrittweise die räumlichen Abmessungen der Merkmalskarten und reduzieren damit den Rechenaufwand und die Parameterzahl nachfolgender Schichten. Tiny VGG verwendet hier Max-Pooling.</p>
+    <p>Für Max-Pooling werden Fenstergröße und Schrittweite festgelegt. Das Fenster gleitet über die Eingabe und übernimmt aus jedem Ausschnitt nur den größten Wert. Klicken Sie auf ein Pooling-Neuron, um den Vorgang zu sehen.</p>
+    <p>Tiny VGG verwendet hier ein 2 × 2-Fenster mit Schrittweite 2. Pro Fenster bleibt ein Maximalwert erhalten, wodurch die Anzahl der Aktivierungswerte um 75 % sinkt. Das spart Rechenaufwand und kann helfen, Überanpassung zu verringern.</p>
+    <h4 id='article-flatten'>Flatten-Schicht</h4>
+    <p>Flatten formt einen dreidimensionalen Tensor in einen eindimensionalen Vektor um, der einer voll verbundenen Klassifikationsschicht übergeben werden kann. Aus einem 5 × 5 × 2-Tensor wird etwa ein Vektor mit 50 Elementen. Die zuvor extrahierten Merkmale werden so aufbereitet, von der voll verbundenen Schicht in Klassenwerte umgerechnet und anschließend durch Softmax in Wahrscheinlichkeiten umgewandelt. Ein Klick auf eine Ausgabeklasse zeigt diese Schicht.</p>
+
+    <h2>Interaktive Funktionen</h2>
+    <ol>
+      <li><strong>Eigene Bilder hochladen:</strong> Klicken Sie auf <img class="icon is-rounded" src="PUBLIC_URL/assets/figures/upload_image_icon.png" alt="Bild hochladen"/>, um zu sehen, welcher der 10 Klassen Ihr Bild zugeordnet wird. Erkunden Sie die Neuronen, um Aktivierungskarten und extrahierte Merkmale zu verstehen.</li>
+      <li><strong>Farbskala der Aktivierungskarten ändern:</strong> Mit <img class="is-rounded" width="12%" height="12%" src="PUBLIC_URL/assets/figures/heatmap_scale.png" alt="Auswahl des Farbskalenbereichs"/> können Sie Aktivierungen auf verschiedenen Abstraktionsebenen vergleichen.</li>
+      <li><strong>Netzwerkdetails anzeigen:</strong> Ein Klick auf <img class="is-rounded" width="12%" height="12%" src="PUBLIC_URL/assets/figures/network_details.png" alt="Netzwerkdetails"/> blendet Schichtgrößen und Farbskalen ein.</li>
+      <li><strong>Operationen simulieren:</strong> Starten Sie mit <img class="icon is-rounded" src="PUBLIC_URL/assets/figures/play_button.png" alt="Wiedergabe"/> die Animation. In der <em>interaktiven Formelansicht</em> können Sie außerdem Eingabe- und Ausgabebereiche mit der Maus erkunden, um ihre Zuordnung und die Berechnung nachzuvollziehen.</li>
+      <li><strong>Schichtfunktionen nachlesen:</strong> Klicken Sie in der <em>interaktiven Formelansicht</em> auf <img class="icon is-rounded" src="PUBLIC_URL/assets/figures/info_button.png" alt="Erläuterung"/>, um zum passenden Artikelabschnitt zu springen.</li>
+    </ol>
+
+    <h2>Videotutorial (auf Englisch)</h2>
+    <ul>
+      <li class="video-link" on:click={currentPlayer.play(0)}>Einführung in CNN Explainer <small>(0:00–0:22)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(27)}><em>Übersicht</em> <small>(0:27–0:37)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(37)}><em>Aufgeklappte Faltungsansicht</em> <small>(0:37–0:46)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(46)}><em>Interaktive Formelansichten</em> für Faltung, ReLU und Pooling <small>(0:46–1:21)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(82)}><em>Aufgeklappte Flatten-Ansicht</em> <small>(1:22–1:41)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(101)}><em>Interaktive Softmax-Formelansicht</em> <small>(1:41–2:02)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(126)}>Interaktiv lernen: Klassifikation verstehen <small>(2:06–2:28)</small></li>
+      <li class="video-link" on:click={currentPlayer.play(149)}>Interaktiver Tutorialartikel <small>(2:29–2:54)</small></li>
+    </ul>
+    <div class="video">
+      <Youtube videoId="HnWIHWFbuUQ" playerId="demo_video" bind:this={currentPlayer}/>
+    </div>
+
+    <h2>Wie ist CNN Explainer implementiert?</h2>
+    <p>CNN Explainer verwendet <a href="https://js.tensorflow.org/">TensorFlow.js</a>, eine Bibliothek für GPU-beschleunigtes Deep Learning im Browser, um das vortrainierte Modell zu laden und zu visualisieren. Das interaktive System ist in JavaScript geschrieben und nutzt <a href="https://svelte.dev/">Svelte</a> als Framework sowie <a href="https://d3js.org/">D3.js</a> für die Visualisierung. Zum Einstieg genügt ein Browser.</p>
+
+    <h2>Wer hat CNN Explainer entwickelt?</h2>
+    <p>CNN Explainer wurde von <a href="https://zijie.wang/">Jay Wang</a>, <a href="https://www.linkedin.com/in/robert-turko/">Robert Turko</a>, <a href="http://oshaikh.com/">Omar Shaikh</a>, <a href="https://haekyu.com/">Haekyu Park</a>, <a href="http://nilakshdas.com/">Nilaksh Das</a>, <a href="https://fredhohman.com/">Fred Hohman</a>, <a href="http://minsuk.com">Minsuk Kahng</a> und <a href="https://www.cc.gatech.edu/~dchau/">Polo Chau</a> im Rahmen einer Zusammenarbeit zwischen Georgia Tech und Oregon State entwickelt. Wir danken Anmol Chhabria, Kaan Sancak, Kantwon Rogers und dem Georgia Tech Visualization Lab für Unterstützung und konstruktives Feedback. Die Arbeit wurde teilweise durch NSF-Förderungen IIS-1563816 und CNS-1704701, NASA NSTRF, DARPA GARD sowie Zuwendungen von Intel, NVIDIA, Google und Amazon unterstützt.</p>
+  </div>
+</body>
+
 {:else}
 <body>
   <div id="description">

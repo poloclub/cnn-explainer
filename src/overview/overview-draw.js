@@ -560,6 +560,17 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
   let svgHeight = Number(d3.select('#cnn-svg').style('height').replace('px', '')) + 150;
   let scroll = new SmoothScroll('a[href*="#"]', {offset: -svgHeight});
   
+  // Translated names can be wider than the space between neighboring layers.
+  const fitLayerLabel = function(d, i) {
+    const x = nodeCoordinate[i][0].x;
+    const leftGap = i > 0 ? x - nodeCoordinate[i - 1][0].x : Infinity;
+    const rightGap = i < nodeCoordinate.length - 1
+      ? nodeCoordinate[i + 1][0].x - x : Infinity;
+    const available = Math.max(1, Math.min(leftGap, rightGap) - 8);
+    const measured = this.getComputedTextLength();
+    return `${measured > available ? 12 * available / measured : 12}px`;
+  };
+
   let detailedLabels = svg.selectAll('g.layer-detailed-label')
     .data(layerNames)
     .enter()
@@ -594,6 +605,7 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     .append('tspan')
     .style('font-size', '12px')
     .text(d => layerLabel(d.name))
+    .style('font-size', fitLayerLabel)
     .append('tspan')
     .style('font-size', '8px')
     .style('font-weight', 'normal')
@@ -637,7 +649,8 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
       if (d.name.includes('relu')) { return 'relu' }
       if (d.name.includes('max_pool')) { return t('max_pool')}
       return t(d.name)
-    });
+    })
+    .style('font-size', fitLayerLabel);
 
   // Add layer color scale legends
   getLegendGradient(svg, layerColorScales.conv, 'convGradient');

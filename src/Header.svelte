@@ -1,5 +1,5 @@
 <script>
-  import { t, locale, changeLocale } from './i18n.js';
+  import { t, locale, changeLocale, languages } from './i18n.js';
 </script>
 
 <style>
@@ -97,8 +97,9 @@
     <label class="language-picker">
       <span>{t("Language")}</span>
       <select aria-label={t("Language")} value={locale} on:change={event => changeLocale(event.target.value)}>
-        <option value="en">English</option>
-        <option value="zh-CN">简体中文</option>
+        {#each languages as language}
+          <option value={language.code}>{language.name}</option>
+        {/each}
       </select>
     </label>
 	
