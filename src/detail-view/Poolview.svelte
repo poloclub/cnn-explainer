@@ -1,4 +1,5 @@
 <script>
+  import { t } from '../i18n.js';
 	import PoolAnimator from './PoolAnimator.svelte';
   import { singleMaxPooling } from '../utils/cnn.js';
   import { createEventDispatcher } from 'svelte';
@@ -144,7 +145,7 @@
       <div class="column is-half is-offset-one-quarter">
         <div class="field is-grouped">
           <p class="control is-expanded">
-            <input class="input" type="text" placeholder="Stride" bind:value={stride} />
+            <input class="input" type="text" placeholder={t("Stride")} bind:value={stride} />
           </p>
           <p class="control">
             <button class="button is-success" on:click={handleClickPause}>
@@ -159,22 +160,22 @@
       <div class="control-pannel">
       
         <div class="title-text">
-          Max Pooling
+          {t("Max Pooling")}
         </div>
 
         <div class="buttons">
 
-          <div class="control-button" on:click={handleScroll} title="Jump to article section">
+          <div class="control-button" on:click={handleScroll} title={t("Jump to article section")}>
             <i class="fas fa-info-circle"></i>
           </div>
 
-          <div class="play-button control-button" on:click={handleClickPause} title="Play animation">
+          <div class="play-button control-button" on:click={handleClickPause} title={t(isPaused ? "Play animation" : "Pause animation")}>
             {@html isPaused ?
               '<i class="fas fa-play-circle play-icon"></i>' :
               '<i class="fas fa-pause-circle"></i>'}
           </div>
 
-          <div class="delete-button control-button" on:click={handleClickX} title="Close">
+          <div class="delete-button control-button" on:click={handleClickX} title={t("Close")}>
             <i class="fas control-icon fa-times-circle"></i>
           </div>
         </div>
@@ -189,9 +190,9 @@
       </div>
 
       <div class="annotation">
-        <img src='PUBLIC_URL/assets/img/pointer.svg' alt='pointer icon'>
+        <img src='PUBLIC_URL/assets/img/pointer.svg' alt={t("pointer icon")}>
           <div class="annotation-text">
-            <span style="font-weight:600">Hover over</span> the matrices to change kernel position.
+            <span style="font-weight:600">{t("Hover over")}</span> {t("the matrices to change kernel position.")}
           </div>
       </div>
 

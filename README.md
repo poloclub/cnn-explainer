@@ -1,5 +1,7 @@
 # CNN Explainer
 
+English | [简体中文](README.zh-CN.md)
+
 An interactive visualization system designed to help non-experts learn about Convolutional Neural Networks (CNNs)
 
 [![build](https://github.com/poloclub/cnn-explainer/workflows/build/badge.svg)](https://github.com/poloclub/cnn-explainer/actions)
@@ -17,6 +19,10 @@ Wang, Zijie J., Robert Turko, Omar Shaikh, Haekyu Park, Nilaksh Das, Fred Hohman
 ## Live Demo
 
 For a live demo, visit: http://poloclub.github.io/cnn-explainer/
+
+## Languages
+
+Use the language selector in the header, or add `?lang=zh-CN` to the URL for Simplified Chinese. Switching languages reloads the visualization; English remains the default. See the [Chinese README](README.zh-CN.md) for translation coverage and maintenance notes.
 
 ## Running Locally
 

@@ -1,4 +1,5 @@
 <script>
+  import { t } from '../i18n.js';
   import { onMount, afterUpdate, createEventDispatcher } from 'svelte';
   export let logits;
   export let logitColors;
@@ -258,25 +259,25 @@
   <div class="box">
 
     <div class="buttons">
-      <div class="control-button" on:click={handleScroll} title="Jump to article section">
+      <div class="control-button" on:click={handleScroll} title={t("Jump to article section")}>
         <i class="fas fa-info-circle"></i>
       </div>
 
-      <div class="delete-button control-button" on:click={handleClickX} title="Close">
+      <div class="delete-button control-button" on:click={handleClickX} title={t("Close")}>
         <i class="fas control-icon fa-times-circle"></i>
       </div>
     </div>
 
     <div class="title-text">
-      Softmax Score for <i>"{outputName}"</i>
+      {t("Softmax Score for")} <i>"{outputName}"</i>
     </div>
 
     <svg id="softmax-svg" width="470" height="105"/>
 
     <div class="annotation">
-      <img src='PUBLIC_URL/assets/img/pointer.svg' alt='pointer icon'>
+      <img src='PUBLIC_URL/assets/img/pointer.svg' alt={t("pointer icon")}>
       <div class="annotation-text">
-        <span style="font-weight:600">Hover over</span> the numbers to highlight logit circles.
+        <span style="font-weight:600">{t("Hover over")}</span> {t("the numbers to highlight logit circles.")}
       </div>
     </div>
 

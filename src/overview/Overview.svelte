@@ -1,4 +1,5 @@
 <script>
+  import { t } from '../i18n.js';
   // Svelte functions
   import { onMount } from 'svelte';
   import {
@@ -1493,8 +1494,8 @@
           class:disabled={disableControl}
           data-imageName={image.file}>
           <img src="PUBLIC_URL/assets/img/{image.file}"
-            alt="image option"
-            title="{image.class}"
+            alt={t("image option")}
+            title={t(image.class)}
             data-imageName={image.file}/>
         </div>
       {/each}
@@ -1508,8 +1509,8 @@
 
           <img class="custom-image"
             src="PUBLIC_URL/assets/img/plus.svg"
-            alt="plus button"
-            title="Add new input image"
+            alt={t("plus button")}
+            title={t("Add new input image")}
             data-imageName="custom"/>
 
           <span class="fa-stack edit-icon"
@@ -1543,12 +1544,12 @@
           <i class="fas fa-eye"></i>
         </span>
         <span id="hover-label-text">
-          Show detail
+          {t("Show detail")}
         </span>
       </button>
 
       <div class="control is-very-small has-icons-left"
-        title="Change color scale range">
+        title={t("Change color scale range")}>
         <span class="icon is-left">
           <i class="fas fa-palette"></i>
         </span>
@@ -1556,9 +1557,9 @@
         <div class="select">
           <select bind:value={selectedScaleLevel} id="level-select"
             disabled={disableControl}>
-            <option value="local">Unit</option>
-            <option value="module">Module</option>
-            <option value="global">Global</option>
+            <option value="local">{t("Unit")}</option>
+            <option value="module">{t("Module")}</option>
+            <option value="global">{t("Global")}</option>
           </select>
         </div>
       </div>

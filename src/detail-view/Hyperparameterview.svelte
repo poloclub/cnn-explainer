@@ -1,4 +1,5 @@
 <script>
+  import { t } from '../i18n.js';
 	import HyperparameterAnimator from './HyperparameterAnimator.svelte';
   import { singleConv } from '../utils/cnn.js';
 
@@ -161,7 +162,7 @@
         <div class="input-row">
           <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Input Size:</label>
+              <label class="label">{t("Input Size:")}</label>
             </div>
             <input class="input is-very-small" type="number" bind:value={inputSize}
               min={kernelSize} max={7}>
@@ -174,7 +175,7 @@
         <div class="input-row">
           <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Padding:</label>
+              <label class="label">{t("Padding:")}</label>
             </div>
             <input class="input is-very-small" type="number" bind:value={padding} min={0}
               max={kernelSize - 1}>
@@ -187,7 +188,7 @@
         <div class="input-row">
           <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Kernel Size:</label>
+              <label class="label">{t("Kernel Size:")}</label>
             </div>
             <input class="input is-very-small" type="number" bind:value={kernelSize} min={padding + 1}
               max={inputSizeWithPadding}>
@@ -200,7 +201,7 @@
         <div class="input-row">
           <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Stride:</label>
+              <label class="label">{t("Stride:")}</label>
             </div>
             <input class="input is-very-small" type=number id="strideNumber" bind:value={stride} min=1
               max={Math.max(inputSizeWithPadding - kernelSize + 1, 2)}>
@@ -217,9 +218,9 @@
             stride={stride} dilation={dilation} padding={padding} isPaused={isPaused}/>
 
           <div class="annotation">
-            <img src='PUBLIC_URL/assets/img/pointer.svg' alt='pointer icon' width="25px">
+            <img src='PUBLIC_URL/assets/img/pointer.svg' alt={t("pointer icon")} width="25px">
             <div class="annotation-text-hyper">
-              <span style="font-weight:600">Hover over</span> the matrices to change kernel position.
+              <span style="font-weight:600">{t("Hover over")}</span> {t("the matrices to change kernel position.")}
             </div>
           </div>
           

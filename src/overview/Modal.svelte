@@ -1,4 +1,5 @@
 <script>
+  import { t } from '../i18n.js';
   /* global d3 */
 
   import { onMount, createEventDispatcher } from 'svelte';
@@ -26,8 +27,8 @@
     // The URL is invalid, show an error message on the UI
     showLoading = false;
     errorInfo.show = true;
-    errorInfo.error = usingURL ? "We can't find the image at that URL." :
-      "Not a valid image file.";
+    errorInfo.error = usingURL ? t("We can't find the image at that URL.") :
+      t("Not a valid image file.");
   }
 
   const loadCallback = () => {
@@ -55,7 +56,7 @@
       // If the foreign image does not support CORS -> use this image
       showLoading = false;
       errorInfo.show = true;
-      errorInfo.error = "No permission to load this image."
+      errorInfo.error = t("No permission to load this image.")
     }
   }
 
@@ -153,8 +154,8 @@
 
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">Add Input Image</p>
-        <button class="delete" aria-label="close" on:click={crossClicked}></button>
+        <p class="modal-card-title">{t("Add Input Image")}</p>
+        <button class="delete" aria-label={t("close")} on:click={crossClicked}></button>
       </header>
 
       <section class="modal-card-body">
@@ -164,7 +165,7 @@
 
             <input class="input small-font" type="url"
               bind:value={inputValue}
-              placeholder="Paste URL of image...">
+              placeholder={t("Paste URL of image...")}>
 
             <span class="icon small-font is-left">
               <i class="fas fa-link"></i>
@@ -172,7 +173,7 @@
 
           </div>
 
-          <div class="or-label">or</div>
+          <div class="or-label">{t("or")}</div>
 
           <div class="file">
             <label class="file-label">
@@ -185,7 +186,7 @@
                   <i class="fas fa-upload"></i>
                 </span>
                 <span class="file-label">
-                  Upload
+                  {t("Upload")}
                 </span>
               </span>
             </label>
@@ -205,12 +206,12 @@
         <div class="button-container">
           <button class="button is-smaller"
             on:click={crossClicked}>
-            Cancel
+            {t("Cancel")}
           </button>
 
           <button class="button is-success is-smaller"
             on:click={addClicked}>
-            Add
+            {t("Add")}
           </button>
         </div>
 

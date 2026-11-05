@@ -1,3 +1,4 @@
+import { t, layerLabel } from '../i18n.js';
 /* global d3, SmoothScroll */
 
 import {
@@ -464,11 +465,11 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     layerGroup.selectAll('g.node-output')
       .on('mouseover', (d, i, g) => {
         nodeMouseOverHandler(d, i, g);
-        hoverInfoStore.set( {show: true, text: `Output value: ${formater(d.output)}`} );
+        hoverInfoStore.set( {show: true, text: `${t("Output value: ")}${formater(d.output)}`} );
       })
       .on('mouseleave', (d, i, g) => {
         nodeMouseLeaveHandler(d, i, g);
-        hoverInfoStore.set( {show: false, text: `Output value: ${formater(d.output)}`} );
+        hoverInfoStore.set( {show: false, text: `${t("Output value: ")}${formater(d.output)}`} );
       });
     
     if (curLayer[0].layerName !== 'output') {
@@ -507,7 +508,7 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
         .style('font-size', '11px')
         .style('fill', 'black')
         .style('opacity', 0.5)
-        .text((d, i) => classLists[i]);
+        .text((d, i) => t(classLists[i]));
       
       // Add annotation text to tell readers the exact output probability
       // nodeGroups.append('text')
@@ -585,14 +586,14 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     });
   
   detailedLabels.append('title')
-    .text('Move to article section');
+    .text(t("Move to article section"));
     
   detailedLabels.append('text')
     .style('opacity', 0.7)
     .style('dominant-baseline', 'middle')
     .append('tspan')
     .style('font-size', '12px')
-    .text(d => d.name)
+    .text(d => layerLabel(d.name))
     .append('tspan')
     .style('font-size', '8px')
     .style('font-weight', 'normal')
@@ -626,16 +627,16 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     });
   
   labels.append('title')
-    .text('Move to article section');
+    .text(t("Move to article section"));
   
   labels.append('text')
     .style('dominant-baseline', 'middle')
     .style('opacity', 0.8)
     .text(d => {
-      if (d.name.includes('conv')) { return 'conv' }
+      if (d.name.includes('conv')) { return t('conv') }
       if (d.name.includes('relu')) { return 'relu' }
-      if (d.name.includes('max_pool')) { return 'max_pool'}
-      return d.name
+      if (d.name.includes('max_pool')) { return t('max_pool')}
+      return t(d.name)
     });
 
   // Add layer color scale legends
@@ -690,11 +691,11 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
   redChannel.append('tspan')
     .style('dominant-baseline', 'hanging')
     .style('fill', '#C95E67')
-    .text('Red');
+    .text(t("Red"));
   
   redChannel.append('tspan')
     .style('dominant-baseline', 'hanging')
-    .text(' channel');
+    .text(t(" channel"));
 
   inputAnnotation.append('text')
     .attr('x', nodeCoordinate[0][1].x + nodeLength / 2)
@@ -703,7 +704,7 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     .style('dominant-baseline', 'hanging')
     .style('text-anchor', 'middle')
     .style('fill', '#3DB665')
-    .text('Green');
+    .text(t("Green"));
 
   inputAnnotation.append('text')
     .attr('x', nodeCoordinate[0][2].x + nodeLength / 2)
@@ -712,7 +713,7 @@ export const drawCNN = (width, height, cnnGroup, nodeMouseOverHandler,
     .style('dominant-baseline', 'hanging')
     .style('text-anchor', 'middle')
     .style('fill', '#3F7FBC')
-    .text('Blue');
+    .text(t("Blue"));
 }
 
 /**
